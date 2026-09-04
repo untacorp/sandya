@@ -1,0 +1,157 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { cn } from "@/shared/lib/utils";
+import { Card } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { Icon } from "@/shared/ui/icon";
+import { type Posko } from "@/shared/types";
+
+export interface PoskoCardProps {
+  posko: Posko;
+  onToggleStatus?: (id: string, newStatus: any) => void;
+  className?: string;
+  showToggleAction?: boolean;
+}
+
+export function PoskoCard({
+  posko,
+  onToggleStatus,
+  className,
+  showToggleAction = true,
+}: PoskoCardProps) {
+  const isEvac = posko.status === "HAZARD_EVACUATION";
+  const percent = Math.round((posko.currentRefugees / posko.capacity) * 100);
+
+  const getPostTypeLabel = (type: string) => {
+    switch (type) {
+      case "FIELD_SHELTER":
+        return "Posko Tenda";
+      case "MEDICAL_POST":
+        return "Pos Medis";
+      case "MAIN_WAREHOUSE":
+        return "Gudang Logistik";
+      default:
+        return "Posko Lapangan";
+    }
+  };
+
+  return (
+    <Card
+      className={cn(
+        "p-4 space-y-3 transition-all",
+        isEvac ? "border-status-danger bg-status-danger-bg/15" : "border-border bg-surface",
+        className
+      )}
+    >
+      {/* Top Row: Consistent Top-Left Status Badge & Single Capacity Count */}
+      <div className="flex items-center justify-between gap-2">
+        <Badge
+          variant={
+            posko.status === "HAZARD_EVACUATION"
+              ? "danger"
+              : posko.status === "OPERATIONAL_NORMAL"
+              ? "safe"
+              : "warning"
+          }
+          size="sm"
+        >
+          {posko.status === "HAZARD_EVACUATION"
+            ? "Evakuasi"
+            : posko.status === "OPERATIONAL_NORMAL"
+            ? "Normal"
+            : "Siaga"}
+        </Badge>
+
+        <span className="text-xs font-bold text-text-main">
+          {posko.currentRefugees}{" "}
+          <span className="font-normal text-text-muted">/ {posko.capacity} Jiwa</span>
+        </span>
+      </div>
+
+      {/* Main Info: Posko Name & Location */}
+      <div className="space-y-0.5">
+        <h3 className="text-sm font-bold text-text-main">
+          {posko.name}
+        </h3>
+        <p className="text-xs text-text-muted flex items-center gap-1">
+          <Icon name="pin" variant="linear" size={13} />
+          {posko.locationName}
+        </p>
+      </div>
+
+      {/* Progress Bar Okupansi (No duplicate number, percentage only) */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-xs text-text-muted font-medium">
+          <span>Kapasitas Tampung</span>
+          <span
+            className={
+              percent > 90
+                ? "text-status-danger font-bold"
+                : "text-text-main"
+            }
+          >
+            {percent}%
+          </span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-surface-muted border border-border overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-300",
+              percent > 90
+                ? "bg-status-danger"
+                : percent > 70
+                ? "bg-status-warning"
+                : "bg-status-safe"
+            )}
+            style={{ width: `${Math.min(100, percent)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Action Footer */}
+      <div className="flex items-center justify-between pt-2 border-t border-border gap-2 text-xs">
+        <span className="text-text-muted font-medium">
+          {getPostTypeLabel(posko.postType)}
+        </span>
+
+        <div className="flex items-center gap-1.5">
+          {showToggleAction && onToggleStatus && (
+            <>
+              {posko.status !== "HAZARD_EVACUATION" ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onToggleStatus(posko.id, "HAZARD_EVACUATION")}
+                >
+                  Tandai Evakuasi
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onToggleStatus(posko.id, "OPERATIONAL_NORMAL")}
+                >
+                  Kembalikan Normal
+                </Button>
+              )}
+            </>
+          )}
+
+          <Link href={`/posko/${posko.id}`}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon="arrow-right"
+              iconVariant="bold"
+            >
+              Buka Posko
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
+}

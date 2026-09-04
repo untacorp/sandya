@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Canvas & Surfaces (Var-UI Base Crisp Light) */
+  --canvas: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-subtle: #F8FAFC;
+  --surface-muted: #F1F5F9;
+
+  /* Borders 1.5px Presisi */
+  --border: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --border-strong: #94A3B8;
+
+  /* Typography & Text */
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-subtle: #94A3B8;
+  --text-inverse: #FFFFFF;
+
+  /* Primary Brand & Actions */
+  --primary: #0F172A;
+  --primary-hover: #1E293B;
+  --primary-foreground: #FFFFFF;
+  --accent: #0284C7;
+
+  /* Status Safe (Emerald) */
+  --status-safe: #059669;
+  --status-safe-bg: #ECFDF5;
+  --status-safe-border: #A7F3D0;
+
+  /* Status Warning (Amber) */
+  --status-warning: #D97706;
+  --status-warning-bg: #FFFBEB;
+  --status-warning-border: #FDE68A;
+
+  /* Status Danger (Rose/Red) */
+  --status-danger: #DC2626;
+  --status-danger-bg: #FEF2F2;
+  --status-danger-border: #FECACA;
+
+  /* START Triage Categories */
+  --triage-red: #DC2626;
+  --triage-yellow: #D97706;
+  --triage-green: #059669;
+  --triage-black: #1E293B;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-muted: var(--surface-muted);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+
+  --color-status-safe: var(--status-safe);
+  --color-status-safe-bg: var(--status-safe-bg);
+  --color-status-safe-border: var(--status-safe-border);
+
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-border: var(--status-warning-border);
+
+  --color-status-danger: var(--status-danger);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-danger-border: var(--status-danger-border);
+
+  --color-triage-red: var(--triage-red);
+  --color-triage-yellow: var(--triage-yellow);
+  --color-triage-green: var(--triage-green);
+  --color-triage-black: var(--triage-black);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--canvas);
+  color: var(--text-main);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-tap-highlight-color: transparent;
 }
