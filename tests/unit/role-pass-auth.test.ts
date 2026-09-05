@@ -1,6 +1,17 @@
 import assert from 'node:assert';
 import { IsomorphicEd25519 } from '@/core/crypto/ed25519-isomorphic';
-import { generate12WordSeed, validateSeedPhrase, EMERGENCY_SEED_WORDS } from '@/core/crypto/seed-phrase';
+import {
+  generate12WordSeed,
+  validateSeedPhrase,
+  normalizeSeedPhrase,
+  formatSeedPhrase,
+  seedPhraseToEntropy,
+  entropyToSeedPhrase,
+  seedPhraseToHex,
+  hexToSeedPhrase,
+  deriveMasterKeySeed,
+  EMERGENCY_SEED_WORDS,
+} from '@/core/crypto/seed-phrase';
 import { RolePassCodec, RolePassPayload } from '@/core/codecs/role-pass-codec';
 
 async function runRolePassAuthTests() {
@@ -24,23 +35,51 @@ async function runRolePassAuthTests() {
   assert.strictEqual(isValidRaw, true, 'Valid signature must verify with Raw public key');
 
   const isTampered = await IsomorphicEd25519.verify(
-  new TextEncoder().encode('TAMPERED_PAYLOAD'),
-  signatureHex,
-  keyPair.publicKeyHex
+    new TextEncoder().encode('TAMPERED_PAYLOAD'),
+    signatureHex,
+    keyPair.publicKeyHex
   );
   assert.strictEqual(isTampered, false, 'Tampered payload must fail verification');
   console.log('  [PASS] Isomorphic Ed25519 Key Generation & Sign/Verify Passed');
 
   // 2. 12-Word Seed Phrase Generator & Verifier
-  console.log('Test 2: Emergency 12-Word Seed Phrase Generator & Validation');
+  console.log('Test 2: Emergency 12-Word Seed Phrase Generator, Encoding & Derivation');
   const seed = generate12WordSeed();
   assert.strictEqual(seed.length, 12, 'Must generate exactly 12 words');
   const isSeedValid = validateSeedPhrase(seed);
   assert.strictEqual(isSeedValid, true, 'Generated seed must pass validation');
 
+  // Dictionary validation (exact 256 words)
+  assert.strictEqual(EMERGENCY_SEED_WORDS.length, 256, 'Dictionary must contain exactly 256 words (8-bit aligned)');
+
+  // Normalization and formatted string validation
+  const formattedString = formatSeedPhrase(seed);
+  assert.strictEqual(validateSeedPhrase(formattedString), true, 'Formatted numbered seed string must pass validation');
+
+  const dirtyInput = ` 1. ${seed[0]} , 2. ${seed[1]} \n 3. ${seed[2]} ; ${seed.slice(3).join(' ')} `;
+  const normalizedWords = normalizeSeedPhrase(dirtyInput);
+  assert.deepStrictEqual(normalizedWords, seed, 'Normalization must correctly parse messy user input');
+
+  // Entropy & Hex Roundtrips
+  const entropy = seedPhraseToEntropy(seed);
+  assert.strictEqual(entropy.length, 12, 'Entropy must be exactly 12 bytes');
+  const recoveredWords = entropyToSeedPhrase(entropy);
+  assert.deepStrictEqual(recoveredWords, seed, 'Entropy roundtrip must match original words');
+
+  const hexString = seedPhraseToHex(seed);
+  assert.strictEqual(hexString.length, 24, 'Seed phrase hex must be 24 hex characters');
+  const recoveredFromHex = hexToSeedPhrase(hexString);
+  assert.deepStrictEqual(recoveredFromHex, seed, 'Hex roundtrip must match original words');
+
+  // Deterministic Master Seed Derivation
+  const masterSeed1 = await deriveMasterKeySeed(seed);
+  const masterSeed2 = await deriveMasterKeySeed(formattedString);
+  assert.strictEqual(masterSeed1.length, 32, 'Master seed must be 32 bytes');
+  assert.deepStrictEqual(masterSeed1, masterSeed2, 'Derived master seed must be identical for same phrase');
+
   const invalidSeed = ['fakeWord1', 'fakeWord2'];
   assert.strictEqual(validateSeedPhrase(invalidSeed), false, 'Invalid seed must fail validation');
-  console.log('  [PASS] Seed Phrase Generator & Validator Passed');
+  console.log('  [PASS] Seed Phrase Generator, Bidirectional Codecs & Derivation Passed');
 
   // 3. Role Pass Issuance and Verification
   console.log('Test 3: Role Pass Issuance & Async Verification');
