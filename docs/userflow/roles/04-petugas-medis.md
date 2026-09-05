@@ -1,9 +1,10 @@
 # User Flow: Petugas Medis / Dokter (Medical Officer)
 
-> **Status**: Approved  
+> **Status**: Approved (Spesifikasi Alur Medis Lapangan)  
 > **Target Persona**: Dokter Lapangan, Perawat Posko Medis, Bidan Tenda Darurat, Tim Medis Relawan  
-> **Core Objective (JTBD)**: Menjalankan skrining klinis cepat, mengklasifikasikan keparahan pasien via Triase START (), merekam tanda vital, menerbitkan resep obat darurat ke logistik farmasi, serta memantau radar krisis medis di seluruh posko dalam misi bencana.  
-> **Konteks & Lingkungan**: Tenda Pos Medis Darurat / RS Lapangan, SQLite lokal, Papan Kanban Triase.
+> **Core Objective (JTBD)**: Menjalankan skrining klinis cepat, mengklasifikasikan keparahan pasien via Triase START (Merah/Kuning/Hijau/Hitam), merekam tanda vital, menerbitkan resep obat darurat ke logistik farmasi, serta memantau radar krisis medis di seluruh posko dalam misi bencana.  
+> **Konteks & Lingkungan**: Tenda Pos Medis Darurat / RS Lapangan, SQLite lokal, Papan Kanban Triase.  
+> **Dokumen Terkait**: [Peta Induk User Flow](../00-arsitektur-dan-peta-userflow.md) | [Triase Medis & Rekam Kesehatan](../03-triase-medis-dan-rekam-kesehatan.md)
 
 ---
 
@@ -12,7 +13,7 @@
 ### Cakupan (In Scope)
 - **Aktivasi Peran**: Memindai QR Kartu Tugas Medis dari Koordinator Posko via `/activate`.
 - **Papan Kanban Triase START Medis (`/(posko)/[poskoId]/refugees/triage`)**:
-  - Kolom Triase 4-Kategori:  Merah (*Immediate*),  Kuning (*Delayed*),  Hijau (*Minor*),  Hitam (*Deceased*).
+  - Kolom Triase 4-Kategori: Merah (*Immediate*), Kuning (*Delayed*), Hijau (*Minor*), Hitam (*Deceased*).
 - **Pemeriksaan Klinis & Rekam Vital Signs**: Input suhu, tekanan darah, nadi, $\text{SpO}_2$, keluhan, dan riwayat alergi.
 - **Penerbitan Resep Obat Darurat (`uint8` Token Medis)**: Terbit otomatis sebagai tiket `needs_requests (PENDING)` untuk lemari obat gudang.
 - **Komunikasi Medis Darurat Lapangan (`/tactical` Saluran `#medis`)**:
@@ -40,7 +41,7 @@
 ```mermaid
 flowchart LR
   A(["1. Scan QR Medis: /activate"]) --> B["2. Masuk Papan Kanban Triase START"]
-  B --> C["3. Skrining Pasien & Klasifikasi Kategori ()"]
+  B --> C["3. Skrining Pasien & Klasifikasi Kategori START"]
   C --> D["4. Input Vital Signs & Resepkan Obat Darurat"]
   D --> E["5. Tiket Obat Terbit ke Logistik & Event Medis Tersimpan"]
   E --> F(["6. Pantau Radar Krisis Medis Posko Sekitar"])
@@ -61,7 +62,7 @@ flowchart TD
   SaveMedicalSession --> OpenTriageBoard["Masuk TAB TRIASE MEDIS AKTIF<br/>Rute: /(posko)/[poskoId]/refugees/triage"]
   
   %% KANBAN TRIASE START
-  OpenTriageBoard --> ViewKanban["Tampilan Papan Kanban START:<br/>•  Merah (Gawat Darurat): 2 Pasien<br/>•  Kuning (Mendesak): 8 Pasien<br/>•  Hijau (Luka Ringan): 34 Pasien<br/>•  Hitam: 0"]
+  OpenTriageBoard --> ViewKanban["Tampilan Papan Kanban START:<br/>• Merah (Gawat Darurat): 2 Pasien<br/>• Kuning (Mendesak): 8 Pasien<br/>• Hijau (Luka Ringan): 34 Pasien<br/>• Hitam: 0"]
   
   ViewKanban --> DoctorActions{"Pilih Tindakan Medis"}
   
@@ -75,9 +76,9 @@ flowchart TD
   OpenExamModal --> InputVitalData["1. Input Tanda Vital:<br/>• Suhu: 39.1°C, Tensi: 120/80 mmHg, SpO2: 97%<br/>• Keluhan Utama: Diare Akut + Dehidrasi Sedang"]
   
   InputVitalData --> ClassifySTART{"Klasifikasi Kategori START"}
-  ClassifySTART -->| Merah| SetRed["Set Kategori:  MERAH (Prioritas Penanganan)"]
-  ClassifySTART -->| Kuning| SetYellow["Set Kategori:  KUNING (Stabil / Butuh Obat)"]
-  ClassifySTART -->| Hijau| SetGreen["Set Kategori:  HIJAU (Rawat Jalan Tenda)"]
+  ClassifySTART -->|Merah| SetRed["Set Kategori: MERAH (Prioritas Penanganan)"]
+  ClassifySTART -->|Kuning| SetYellow["Set Kategori: KUNING (Stabil / Butuh Obat)"]
+  ClassifySTART -->|Hijau| SetGreen["Set Kategori: HIJAU (Rawat Jalan Tenda)"]
   
   SetRed & SetYellow & SetGreen --> PrescribeCheck{"Perlu Resep Obat Darurat?"}
   
@@ -93,7 +94,7 @@ flowchart TD
   
   %% TINDAKAN B: RADAR MEDIS MISI
   DoctorActions -->|"2. Pantau Situasi Medis Misi"| OpenMissionRadar["Buka Posko Switcher -> Lihat Status Misi Makro"]
-  OpenMissionRadar --> ViewOtherPoskoMedics["Pantau Situasi Posko Sekitar:<br/>• Posko B:  15 Pasien Diare (Wabah Terdeteksi)<br/>• Gudang Pusat: Stok Infus Tersedia 50 Kolf"]
+  OpenMissionRadar --> ViewOtherPoskoMedics["Pantau Situasi Posko Sekitar:<br/>• Posko B: 15 Pasien Diare (Wabah Terdeteksi)<br/>• Gudang Pusat: Stok Infus Tersedia 50 Kolf"]
   
   NotifyLogistics --> RefreshKanban["Papan Kanban & Riwayat Pasien Terupdate"]
   ViewOtherPoskoMedics --> RefreshKanban
@@ -108,20 +109,20 @@ flowchart TD
 |---|---|---|---|---|
 | **4.0** | `/activate` | Memindai QR Kartu Tugas Medis | Mengaktifkan sesi `POSKO_MEDICAL` dan membuka papan Triase Medis | Instan 1 detik |
 | **4.1** | `/refugees/triage` | Membuka sub-tab Triase Medis | Menampilkan Kanban 4 kolom kategori START dan ringkasan pasien kritis | Tampilan kontras tinggi |
-| **4.2** | Form Medis | Mengisi vital signs & memilih chip  *Merah* | Kartu pasien berpindah otomatis ke kolom  *Merah* dan memicu alert di Beranda posko | Prioritas darurat |
+| **4.2** | Form Medis | Mengisi vital signs & memilih chip *Merah* | Kartu pasien berpindah otomatis ke kolom *Merah* dan memicu alert di Beranda posko | Prioritas darurat |
 | **4.3** | Form Medis | Memilih obat *Oralit* & *Paracetamol* dari katalog | Mengambil token biner 1-byte (`0x21`, `0x22`) dari katalog BNPB/PMI | Istilah medis standar |
 | **4.4** | Form Medis | Mengetuk *"Simpan Rekam Medis"* | Menulis event baru ke `refugee_events` dan menerbitkan tiket `needs_requests (PENDING)` | Stempel nama & ID dokter |
 | **4.5** | Header Bar | Membuka *Posko Switcher* | Menampilkan radar kesehatan posko-posko tetangga (indikator jumlah pasien merah/kuning) | *Situational Awareness* |
 
 ---
 
-## 5. Matriks Kasus Khusus & Penanganan Galat (*Edge Cases*)
+## 5. Matriks Kasus Khusus & Penanganan Galat (Edge Cases)
 
 | Pemicu / Kondisi | Mode Kegagalan | Perilaku UX & Jalur Pemulihan |
 |---|---|---|
-| **Pasien Kritis Butuh Rujukan ke Rumah Sakit Kota** | Posko lapangan tidak memiliki alat bedah/operasi | Dokter memilih status  *Merah* $\rightarrow$ aktifkan toggle *"Butuh Rujukan"* $\rightarrow$ tiket rujukan otomatis terkirim ke Command Center Komandan Misi untuk ambulans. |
-| **Obat Habis di Gudang Posko Ini** | Petugas logistik mengabarkan stok Paracetamol kosong | Dokter membuka *Posko Switcher* $\rightarrow$ melihat Posko RW 02 memiliki surplus Paracetamol $\rightarrow$ minta koordinator membuat Surat Jalan antar-posko. |
-| **Pasien Datang Tanpa Identitas (Pingsan)** | Pasien belum pernah di-intake relawan | Dokter mengetuk *"Intake Darurat"* $\rightarrow$ sistem membuat record sementara (*"Mr. X - Tenda 02"*) $\rightarrow$ penanganan medis langsung berjalan tanpa tertahan administrasi. |
+| **Pasien Kritis Butuh Rujukan ke Rumah Sakit Kota** | Posko lapangan tidak memiliki alat bedah/operasi | Dokter memilih status *Merah* -> aktifkan toggle *"Butuh Rujukan"* -> tiket rujukan otomatis terkirim ke Command Center Komandan Misi untuk ambulans. |
+| **Obat Habis di Gudang Posko Ini** | Petugas logistik mengabarkan stok Paracetamol kosong | Dokter membuka *Posko Switcher* -> melihat Posko RW 02 memiliki surplus Paracetamol -> minta koordinator membuat Surat Jalan antar-posko. |
+| **Pasien Datang Tanpa Identitas (Pingsan)** | Pasien belum pernah di-intake relawan | Dokter mengetuk *"Intake Darurat"* -> sistem membuat record sementara (*"Mr. X - Tenda 02"*) -> penanganan medis langsung berjalan tanpa tertahan administrasi. |
 
 ---
 

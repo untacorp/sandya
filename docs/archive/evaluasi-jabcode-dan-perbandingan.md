@@ -1,7 +1,11 @@
 # [ARSIP RISET] Evaluasi Eksperimen JabCode (Color 2D Barcode)
 
+> **Status Dokumen**: DIARSIPKAN / DIBATALKAN (ARCHIVED & CANCELLED)  
+> **Klasifikasi**: Riset & Pengujian Laboratorium (Archived)  
+> **Dokumen Terkait**: [Spesifikasi Transfer Animated QR & Poster Paritas](../spesifikasi-transfer-animated-dan-poster.md) | [Tokenisasi Nama & Paritas QR](../tokenisasi-nama-dan-paritas-qr.md)
+
 > [!NOTE]
-> **Status Dokumen: DIARSIPKAN / DIBATALKAN (ARCHIVED & CANCELLED)**
+> **Keputusan Arsitektur:**
 > Berdasarkan hasil evaluasi praktis dan pertimbangan kondisi lapangan bencana ekstrem, implementasi **JabCode (Color 2D Barcode - ISO/IEC 23634)** resmi **dibatalkan/diarsipkan**. 
 > Sistem Sandya sepenuhnya berfokus pada **Standar Monokrom Hitam-Putih Universal**:
 > 1. **Moda Layar (Device-to-Device)**: **Animated Dynamic Multipart QR (B&W)**.
@@ -13,7 +17,7 @@
 
 ## 1. Ringkasan Pengujian JabCode 8-Warna
 
-Laboratorium Sandya telah berhasil mengompilasi dan menguji native binary C JabCode (ISO/IEC 23634:2022) dengan hasil kapasitas sebagai berikut:
+Laboratorium Sandya telah mengompilasi dan menguji *native binary* C JabCode (ISO/IEC 23634:2022) dengan hasil kapasitas sebagai berikut:
 
 | Jumlah Pengungsi | Raw JSON | Bit-Packed | Compressed | 1 Kotak QR B&W | 1 Kotak JabCode (8 Warna) |
 | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -27,20 +31,20 @@ Laboratorium Sandya telah berhasil mengompilasi dan menguji native binary C JabC
 
 ## 2. Mengapa JabCode Dibatalkan untuk Sandya?
 
-Meskipun 1 kotak JabCode mampu menampung 300 pengungsi di layar, beberapa kendala fundamental menjadikannya tidak layak untuk situasi bencana nyata:
+Meskipun 1 kotak JabCode mampu menampung 300 data pengungsi di layar, sejumlah kendala fundamental menjadikannya tidak layak untuk situasi bencana nyata:
 
 1. **Inkompatibilitas dengan Printer Termal Saku**:
-  * Seluruh relawan di daerah bencana menggunakan printer kasir termal saku monokrom (hanya bisa mencetak hitam-putih). JabCode tidak bisa dicetak di printer termal.
+   * Seluruh relawan di daerah bencana menggunakan printer kasir termal saku monokrom (hanya bisa mencetak hitam-putih). JabCode tidak bisa dicetak di printer termal.
 2. **Ketergantungan pada Kalibrasi Warna Kamera HP**:
-  * Sensor kamera smartphone murah di tenda darurat yang remang-remang sering mengalami pergeseran *white balance/hue*, menyebabkan warna kuning, hijau, dan cyan salah terdeteksi.
+   * Sensor kamera smartphone murah di tenda darurat yang remang-remang sering mengalami pergeseran *white balance/hue*, menyebabkan warna kuning, hijau, dan cyan salah terdeteksi.
 3. **Batas Fisik Simbol Tunggal (4.8 KB)**:
-  * Pada data $>400\text{ orang}$, 1 kotak JabCode tetap mengalami *overflow* dan memerlukan multi-simbol yang rumit.
+   * Pada data $>400\text{ orang}$, 1 kotak JabCode tetap mengalami *overflow* dan memerlukan multi-simbol yang rumit.
 4. **Keunggulan Telak Animated Dynamic Multipart QR (B&W)**:
-  * Animated QR monokrom bekerja **100% pada semua HP**, tidak butuh kalibrasi warna, dan mampu mentransfer data **hingga 5.000+ orang dalam hitungan detik** secara dinamis.
+   * Animated QR monokrom bekerja **100% pada semua smartphone**, tidak butuh kalibrasi warna, dan mampu mentransfer data **hingga 5.000+ orang dalam hitungan detik** secara dinamis.
 
 ---
 
 ## 3. Keputusan Resmi Arsitektur
 
 Sandya secara resmi mengadopsi standar monokrom hitam-putih universal yang dirinci pada:
- **[`docs/spesifikasi-transfer-animated-dan-poster.md`](file:///home/auttomus/Documents/Code/PROJECT/sandya/docs/spesifikasi-transfer-animated-dan-poster.md)**.
+[Spesifikasi Protokol Transfer Data: Animated QR Dinamis & Poster Paritas](../spesifikasi-transfer-animated-dan-poster.md).

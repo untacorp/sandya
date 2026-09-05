@@ -1,23 +1,27 @@
 # Pedoman Standar Solar Icons: Sandya
 
+> **Status**: Approved (Standar Ikonografi Resmi)  
+> **Klasifikasi**: Sistem Ikonografi & Pemetaan Semantik  
+> **Dokumen Terkait**: [Blueprint Frontend](./01-arsitektur-frontend-sandya.md) | [Token Warna Semantik](./03-sistem-desain-dan-token-warna.md)
+
 Dokumen ini mendefinisikan aturan resmi penggunaan **Solar Icons** pada seluruh antarmuka aplikasi Sandya.
 
 ---
 
-##  Aturan Pembatasan Varian (Strict Rules)
+## 1. Aturan Pembatasan Varian (Strict Rules)
 
-1. **HANYA 2 VARIAN YANG DIIZINKAN**:
-  - `linear`: Garis kontur stroke 1.5px (Default).
-  - `bold`: Isian solid penuh (Penekanan & Status Aktif).
-2. **DILARANG DIGUNAKAN (HARAM)**:
-  - [FAIL] `bold-duotone`
-  - [FAIL] `linear-duotone`
-  - [FAIL] `broken`
-  - [FAIL] `outline` (berbeda ketebalan)
+1. **Hanya 2 Varian yang Diizinkan**:
+   - `linear`: Garis kontur stroke 1.5px (Default).
+   - `bold`: Isian solid penuh (Penekanan & Status Aktif).
+2. **Dilarang Digunakan**:
+   - `bold-duotone`
+   - `linear-duotone`
+   - `broken`
+   - `outline` (inkonsistensi ketebalan)
 
 ---
 
-##  Matriks Semantik Varian
+## 2. Matriks Semantik Varian
 
 ```text
 ┌──────────────────────────────┬────────────────────────────────────────────────────────┐
@@ -30,14 +34,14 @@ Dokumen ini mendefinisikan aturan resmi penggunaan **Solar Icons** pada seluruh 
 ├──────────────────────────────┼────────────────────────────────────────────────────────┤
 │ BOLD                         │ 1. Navigasi / Tab saat SEDANG AKTIF (Active state)     │
 │ (Solid Fill)                 │ 2. Tombol Utama Hero / Floating Action Button (FAB)    │
-│                              │ 3. Peringatan Bahaya / Kritis ( Triase,  SOS)       │
+│                              │ 3. Peringatan Bahaya / Kritis (Triase, SOS)            │
 │                              │ 4. Badge Status Terverifikasi / Konfirmasi Sukses      │
 └──────────────────────────────┴────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-##  Katalog Pemetaan Ikon Resmi (Official Mapping)
+## 3. Katalog Pemetaan Ikon Resmi (Official Mapping)
 
 | Nama Semantik (`name`) | Solar Icon ID (`linear`) | Solar Icon ID (`bold`) | Peruntukan di Sandya |
 | :--- | :--- | :--- | :--- |

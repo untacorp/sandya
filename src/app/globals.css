@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Canvas & Surfaces (Var-UI Base Crisp Light) */
+  /* Canvas & Surfaces (Crisp Light & High Contrast) */
   --canvas: #FFFFFF;
   --surface: #FFFFFF;
   --surface-subtle: #F8FAFC;

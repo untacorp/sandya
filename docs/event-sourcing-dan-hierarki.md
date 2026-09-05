@@ -1,14 +1,18 @@
 # Arsitektur Event Sourcing, Hierarki Organisasi, & Universal Data Mule: Sandya
 
+> **Status**: Approved (Spesifikasi Model Data & Sinkronisasi)  
+> **Klasifikasi**: Desain Database, Event Sourcing, & RBAC  
+> **Dokumen Terkait**: [Analisis Arsitektur](./analisis-arsitektur.md) | [Spesifikasi Mesh & Intercom](./spesifikasi-mesh-dan-intercom.md) | [Tata Kelola Organisasi](./tata-kelola-organisasi-dan-kriptografi.md)
+
 Dokumen ini merupakan spesifikasi arsitektur lanjutan untuk sistem **Sandya (Offline-First Disaster Management)**, yang merinci model **Event Sourcing** pada pendataan manusia, hierarki posko, prinsip **Universal Data Mule**, dan mitigasi *clock drift*.
 
 ---
 
-## 1. Pemisahan Wewenang (*Separation of Duties*)
+## 1. Pemisahan Wewenang (Separation of Duties)
 
 Dalam lingkungan bencana, terdapat perbedaan mendasar antara karakteristik data manusia dan data logistik:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │                     DATA MANUSIA                         │
 │               (Additive / Enriching Data)                │
@@ -37,19 +41,19 @@ Dalam lingkungan bencana, terdapat perbedaan mendasar antara karakteristik data 
 
 ```mermaid
 graph TD
-  Org[" LEVEL ORGANISASI<br/>BPBD / PMI / SAR / Relawan Mandiri"]
+  Org["LEVEL ORGANISASI<br/>BPBD / PMI / SAR / Relawan Mandiri"]
   
-  Org --> Mission[" MISI / WILAYAH BENCANA<br/>Tanggap Darurat Gempa 2026"]
+  Org --> Mission["MISI / WILAYAH BENCANA<br/>Tanggap Darurat Gempa 2026"]
   
-  Mission --> PosInduk[" POSKO INDUK / GUDANG UTAMA<br/>Hub Logistik & Manajemen Pusat"]
-  Mission --> PosA[" POSKO LAPANGAN A<br/>Tenda Pengungsi RW 01"]
-  Mission --> PosB[" POSKO LAPANGAN B<br/>Tenda Pengungsi RW 02"]
+  Mission --> PosInduk["POSKO INDUK / GUDANG UTAMA<br/>Hub Logistik & Manajemen Pusat"]
+  Mission --> PosA["POSKO LAPANGAN A<br/>Tenda Pengungsi RW 01"]
+  Mission --> PosB["POSKO LAPANGAN B<br/>Tenda Pengungsi RW 02"]
 
   subgraph Personel_Posko ["4 Peran Fungsional di Posko"]
-  Koord[" Koordinator Posko<br/>Otoritas Posko, Tim, & Cetak Poster"]
-  Logistik[" Petugas Logistik<br/>SATU-SATUNYA yang berhak memotong stok fisik"]
-  Medis[" Petugas Medis<br/>Skrining Triase START & Resep Obat"]
-  Relawan[" Relawan Lapangan<br/>Fast Intake 30s, Antar Bantuan, Data Mule"]
+  Koord["Koordinator Posko<br/>Otoritas Posko, Tim, & Cetak Poster"]
+  Logistik["Petugas Logistik<br/>SATU-SATUNYA yang berhak memotong stok fisik"]
+  Medis["Petugas Medis<br/>Skrining Triase START & Resep Obat"]
+  Relawan["Relawan Lapangan<br/>Fast Intake 30s, Antar Bantuan, Data Mule"]
   end
 
   PosA --> Koord
@@ -58,20 +62,19 @@ graph TD
   PosA --> Relawan
 ```
 
-### Matriks Peran (*Streamlined 4-Role RBAC*)
+### Matriks Peran (Streamlined 4-Role RBAC)
 
 | Role / Peran | Manajemen Pengungsi | Triase Medis START | Mutasi Stok Fisik | Cetak Poster Serah Terima | Transfer Layar (Data Mule) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **1.  KOORDINATOR** | [PASS] Penuh | [PASS] Audit |  Audit Agregat | [PASS] **Otorisasi Utama (Ed25519)** | [PASS] Bebas |
-| **2.  MEDIS** | [PASS] Catat Kondisi | [PASS] **Input Triase & Resep Obat** | [FAIL] (Hanya ajukan tiket obat) | [FAIL] Dilarang | [PASS] Bebas |
-| **3.  LOGISTIK** |  Lihat Data | [FAIL] | [PASS] **Mutasi & Potong Stok** | [FAIL] Dilarang | [PASS] Bebas |
-| **4.  RELAWAN** | [PASS] **Fast Intake 30s & Tiket Butuh** | [FAIL] | [FAIL] (Hanya konfirmasi penyerahan) | [FAIL] Dilarang | [PASS] **Bebas Scan & Ekspor** |
-| **[  WARGA / TAMU ]** |  Cari Kerabat Sendiri | [FAIL] | [FAIL] | [FAIL] |  Pindai Poster (Read-Only) |
-
+| **1. KOORDINATOR** | [PASS] Penuh | [PASS] Audit | Audit Agregat | [PASS] **Otorisasi Utama (Ed25519)** | [PASS] Bebas |
+| **2. MEDIS** | [PASS] Catat Kondisi | [PASS] **Input Triase & Resep Obat** | [FAIL] (Hanya ajukan tiket obat) | [FAIL] Dilarang | [PASS] Bebas |
+| **3. LOGISTIK** | Lihat Data | [FAIL] | [PASS] **Mutasi & Potong Stok** | [FAIL] Dilarang | [PASS] Bebas |
+| **4. RELAWAN** | [PASS] **Fast Intake 30s & Tiket Butuh** | [FAIL] | [FAIL] (Hanya konfirmasi penyerahan) | [FAIL] Dilarang | [PASS] **Bebas Scan & Ekspor** |
+| **[ WARGA / TAMU ]** | Cari Kerabat Sendiri | [FAIL] | [FAIL] | [FAIL] | Pindai Poster (Read-Only) |
 
 ---
 
-## 3. Konsep "Zero-Touch BLE Mesh & Universal Data Mule"
+## 3. Konsep Zero-Touch BLE Mesh & Universal Data Mule
 
 ### A. Jalur Utama: Zero-Touch BLE Mesh Gossip
 Di lokasi bencana, perangkat relawan secara otomatis membentuk jaringan jaring (*ad-hoc multi-hop BLE mesh* hingga 7 hop). Sinkronisasi event delta berjalan otomatis di latar belakang saat relawan mendekati posko lain:
@@ -79,12 +82,12 @@ Di lokasi bencana, perangkat relawan secara otomatis membentuk jaringan jaring (
 ```mermaid
 sequenceDiagram
   autonumber
-  participant PosA as  HP Relawan Posko A
-  participant Mesh as  BLE Mesh Multi-Hop (TTL 7)
-  participant PosInduk as  HP Koordinator Posko Induk
+  participant PosA as HP Relawan Posko A
+  participant Mesh as BLE Mesh Multi-Hop (TTL 7)
+  participant PosInduk as HP Koordinator Posko Induk
 
   Note over PosA: Relawan A mendata 5 pengungsi baru di SQLite lokal
-  PosA->>Mesh:  SILENT GOSSIP: Pancarkan SYNC_DELTA_BATCH (~30B)
+  PosA->>Mesh: SILENT GOSSIP: Pancarkan SYNC_DELTA_BATCH (~30B)
   Mesh->>PosInduk: Relay otomatis melompat antar-HP relawan (<250ms)
   Note over PosInduk: SQLite Posko Induk otomatis terbarui seketika!
 ```
@@ -93,19 +96,19 @@ sequenceDiagram
 Untuk mencegah pengiriman ulang seluruh tabel database (*zero redundancy*):
 1. **Probe Handshake**: Node A menyiarkan `SYNC_VECTOR_PROBE` berisi nomor sequence tertinggi lokal per posko: `{ posko_id: max_seq }`.
 2. **Kalkulasi Selisih Delta**: Node B membandingkan sequence lokalnya. Jika Node B memiliki `seq = 40` dan Node A mengklaim `seq = 45`, Node B hanya meminta selisih:
-  $$\text{Delta Request} = \text{Sequence Range }[41 \dots 45]$$
+   $$\text{Delta Request} = \text{Sequence Range }[41 \dots 45]$$
 3. **Pengiriman Data Padat**: Node A mengeksekusi `SELECT * FROM refugee_events WHERE post_id = ? AND logical_seq > 40`, memadatkannya dengan *Ultra-Dense Bitpacking v4* (~5-6B/jiwa), dan mengirimkannya dalam 1 paket BLE MTU (~30 Bytes).
 4. **Nol Transfer Saat Sinkron**: Jika kedua node memiliki sequence yang sama (`seq_A == seq_B`), transfer data = **0 Bytes**!
 
 ### C. Jalur Cadangan: Universal Data Mule (Air-Gapped Sneakernet)
-Jika sinyal radio dimatikan (*radio silence*) atau baterai sekarat, relawan yang berjalan fisik membawa HP bertindak sebagai kurir data (*Data Mule*):
+Jika sinyal radio dimatikan (*radio silence*) atau baterai sekarat, relawan yang berjalan fisik membawa smartphone bertindak sebagai kurir data (*Data Mule*):
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant PosA as  Posko A (Terpencil)
-  participant Relawan as  HP Relawan (Data Mule)
-  participant PosPusat as  Posko Induk (Gudang)
+  participant PosA as Posko A (Terpencil)
+  participant Relawan as HP Relawan (Data Mule)
+  participant PosPusat as Posko Induk (Gudang)
 
   PosA->>Relawan: 1. Pos A Ekspor Delta QR / Simpan di Antrean Outbox
   Note over Relawan: Data tersimpan di SQLite lokal HP Relawan
@@ -121,13 +124,13 @@ sequenceDiagram
 
 ## 4. Event Sourcing & Timeline Berbasis Waktu
 
-### A. Membedah Masalah: "Agus Mendata A Sakit vs Budi Mendata A Sehat"
+### A. Membedah Masalah: Update Baris Tunggal vs Event Sourcing
 
 Jika menggunakan model pembaruan baris tunggal (*in-place update*):
 ```json
 // Database lama tertimpa:
 { "id": "pengungsi_1", "nama": "A", "status_kesehatan": "SAKIT" }
-// Jika Budi mengimpor data "SEHAT", salah satu data akan hilang dan membingungkan.
+// Jika pihak lain mengimpor data "SEHAT", salah satu data akan hilang dan membingungkan.
 ```
 
 ### B. Solusi: Append-Only Event Timeline (Rekam Medis Kronologis)
@@ -141,38 +144,38 @@ gitGraph
   commit id: "16:00 - Dokter Siti: Diberikan Paracetamol 500mg"
 ```
 
-1. **Tidak Ada Data yang Dihapus**: Catatan Agus dan catatan Budi tetap tersimpan berdampingan di basis data.
+1. **Tidak Ada Data yang Dihapus**: Catatan awal dan catatan pembaruan tetap tersimpan berdampingan di basis data.
 2. **Konteks Kronologis Utuh**: Petugas medis dapat membaca kronologi: *"Pagi hari sehat, siang hari demam, sore hari sudah tertangani"*.
 3. **Status Terkini (*Derived State*)**: Aplikasi cukup menampilkan proyeksi dari baris event paling mutakhir.
 
 ---
 
-## 5. Mitigasi "Jebakan Waktu" (*Clock Drift / Clock Skew*)
+## 5. Mitigasi Clock Drift (Clock Skew)
 
-###  Masalah: Jam HP Tidak Akurat
-Pada kondisi bencana, baterai HP yang habis total atau jam yang tidak tervalidasi internet dapat membuat timestamp mundur (misal: ke tahun 2020 atau selisih jam).
+### Masalah: Jam HP Tidak Akurat
+Pada kondisi bencana, baterai smartphone yang habis total atau jam yang tidak tervalidasi internet dapat membuat timestamp mundur (misalnya: ke tahun 2020 atau selisih beberapa jam).
 
-###  Solusi: Hybrid Timestamp + Lamport Sequence Counter
+### Solusi: Hybrid Timestamp + Lamport Sequence Counter
 Setiap catatan event menyertakan:
-1. `device_timestamp`: Waktu fisik jam HP saat input.
+1. `device_timestamp`: Waktu fisik jam perangkat saat input.
 2. `logical_seq`: Nomor urut monotonik (`seq = seq + 1`) pada perangkat tersebut.
 3. `causal_parent_id`: ID event terakhir yang diketahui sebelum catatan ini dibuat.
 
 Saat menggabungkan data antar-perangkat:
-* Jika selisih waktu wajar $\rightarrow$ Urutkan berdasarkan `device_timestamp`.
-* Jika timestamp meragukan $\rightarrow$ Gunakan `logical_seq` dan rantai `causal_parent_id` untuk merekonstruksi urutan sebab-akibat.
+* Jika selisih waktu wajar -> Urutkan berdasarkan `device_timestamp`.
+* Jika timestamp meragukan -> Gunakan `logical_seq` dan rantai `causal_parent_id` untuk merekonstruksi urutan sebab-akibat.
 
 ---
 
-## 6. Alur Kerja Permintaan Logistik Bebas *Race Condition*
+## 6. Alur Kerja Permintaan Logistik Bebas Race Condition
 
 ```mermaid
 sequenceDiagram
   autonumber
-  actor Relawan as  Relawan Pendata
-  actor Pengungsi as ‍‍ Pengungsi
-  actor Logistik as  Petugas Logistik
-  actor Runner as  Petugas Distribusi
+  actor Relawan as Relawan Pendata
+  actor Pengungsi as Pengungsi
+  actor Logistik as Petugas Logistik
+  actor Runner as Petugas Distribusi
 
   Relawan->>Pengungsi: Mendata kebutuhan: 2 Kotak Susu Bayi & 1 Selimut
   Relawan->>Relawan: Buat "Tiket Kebutuhan" (Status: PENDING)

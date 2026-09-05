@@ -1,16 +1,20 @@
 # Spesifikasi Protokol Transfer Data: Animated QR Dinamis & Poster Paritas
 
+> **Status**: Approved (Spesifikasi Jalur Transfer Visual Resmi)  
+> **Klasifikasi**: Protokol Transfer Asinkron Layar & Kertas  
+> **Dokumen Terkait**: [Kamus Bencana & Serialisasi v4](./metode-transfer-dan-kamus-bencana.md) | [Tokenisasi Nama & Paritas](./tokenisasi-nama-dan-paritas-qr.md)
+
 Dokumen ini mendefinisikan arsitektur resmi protokol transfer data visual offline pada sistem **Sandya**, yang mencakup dua moda adaptif:
-1. **Moda Layar Digital (Screen-to-Screen)**: Menggunakan **Animated Dynamic Multipart QR** untuk transfer super cepat antar-perangkat HP relawan.
+1. **Moda Layar Digital (Screen-to-Screen)**: Menggunakan **Animated Dynamic Multipart QR** untuk transfer cepat antar-smartphone relawan.
 2. **Moda Cetak Fisik (Print/Paper Poster)**: Menggunakan **Poster Multi-QR dengan Paritas XOR** untuk serah terima posko yang ditinggalkan.
 
 ---
 
 ## 1. Moda Layar: Animated Dynamic Multipart QR
 
-Moda ini digunakan saat relawan dari dua posko saling bertemu secara langsung di lapangan dan ingin memindahkan ribuan data pengungsi dari layar HP pengirim ke kamera HP penerima tanpa internet, bluetooth, atau kabel data.
+Moda ini digunakan saat relawan dari dua posko saling bertemu secara langsung di lapangan dan ingin memindahkan ribuan data pengungsi dari layar smartphone pengirim ke kamera smartphone penerima tanpa internet, bluetooth, atau kabel data.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │          ALUR TRANSFER ANIMATED MULTIPART QR                │
 ├─────────────────────────────────────────────────────────────┤
@@ -26,25 +30,24 @@ Moda ini digunakan saat relawan dari dua posko saling bertemu secara langsung di
 │   • Detik 0.2: Tertangkap Frame 3/10 (Slot #3 terisi)       │
 │   • Detik 0.4: Tertangkap Frame 5/10 (Slot #5 terisi)       │
 │   • Detik 0.6: Tertangkap Frame 1/10 (Slot #1 terisi)       │
-│   • ...                                                     │
 │   • Detik 1.8: Tertangkap Frame 2/10 (SLOT LENGKAP 10/10)   │
 │                                                             │
-│    SELESAI INSTAN! HP bergetar (BZZT) & scan STOP detik itu│
+│   SELESAI INSTAN: HP bergetar & proses pemindaian BERHENTI  │
 │   tanpa perlu menunggu animasi di layar pengirim selesai!   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### A. Rumus Pembagian Frame Dinamis (*Dynamic Chunking*)
-Jumlah frame ($N$) **tidak pernah di-hardcode**, melainkan dihitung secara adaptif berdasarkan ukuran data:
+### A. Rumus Pembagian Frame Dinamis (Dynamic Chunking)
+Jumlah frame ($N$) dihitung secara adaptif berdasarkan ukuran data:
 
 $$\text{Jumlah Frame } (N) = \left\lceil \frac{\text{Total Byte Terkompresi}}{1.200\text{ Bytes}} \right\rceil$$
 
-* Ukuran target per frame sengaja dipatok pada **$\approx 1.200\text{ Bytes}$** agar QR Code selalu berada di **Versi Rendah (Modul Tebal / Versi 24–28)**. Modul tebal menjamin kamera HP kelas bawah dapat mengunci fokus dengan cepat tanpa terganggu *motion blur* saat animasi berganti frame.
+* Ukuran target per frame dipatok pada **$\approx 1.200\text{ Bytes}$** agar QR Code selalu berada di **Versi Rendah (Modul Tebal / Versi 24-28)**. Modul tebal menjamin kamera smartphone kelas bawah dapat mengunci fokus dengan cepat tanpa terganggu *motion blur* saat animasi berganti frame.
 
 ### B. Format Header Tiap Frame Animasi
 Setiap frame QR menyertakan metadata 6-byte di awal payload:
 
-```
+```text
 ┌────────────────────────────────────────────────────────────┐
 │ [PayloadUUID: 2B] [PartIndex: 1B] [TotalParts: 1B] [CRC16] │
 ├────────────────────────────────────────────────────────────┤
@@ -57,10 +60,10 @@ Setiap frame QR menyertakan metadata 6-byte di awal payload:
 3. **`TotalParts` (1 Byte)**: Total frame dalam sesi tersebut ($N$).
 4. **`CRC16` (2 Bytes)**: Checksum integritas potongan biner.
 
-### C. Mekanisme Pemindaian Asinkron (*Out-of-Order Capture*)
-* Begitu kamera menangkap **frame pertama mana pun** (misal Frame #4 dari 10), scanner langsung membaca `TotalParts: 10` dan mengalokasikan array penampung berisi 10 slot.
+### C. Mekanisme Pemindaian Asinkron (Out-of-Order Capture)
+* Begitu kamera menangkap **frame pertama mana pun** (misalnya Frame #4 dari 10), scanner langsung membaca `TotalParts: 10` dan mengalokasikan array penampung berisi 10 slot.
 * Kamera menangkap frame-frame yang lewat secara acak. Frame yang sudah pernah tersimpan akan diabaikan (*deduplication*).
-* **Kondisi Berhenti**: Saat seluruh $N$ slot terisi $\rightarrow$ Pemindaian **langsung berhenti (Haptic Vibration + Beep)** dan data digabungkan seketika.
+* **Kondisi Berhenti**: Saat seluruh $N$ slot terisi -> Pemindaian **langsung berhenti (Haptic Vibration + Beep)** dan data digabungkan seketika.
 
 ### D. Skalabilitas Waktu Pemindaian di Layar:
 
@@ -78,22 +81,22 @@ Setiap frame QR menyertakan metadata 6-byte di awal payload:
 
 Moda ini digunakan saat relawan harus meninggalkan posko atau menyerahkan tanggung jawab ke organisasi lain melalui lembaran poster fisik yang ditempel di tiang tenda atau dinding posko.
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
-│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
+│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS          │
 │  Posko: GOR Pacet | Kapasitas: 1.000 Pengungsi           │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
-│   [ QR Data 1 ]    [ QR Data 2 ]    [ QR Data 3 ]        │
-│   (@143 Jiwa)      (@143 Jiwa)      (@143 Jiwa)          │
+│   [QR Data 1]       [QR Data 2]       [QR Data 3]        │
+│   (@143 Jiwa)       (@143 Jiwa)       (@143 Jiwa)        │
 │                                                          │
-│   [ QR Data 4 ]    [ QR Data 5 ]    [ QR Data 6 ]        │
-│   (@143 Jiwa)      (@143 Jiwa)      (@143 Jiwa)          │
+│   [QR Data 4]       [QR Data 5]       [QR Data 6]        │
+│   (@143 Jiwa)       (@143 Jiwa)       (@143 Jiwa)        │
 │                                                          │
-│   [ QR Data 7 ]    [ QR PARITAS D ]                      │
-│   (@143 Jiwa)      (XOR Paritas Redundansi)              │
+│   [QR Data 7]       [QR PARITAS D]                       │
+│   (@143 Jiwa)       (XOR Paritas Redundansi)             │
 │                                                          │
-│   KEBAL SOBEKAN: Cukup scan SEMBARANG 7 dari 8 QR.     │
+│   KEBAL SOBEKAN: Cukup scan SEMBARANG 7 dari 8 QR.       │
 │  Jika 1 kotak QR sobek / terkena lumpur total,           │
 │  data 1.000 pengungsi tetap pulih 100% sempurna!         │
 └──────────────────────────────────────────────────────────┘
@@ -116,14 +119,14 @@ $$D_k = \text{Paritas} \oplus \left( \bigoplus_{i \neq k} D_i \right)$$
 
 ---
 
-## 3. Fitur Penyatuan Keluarga Terpisah (*Offline Family Reunion*)
+## 3. Fitur Penyatuan Keluarga Terpisah (Offline Family Reunion)
 
 Saat relawan memindai QR (baik via animasi layar maupun poster kertas), sistem secara otomatis menjalankan **Rekonsiliasi Graf Temu Keluarga**:
 
 1. Sistem membandingkan field `missingKinName` (nama keluarga yang dicari) dari posko lokal dengan daftar `fullName` dari posko yang baru diimpor.
 2. Jika ada kecocokan nama dan asal domisili (`domicileOrigin`):
-  * Aplikasi langsung memunculkan notifikasi pop-up:
-  > *" KELUARGA DITEMUKAN: Siti Rahmawati (Dusun Cijedil) yang dicari oleh Budi Santoso terdaftar di Posko B (Ruang Kelas 2B SDN 1 Pacet)!"*
+   * Aplikasi langsung memunculkan notifikasi:
+   > *"KELUARGA DITEMUKAN: Siti Rahmawati (Dusun Cijedil) yang dicari oleh Budi Santoso terdaftar di Posko B (Ruang Kelas 2B SDN 1 Pacet)!"*
 3. Hubungan keluarga otomatis terhubung di basis data lokal SQLite tanpa membutuhkan koneksi internet.
 
 ---

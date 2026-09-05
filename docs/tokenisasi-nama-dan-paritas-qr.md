@@ -1,18 +1,22 @@
 # Spesifikasi Teknis: Tokenisasi Nama Indonesia & Poster Multi-QR Paritas
 
+> **Status**: Approved (Spesifikasi Teknis Tokenisasi & Erasure Coding)  
+> **Klasifikasi**: Algoritma Kompresi Teks Deterministik & Desain Poster  
+> **Dokumen Terkait**: [Kamus Bencana & Serialisasi v4](./metode-transfer-dan-kamus-bencana.md) | [Spesifikasi Transfer Animated & Poster](./spesifikasi-transfer-animated-dan-poster.md)
+
 Dokumen ini mendokumentasikan hasil evaluasi empiris dari pengujian simulator QR, mengoreksi limitasi rancangan sebelumnya, serta merinci spesifikasi arsitektur baru: **Tokenisasi Nama Deterministik Indonesia (Tanpa AI)** dan **Poster Multi-QR dengan Paritas (*Erasure Coding*)**.
 
 ---
 
 ## 1. Evaluasi Empiris & Koreksi Rencana Sebelumnya
 
-Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](file:///home/auttomus/Documents/Code/PROJECT/sandya/experiments/qr-simulation/), ditemukan dua kegagalan fundamental pada rancangan 1 QR tunggal konvensional:
+Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](../experiments/qr-simulation/), ditemukan dua kegagalan fundamental pada rancangan 1 QR tunggal konvensional:
 
-###  Kegagalan 1: *Name Byte Bottleneck* (Batas Kapasitas 100 Orang)
-* **Temuan**: Meskipun teks kebutuhan logistik sudah dikompresi dengan token kamus, nama lengkap pengungsi (`fullName`) yang disimpan sebagai string UTF-8 mentah memakan rata-rata **12–20 bytes per orang**.
+### Kegagalan 1: Name Byte Bottleneck (Batas Kapasitas 100 Orang)
+* **Temuan**: Meskipun teks kebutuhan logistik sudah dikompresi dengan token kamus, nama lengkap pengungsi (`fullName`) yang disimpan sebagai string UTF-8 mentah memakan rata-rata **12-20 bytes per orang**.
 * **Dampak**: 1 QR Code tunggal sudah mengalami *overflow* (melebihi kapasitas maksimum Versi 40) ketika jumlah pengungsi mencapai **$\ge 150\text{ orang}$**.
 
-###  Kegagalan 2: Kerentanan *Finder Pattern* pada Sobekan Sudut
+### Kegagalan 2: Kerentanan Finder Pattern pada Sobekan Sudut
 * **Temuan**: Uji simulasi sobekan sudut (*Corner Tear*) dan lipatan diagonal (*Crease Fold*) menyebabkan proses decode **gagal total**, meskipun tingkat koreksi error disetel ke level tertinggi (Level Q / 25%).
 * **Penyebab**: Algoritma QR Code sangat bergantung pada **3 Kotak Sudut (*Finder Patterns*)** untuk menghitung rotasi dan perspektif kamera. Jika 1 sudut sobek, kamera HP kehilangan orientasi geometris sebelum algoritma Reed-Solomon sempat bekerja.
 
@@ -22,7 +26,7 @@ Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](file:///
 
 Untuk memangkas ukuran byte nama tanpa model AI dan tanpa risiko salah eja, Sandya menerapkan **Deterministic Name Tokenizer**:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                 ALUR TOKENISASI NAMA (100% DETERMINISTIK)   │
 ├─────────────────────────────────────────────────────────────┤
@@ -51,19 +55,19 @@ Setiap elemen nama disimpan dalam unit 2-byte:
 * **Bit 15 = `0`**: 15 bit sisanya adalah **Index Token Kamus Nama** (`0x0000 - 0x7FFF`).
 * **Bit 15 = `1`**: Menandakan **Literal String (Teks Asli)**. Diikuti 1-byte panjang string dan karakter UTF-8 asli.
 
-### B. Aturan Ketat Integritas Data KTP (*Strict Rules*):
+### B. Aturan Ketat Integritas Data KTP (Strict Rules):
 1. **Dilarang Auto-Correct / Fuzzy Match**: Pencocokan kata wajib 100% identik per huruf. Variasi seperti `"Rizky"` dan `"Rizki"` memiliki token terpisah agar nama KTP tidak berubah.
 2. **Kamus Abadi (*Immutable Append-Only*)**: Urutan indeks kata dalam kamus tidak boleh pernah diubah atau digeser antar-versi aplikasi untuk mencegah pergeseran makna (*Dictionary Drift*).
 
 ---
 
-## 3. Solusi 2: Poster Multi-QR dengan Redundansi Paritas (*N-of-M Erasure Coding*)
+## 3. Solusi 2: Poster Multi-QR dengan Redundansi Paritas (N-of-M Erasure Coding)
 
-Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster fisik dibagi menjadi **4 Kotak QR Berukuran Sedang (Versi 15–18, Modul Tebal)** dengan sistem paritas XOR:
+Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster fisik dibagi menjadi **4 Kotak QR Berukuran Sedang (Versi 15-18, Modul Tebal)** dengan sistem paritas XOR:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
-│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
+│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS          │
 │  Posko: RW 03 Cijedil | Total Data: 500 Pengungsi        │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
@@ -77,7 +81,7 @@ Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster fisik dibagi me
 │   │ Data Part 3 │       │ Paritas XOR │                  │
 │   └─────────────┘       └─────────────┘                  │
 │                                                          │
-│   KETAHANAN KERUSAKAN TOTAL:                           │
+│   KETAHANAN KERUSAKAN TOTAL:                             │
 │  Relawan baru HANYA PERLU MEMINDAI 3 DARI 4 QR.          │
 │  Jika 1 QR sobek / hilang / terkena lumpur total,        │
 │  aplikasi otomatis merekonstruksi data yang hilang!      │
@@ -97,11 +101,11 @@ $$\text{Data } B = A \oplus C \oplus D$$
 
 ---
 
-## 4. Kamus Dinamis di Header Payload (*Local Symbol Table*)
+## 4. Kamus Dinamis di Header Payload (Local Symbol Table)
 
 Untuk menangani kata nama langka yang berulang dalam satu keluarga (misalnya marga atau nama belakang yang sama pada 10 anggota keluarga di satu posko), Sandya menyematkan **Tabel Simbol Dinamis (Local Symbol Table)** di bagian *header* payload QR:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │             STRUKTUR PAYLOAD DENGAN KAMUS DINAMIS        │
 ├──────────────────────────────────────────────────────────┤
@@ -126,9 +130,9 @@ Untuk menangani kata nama langka yang berulang dalam satu keluarga (misalnya mar
 
 ---
 
-## 5. Sumber Data Kurasi Nama Indonesia (*Datasets*)
+## 5. Sumber Data Kurasi Nama Indonesia (Datasets)
 
-Untuk menyusun **Kamus Nama Bawaan (*Pre-Shared Name Dictionary*)** berisi 1.000–2.000 kata terpopuler, kita mengompilasi dari sumber data terbuka terverifikasi:
+Untuk menyusun **Kamus Nama Bawaan (*Pre-Shared Name Dictionary*)** berisi 1.000-2.000 kata terpopuler, kita mengompilasi dari sumber data terbuka terverifikasi:
 
 | Sumber Dataset | Deskripsi & Komponen | Tautan / Referensi |
 | :--- | :--- | :--- |
@@ -140,14 +144,14 @@ Untuk menyusun **Kamus Nama Bawaan (*Pre-Shared Name Dictionary*)** berisi 1.000
 
 ---
 
-### 6. Optimasi Lanjutan: Ultra-Dense Bitpacking v4 (~9–12 Bytes/Orang)
+## 6. Optimasi Lanjutan: Ultra-Dense Bitpacking v4 (~9-12 Bytes/Orang)
 
 Untuk memeras ukuran data mentah dari **$24\text{ Bytes} \rightarrow \mathbf{9 - 1 2\text{ Bytes}}$** per pengungsi (dan **$\approx 5 - 6\text{ Bytes}$** setelah kompresi Zstandard/Deflate), Sandya menerapkan 4 teknik pengepakan biner tingkat lanjut:
 
 ### A. Dynamic NIK & Regional Prefix Offloading (0 hingga 5 Bytes)
-* Di kondisi darurat, mayoritas pengungsi kehilangan/lupa KTP $\rightarrow$ Bit flag `hasNationalId = 0`, alokasi NIK menjadi **0 Byte (Hemat 100%)**.
-* Jika membawa KTP dan satu wilayah dengan posko $\rightarrow$ 6 digit wilayah disimpan di header posko (3 bytes `uint24`), dan 10 digit sisa disimpan dalam **5 Bytes**.
-* Jika dari wilayah luar $\rightarrow$ disimpan sebagai 8 bytes (`uint64`).
+* Di kondisi darurat, mayoritas pengungsi kehilangan/lupa KTP -> Bit flag `hasNationalId = 0`, alokasi NIK menjadi **0 Byte (Hemat 100%)**.
+* Jika membawa KTP dan satu wilayah dengan posko -> 6 digit wilayah disimpan di header posko (3 bytes `uint24`), dan 10 digit sisa disimpan dalam **5 Bytes**.
+* Jika dari wilayah luar -> disimpan sebagai 8 bytes (`uint64`).
 
 ### B. Katalog Kebutuhan 1-Byte uint8 (Hemat 50% Ukuran Kebutuhan)
 * Token kebutuhan dipadatkan dari `uint16` (2 bytes) menjadi **`uint8` (1 Byte, 256 variasi)** mencakup seluruh klaster BNPB/PMI/SPHERE.
@@ -160,8 +164,8 @@ Untuk memeras ukuran data mentah dari **$24\text{ Bytes} \rightarrow \mathbf{9 -
 * `nameTokenCount` (4 bits) dan `urgentNeedCount` (4 bits) digabungkan ke dalam **1 Byte tunggal**:
   $$\text{Byte Counter} = (\text{nameCount} \ll 4) \mid (\text{needCount} \& \text{0x0F})$$
 
-###  Hasil Pengecilan Byte per Record (Kondisi Lapangan Nyata):
-```
+### Hasil Pengecilan Byte per Record (Kondisi Lapangan Nyata):
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │             STRUKTUR ULTRA-DENSE 1 PENGUNGSI (KONDISI NYATA)│
 ├─────────────────────────────────────────────────────────────┤
@@ -199,9 +203,6 @@ Sistem Paritas Multi-QR dapat diskalakan sesuai dengan ukuran posko darurat:
 | **Ukuran Data / Orang** | $\approx 25\text{ Bytes}$ mentah | $\approx 24\text{ Bytes}$ mentah | **$\approx 9\text{ Bytes}$ mentah ($\approx 5 - 6\text{ B}$ terkompresi)** |
 | **Penyimpanan NIK** | 8 Bytes (`uint64`) | 8 Bytes (`uint64`) | **Dinamis ($0\text{ B}$ jika hilang, $5\text{ B}$ jika sewilayah)** |
 | **Media Layar Utama** | 1 QR Statis (Overflow) | 1 QR Statis (Overflow) | **Animated Multipart QR (Hingga 5.000+ Jiwa)** |
-| **Kapasitas Poster Cetak (A4)** | $\approx 100$ Orang | 300 Orang (4 QR) | **$500 - 1.000\text{ Orang}$ (4–8 QR Paritas)** |
-| **Ketahanan Sobekan Sudut** | [FAIL] Gagal Total | [PASS] Pulih via Paritas | [PASS] **100% Pulih Mutlak (Paritas XOR)** |
-| **Keamanan Ejaan KTP** | Rentan salah tafsir | [PASS] Strict Exact Match | [PASS] **Strict Exact Match + Fallback Literal** |
-
-
-
+| **Kapasitas Poster Cetak (A4)** | $\approx 100$ Orang | 300 Orang (4 QR) | **$500 - 1.000\text{ Orang}$ (4-8 QR Paritas)** |
+| **Ketahanan Sobekan Sudut** | [FAIL] Gagal Total | [PASS] Pulih via Paritas | **[PASS] 100% Pulih Mutlak (Paritas XOR)** |
+| **Keamanan Ejaan KTP** | Rentan salah tafsir | [PASS] Strict Exact Match | **[PASS] Strict Exact Match + Fallback Literal** |

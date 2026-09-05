@@ -1,5 +1,9 @@
 # Spesifikasi Transfer Data Visual: Kamus Bencana & Poster Multi-QR Paritas
 
+> **Status**: Approved (Spesifikasi Serialisasi Biner & Poster Cetak)  
+> **Klasifikasi**: Serialisasi Data Biner & Erasure Coding  
+> **Dokumen Terkait**: [Spesifikasi Transfer Animated & Poster](./spesifikasi-transfer-animated-dan-poster.md) | [Tokenisasi Nama](./tokenisasi-nama-dan-paritas-qr.md)
+
 Dokumen ini mendefinisikan arsitektur dasar untuk transfer data visual offline pada sistem **Sandya**, menggunakan metode **Pre-Shared Disaster Dictionary (Kamus Bencana Bawaan)**, **Serialisasi Biner Ultra-Dense v4**, dan **Poster Serah Terima Berbasis Paritas XOR**.
 
 ---
@@ -9,32 +13,32 @@ Dokumen ini mendefinisikan arsitektur dasar untuk transfer data visual offline p
 ### Tantangan Fisik di Lapangan Bencana:
 1. **Keterbatasan Alat Cetak**: Relawan lapangan umumnya hanya membawa *printer thermal* bluetooth saku monokrom (hanya bisa mencetak hitam-putih resolusi standar) atau kertas HVS A4.
 2. **Kondisi Lingkungan Ekstrem**: Minim pencahayaan (malam hari di dalam tenda), kertas poster rawan terlipat, terkena lumpur, atau sobek di tiang tenda.
-3. **Kamera HP Kelas Menengah ke Bawah**: Kamera HP murah sulit mengunci fokus jika QR code memiliki kisi piksel mikro yang terlalu rapat (QR versi tinggi di atas Versi 35).
+3. **Kamera HP Kelas Menengah ke Bawah**: Kamera smartphone terjangkau sulit mengunci fokus jika QR code memiliki kisi piksel mikro yang terlalu rapat (QR versi tinggi di atas Versi 35).
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
 │                   DILEMA QR TRADISIONAL                  │
 ├──────────────────────────────────────────────────────────┤
 │ Data Banyak (JSON) -> QR Versi Tinggi (Piksel Mikro)     │
-│                    -> Kamera HP Murah GAGAL Scan [FAIL]      │
+│                    -> Kamera HP Murah GAGAL Scan         │
 ├──────────────────────────────────────────────────────────┤
-│                   SOLUSI SANDYA                         │
+│                   SOLUSI SANDYA                          │
 ├──────────────────────────────────────────────────────────┤
 │ Kamus Bencana Pre-Shared + Bit-Packing Ultra-Dense       │
 │ -> Ukuran Data Menyusut ~90%                             │
 │ -> QR Tetap Versi Rendah/Sedang (Modul Tebal & Besar)    │
 │ -> Kamera HP Murah INSTAN Scan (Bahkan di Remang-Remang) │
-│ -> Paritas XOR: Kebal Sobekan Fisik 1 Kotak QR Utuh [PASS]   │
+│ -> Paritas XOR: Kebal Sobekan Fisik 1 Kotak QR Utuh      │
 └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Katalog 256 Kebutuhan Bencana Bawaan (`uint8` Token)
+## 2. Katalog 256 Kebutuhan Bencana Bawaan (uint8 Token)
 
 Aplikasi Sandya di setiap perangkat relawan memiliki tabel katalog kebutuhan standar (*pre-shared catalog*) berukuran **1-Byte (`uint8`)** yang mengadopsi klaster BNPB, PMI, dan SPHERE:
 
-```
+```text
 Rentang Token 1-Byte (0x01 - 0xFF):
 ├── 0x01 - 0x20 : Logistik Pangan & Air Minum (Beras, MRE, MPASI, Air Bersih, dll)
 ├── 0x21 - 0x50 : Medis & Obat-Obatan Rutin (Insulin, Hipertensi, Asma, Paracetamol, Perban)
@@ -45,7 +49,7 @@ Rentang Token 1-Byte (0x01 - 0xFF):
 └── 0xD1 - 0xFF : Peralatan Darurat (Senter LED, Powerbank, Lilin, Peluit Rescue)
 ```
 
-> Dengan alokasi 1 Byte per kebutuhan, seorang pengungsi yang memerlukan 2–3 jenis bantuan hanya menambahkan **2–3 Bytes** ke dalam payload biner.
+> Dengan alokasi 1 Byte per kebutuhan, seorang pengungsi yang memerlukan 2-3 jenis bantuan hanya menambahkan **2-3 Bytes** ke dalam payload biner.
 
 ---
 
@@ -53,7 +57,7 @@ Rentang Token 1-Byte (0x01 - 0xFF):
 
 Setiap data pengungsi (`DisasterPerson`) dikemas dalam format biner yang sangat padat dengan fitur *Dynamic Null-Field Bypass*:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │       STRUKTUR BINER 1 PENGUNGSI ULTRA-DENSE V4             │
 ├─────────────────────────────────────────────────────────────┤
@@ -75,13 +79,13 @@ Setiap data pengungsi (`DisasterPerson`) dikemas dalam format biner yang sangat 
 
 ---
 
-## 4. Desain Poster Serah Terima Posko Berbasis Paritas (*Handover Poster*)
+## 4. Desain Poster Serah Terima Posko Berbasis Paritas (Handover Poster)
 
 Poster serah terima dicetak saat posko ditinggalkan atau diserahkan ke tim relawan berikutnya. Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster menggunakan **Grid Multi-QR dengan 1 Kotak Paritas XOR**:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────┐
-│   SANDYA - POSTER SERAH TERIMA POSKO LAPANGAN         │
+│   SANDYA - POSTER SERAH TERIMA POSKO LAPANGAN            │
 │  Posko: RW 03 Kp. Cijedil | Kapasitas: 500 Pengungsi     │
 │  Otorisasi: Koordinator Budi Santoso (Ed25519 Signed)    │
 ├──────────────────────────────────────────────────────────┤
@@ -90,19 +94,19 @@ Poster serah terima dicetak saat posko ditinggalkan atau diserahkan ke tim relaw
 │  • Kebutuhan Kritis: Air Bersih, Susu Bayi, Selimut      │
 │  • Penampungan     : Tenda Lapangan, Ruang Kelas SDN 1   │
 ├──────────────────────────────────────────────────────────┤
-│  DATA DIGITAL SANDYA (GRID 4 QR DENGAN PARITAS XOR):    │
+│  DATA DIGITAL SANDYA (GRID 4 QR DENGAN PARITAS XOR):     │
 │                                                          │
 │   ┌─────────────┐       ┌─────────────┐                  │
-│   │ [ QR Data A]│       │ [ QR Data B]│                  │
+│   │ [QR Data A] │       │ [QR Data B] │                  │
 │   │  (167 Jiwa) │       │  (167 Jiwa) │                  │
 │   └─────────────┘       └─────────────┘                  │
 │                                                          │
 │   ┌─────────────┐       ┌─────────────┐                  │
-│   │ [ QR Data C]│       │ [ QR PARITAS│                  │
-│   │  (166 Jiwa) │       │    XOR D ]  │                  │
+│   │ [QR Data C] │       │ [QR PARITAS │                  │
+│   │  (166 Jiwa) │       │   XOR D]    │                  │
 │   └─────────────┘       └─────────────┘                  │
 │                                                          │
-│   KEBAL SOBEKAN: Cukup pindai SEMBARANG 3 DARI 4 QR!   │
+│   KEBAL SOBEKAN: Cukup pindai SEMBARANG 3 DARI 4 QR!     │
 │  Jika salah satu kotak QR sobek / rusak / terkena lumpur,│
 │  aplikasi otomatis merekonstruksi data 100% utuh:        │
 │                     B = A ⊕ C ⊕ D                        │
@@ -115,25 +119,25 @@ Poster serah terima dicetak saat posko ditinggalkan atau diserahkan ke tim relaw
 
 ```mermaid
 flowchart TD
-  subgraph Encoding_Export [Proses Ekspor Poster Resmi di Posko]
-  DB[(Database SQLite)] --> Extract[Query Data Pengungsi & Logistik]
-  Extract --> Tokenize[Ganti Kata Nama & Kebutuhan dengan Token Kamus]
-  Tokenize --> BitPack[Bit-Packing Struct Biner Ultra-Dense v4]
-  BitPack --> ZstdComp[Kompresi Lossless Zstandard Lvl 19 / Deflate]
-  ZstdComp --> Split[Bagi Payload ke N Chunks + Hitung Paritas XOR]
-  Split --> Sign[Tanda Tangan Digital Ed25519 Koordinator]
-  Sign --> GenQR[Generate Grid QR Codes Monokrom]
-  GenQR --> Print[Cetak ke Kertas A4 / Printer Thermal Saku]
+  subgraph Encoding_Export ["Proses Ekspor Poster Resmi di Posko"]
+  DB[(Database SQLite)] --> Extract["Query Data Pengungsi & Logistik"]
+  Extract --> Tokenize["Ganti Kata Nama & Kebutuhan dengan Token Kamus"]
+  Tokenize --> BitPack["Bit-Packing Struct Biner Ultra-Dense v4"]
+  BitPack --> ZstdComp["Kompresi Lossless Zstandard Lvl 19 / Deflate"]
+  ZstdComp --> Split["Bagi Payload ke N Chunks + Hitung Paritas XOR"]
+  Split --> Sign["Tanda Tangan Digital Ed25519 Koordinator"]
+  Sign --> GenQR["Generate Grid QR Codes Monokrom"]
+  GenQR --> Print["Cetak ke Kertas A4 / Printer Thermal Saku"]
   end
 
-  subgraph Decoding_Import [Proses Impor di HP Relawan Baru]
-  Camera[Scan Kamera HP Relawan Baru] --> Capture[Pindai N-1 Kotak QR yang Masih Utuh]
-  Capture --> ParityRec[Rekonstruksi Chunk Rusak via Rumus XOR]
-  ParityRec --> Verify[Verifikasi Signature Ed25519 Koordinator]
-  Verify --> ZstdDecomp[Dekompresi Zstandard / Deflate]
-  ZstdDecomp --> Unpack[Unpack Bit Biner v4]
-  Unpack --> Detokenize[Terjemahkan Token ke Teks Asli]
-  Detokenize --> ReunionCheck[Cek Otomatis Temu Keluarga / Family Reunion]
+  subgraph Decoding_Import ["Proses Impor di HP Relawan Baru"]
+  Camera["Scan Kamera HP Relawan Baru"] --> Capture["Pindai N-1 Kotak QR yang Masih Utuh"]
+  Capture --> ParityRec["Rekonstruksi Chunk Rusak via Rumus XOR"]
+  ParityRec --> Verify["Verifikasi Signature Ed25519 Koordinator"]
+  Verify --> ZstdDecomp["Dekompresi Zstandard / Deflate"]
+  ZstdDecomp --> Unpack["Unpack Bit Biner v4"]
+  Unpack --> Detokenize["Terjemahkan Token ke Teks Asli"]
+  Detokenize --> ReunionCheck["Cek Otomatis Temu Keluarga / Family Reunion"]
   ReunionCheck --> InsertDB[(Insert ke SQLite Relawan Baru)]
   end
 ```
