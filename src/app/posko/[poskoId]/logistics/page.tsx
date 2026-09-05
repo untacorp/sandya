@@ -2,230 +2,520 @@
 
 import * as React from "react";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
+import { InventoryAggregate, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
+import { asItemId, asPoskoId } from "@/core/shared/branded-types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Tabs } from "@/shared/ui/tabs";
-import { type ItemCategory } from "@/shared/types";
+import { Icon } from "@/shared/ui/icon";
+import { AlertBanner } from "@/shared/ui/alert-banner";
+import { Badge } from "@/shared/ui/badge";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export default function LogisticsPage() {
   const { session, inventory, transactions, addRestock } = usePoskoStore();
 
   const [restockOpen, setRestockOpen] = React.useState(false);
-  const [itemName, setItemName] = React.useState("");
-  const [category, setCategory] = React.useState<ItemCategory>("FOOD");
+  const [useCatalog, setUseCatalog] = React.useState(true);
+  const [selectedCatalogId, setSelectedCatalogId] = React.useState<number>(0x01);
+  const [customItemName, setCustomItemName] = React.useState("");
+  const [category, setCategory] = React.useState<InventoryCategory>("FOOD");
   const [qty, setQty] = React.useState<number | "">("");
   const [unit, setUnit] = React.useState("KG");
+  const [notes, setNotes] = React.useState("Drop bantuan truk logistik");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [successToast, setSuccessToast] = React.useState<string | null>(null);
 
-  const isLogisticsOfficer = session.userRole === "PETUGAS_LOGISTIK" || session.userRole === "KOORDINATOR_POSKO";
+  // RBAC Permission Check
+  const authorizedRoles = [
+  "PETUGAS_LOGISTIK",
+  "LOGISTIK",
+  "KOORDINATOR_POSKO",
+  "KOORDINATOR",
+  "KOMANDAN_MISI",
+  "PEMIMPIN_ORGANISASI",
+  ];
+  const isLogisticsOfficer = authorizedRoles.includes(session.userRole);
 
-  const handleSaveRestock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!itemName.trim() || qty === "") return;
+  const catalogItems = React.useMemo(() => {
+  return Object.values(DISASTER_NEEDS_CATALOG);
+  }, []);
 
-    addRestock(itemName.trim(), category, Number(qty), unit.trim().toUpperCase());
-    setItemName("");
-    setQty("");
-    setRestockOpen(false);
+  const handleOpenRestock = () => {
+  setErrorMessage(null);
+  setQty("");
+  setNotes("Penerimaan bantuan masuk gudang posko");
+  setRestockOpen(true);
+  };
+
+  const handleSaveRestock = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (qty === "" || Number(qty) <= 0) return;
+
+  if (!isLogisticsOfficer) {
+  setErrorMessage("Akses ditolak: Hanya Petugas Logistik atau Koordinator Posko yang berwenang memutasi stok fisik.");
+  return;
+  }
+
+  setIsSubmitting(true);
+  setErrorMessage(null);
+
+  try {
+  const finalItemName = useCatalog
+  ? DISASTER_NEEDS_CATALOG[selectedCatalogId]?.nameId || "Bantuan Bencana"
+  : customItemName.trim();
+
+  if (!finalItemName) {
+  setErrorMessage("Nama barang logistik tidak boleh kosong.");
+  setIsSubmitting(false);
+  return;
+  }
+
+  const container = ServiceContainer.getInstance();
+  const poskoId = asPoskoId(session.poskoId);
+  const existingItemsRes = await container.inventoryRepo.findByPoskoId(poskoId);
+  const existingList = existingItemsRes.ok ? existingItemsRes.value : [];
+  const existingItem = existingList.find(
+  (i) => i.toSnapshot().itemName.toLowerCase() === finalItemName.toLowerCase()
+  );
+
+  const quantityNumber = Number(qty);
+
+  if (existingItem) {
+  // Mutate existing inventory via MutateStockUseCase
+  const mutateRes = await container.mutateStockUseCase.execute({
+  poskoId: session.poskoId,
+  itemId: existingItem.toSnapshot().id,
+  officerId: session.userId,
+  officerRole: session.userRole,
+  txType: "RESTOCK",
+  quantityChange: quantityNumber,
+  logicalSeq: existingItem.toSnapshot().version + 1,
+  notes: notes.trim() || undefined,
+  });
+
+  if (!mutateRes.ok) {
+  setErrorMessage(mutateRes.error.message);
+  setIsSubmitting(false);
+  return;
+  }
+  } else {
+  // Create new InventoryAggregate
+  const newItemId = asItemId(`${session.poskoId}-ITEM-${Math.floor(100 + Math.random() * 900)}`);
+  const newAggRes = InventoryAggregate.create({
+  id: newItemId,
+  poskoId,
+  itemName: finalItemName,
+  category,
+  initialQuantity: quantityNumber,
+  unit: unit.toUpperCase(),
+  });
+
+  if (!newAggRes.ok) {
+  setErrorMessage(newAggRes.error.message);
+  setIsSubmitting(false);
+  return;
+  }
+
+  const newAgg = newAggRes.value;
+  await container.inventoryRepo.save(newAgg);
+  await container.outboxRepo.enqueue({
+  poskoId,
+  topic: "STOCK_MUTATED",
+  payload: JSON.stringify({
+  itemId: newItemId,
+  itemName: finalItemName,
+  initialQuantity: quantityNumber,
+  unit: unit.toUpperCase(),
+  officerId: session.userId,
+  txType: "RESTOCK",
+  }),
+  });
+  }
+
+  // Update zustand store
+  addRestock(finalItemName, category as any, quantityNumber, unit.toUpperCase());
+
+  setSuccessToast(`Stok ${quantityNumber} ${unit.toUpperCase()} ${finalItemName} berhasil ditambahkan.`);
+  setTimeout(() => setSuccessToast(null), 4000);
+
+  setCustomItemName("");
+  setQty("");
+  setRestockOpen(false);
+  } catch (err: any) {
+  setErrorMessage(err?.message || "Terjadi kesalahan saat memproses stok masuk.");
+  } finally {
+  setIsSubmitting(false);
+  }
   };
 
   const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case "FOOD":
-        return "Bahan Makanan";
-      case "MEDICAL":
-        return "Obat & Medis";
-      case "BABY_SUPPLIES":
-        return "Kebutuhan Bayi";
-      case "SHELTER":
-        return "Tenda & Terpal";
-      case "CLOTHING":
-        return "Pakaian & Selimut";
-      default:
-        return "Logistik Umum";
-    }
+  switch (cat) {
+  case "FOOD":
+  case "FOOD_WATER":
+  return "Bahan Makanan & Air";
+  case "MEDICAL":
+  return "Obat & Perawatan Medis";
+  case "BABY_SUPPLIES":
+  case "INFANT":
+  return "Perlengkapan Bayi & Balita";
+  case "SHELTER":
+  return "Tenda, Matras & Terpal";
+  case "CLOTHING":
+  case "CLOTHING_BEDDING":
+  return "Pakaian & Alas Tidur";
+  case "HYGIENE":
+  return "Kebersihan & Sanitasi";
+  case "ASSISTIVE":
+  return "Alat Bantu Disabilitas";
+  case "EMERGENCY_TOOLS":
+  return "Peralatan Darurat";
+  default:
+  return "Logistik Umum";
+  }
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. Sub-Navigasi Logistik */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <Tabs
-          items={[
-            { id: "stock", label: "Stok Barang", icon: "box", href: `/posko/${session.poskoId}/logistics` },
-            { id: "distribute", label: "Salurkan Bantuan", icon: "delivery", href: `/posko/${session.poskoId}/logistics/distribute` },
-            { id: "waybills", label: "Kirim Antar-Posko", icon: "waybill", href: `/posko/${session.poskoId}/logistics/waybills` },
-          ]}
-          activeId="stock"
-          variant="segmented"
-          className="w-full sm:w-auto"
-        />
+  <div className="space-y-4">
+  {/* 1. Sub-Navigasi Logistik */}
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+  <Tabs
+  items={[
+  { id: "stock", label: "Stok Gudang Posko", icon: "box", href: `/posko/${session.poskoId}/logistics` },
+  { id: "distribute", label: "Distribusi Bantuan", icon: "delivery", href: `/posko/${session.poskoId}/logistics/distribute` },
+  { id: "waybills", label: "Surat Jalan Antar-Posko", icon: "waybill", href: `/posko/${session.poskoId}/logistics/waybills` },
+  ]}
+  activeId="stock"
+  variant="segmented"
+  className="w-full sm:w-auto"
+  />
 
-        {isLogisticsOfficer && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setRestockOpen(true)}
-          >
-            + Catat Barang Masuk
-          </Button>
-        )}
-      </div>
+  <Button
+  variant="primary"
+  size="sm"
+  disabled={!isLogisticsOfficer}
+  onClick={handleOpenRestock}
+  >
+  <Icon name="add-circle" variant="bold" size={14} className="mr-1" />
+  Catat Barang Masuk
+  </Button>
+  </div>
 
-      {/* 2. Grid Stok Barang (Spasi Rasional) */}
-      <div>
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted">
-            Ketersediaan Stok di Posko
-          </h2>
-          <span className="text-xs text-text-muted">
-            {inventory.length} Jenis Barang
-          </span>
-        </div>
+  {/* 2. Banner Notifikasi RBAC & Sukses */}
+  {!isLogisticsOfficer && (
+  <AlertBanner
+  variant="warning"
+  title="Mode Peninjauan Gudang (Read-Only)"
+  description="Hak mutasi saldo stok fisik di gudang dibatasi khusus untuk Petugas Logistik, Koordinator Posko, atau Komandan Misi."
+  icon="shield"
+  />
+  )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {inventory.map((item) => {
-            const isCritical = item.burnRateDays <= 1 || item.currentQuantity <= 10;
-            return (
-              <div
-                key={item.id}
-                className={`p-3.5 rounded-xl border bg-surface shadow-2xs space-y-2.5 ${
-                  isCritical ? "border-status-danger-border bg-status-danger-bg/15" : "border-border"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[11px] text-text-muted font-medium block">
-                      {getCategoryLabel(item.category)}
-                    </span>
-                    <h3 className="text-sm font-bold text-text-main mt-0.5">
-                      {item.itemName}
-                    </h3>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className={`text-xl font-bold ${isCritical ? "text-status-danger" : "text-text-main"}`}>
-                      {item.currentQuantity}
-                    </p>
-                    <span className="text-[11px] text-text-muted font-medium">{item.unit}</span>
-                  </div>
-                </div>
+  {successToast && (
+  <AlertBanner
+  variant="safe"
+  title="Stok Berhasil Dimutasi"
+  description={successToast}
+  icon="check"
+  />
+  )}
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-border/80">
-                  <span className="text-text-muted">Perkiraan Habis:</span>
-                  <span className={`font-semibold ${isCritical ? "text-status-danger" : "text-text-main"}`}>
-                    {isCritical ? "Kurang dari 24 Jam" : `~${item.burnRateDays} Hari`}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+  {/* 3. Grid Ketersediaan Stok Barang */}
+  <div>
+  <div className="flex items-center justify-between mb-2.5">
+  <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+  <Icon name="box" variant="bold" size={14} className="text-primary" />
+  Ketersediaan Stok Fisik Posko ({inventory.length} Komoditas)
+  </h2>
+  <span className="text-xs text-text-muted font-medium">
+  Aturan Single-Writer Ledger Aktif
+  </span>
+  </div>
 
-      {/* 3. Riwayat Keluar-Masuk Barang */}
-      <Card className="shadow-2xs">
-        <CardHeader>
-          <CardTitle className="text-sm">Catatan Keluar-Masuk Barang</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border text-xs">
-            {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="py-2.5 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className={`px-2 py-0.5 rounded font-bold text-[11px] ${
-                      tx.quantityChange > 0
-                        ? "bg-status-safe-bg text-status-safe border border-status-safe-border"
-                        : "bg-surface-muted text-text-muted border border-border"
-                    }`}
-                  >
-                    {tx.quantityChange > 0 ? `+${tx.quantityChange}` : tx.quantityChange}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-text-main truncate">
-                      {tx.note || "Perubahan Stok"}
-                    </p>
-                    <p className="text-[11px] text-text-muted">
-                      Dicatat oleh: {tx.officerName}
-                    </p>
-                  </div>
-                </div>
+  {inventory.length === 0 ? (
+  <EmptyState
+  icon="box"
+  title="Gudang Logistik Masih Kosong"
+  description="Belum ada komoditas logistik atau bantuan darurat yang tercatat di posko ini. Klik tombol di bawah untuk mencatat penerimaan barang masuk."
+  actionLabel="+ Catat Barang Masuk"
+  actionIcon="add-circle"
+  onAction={handleOpenRestock}
+  />
+  ) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  {inventory.map((item) => {
+  const isCritical = item.burnRateDays <= 1 || item.currentQuantity <= 10;
+  return (
+  <div
+  key={item.id}
+  className={`p-3.5 rounded-xl border bg-surface shadow-2xs space-y-2.5 transition-all ${
+  isCritical ? "border-status-danger-border bg-status-danger-bg/15" : "border-border"
+  }`}
+  >
+  <div className="flex items-start justify-between gap-2">
+  <div className="min-w-0">
+  <span className="text-[11px] text-text-muted font-semibold block truncate">
+  {getCategoryLabel(item.category)}
+  </span>
+  <h3 className="text-sm font-bold text-text-main mt-0.5 truncate">
+  {item.itemName}
+  </h3>
+  </div>
+  <div className="text-right shrink-0">
+  <p className={`text-xl font-black ${isCritical ? "text-status-danger" : "text-text-main"}`}>
+  {item.currentQuantity.toLocaleString()}
+  </p>
+  <span className="text-[11px] text-text-muted font-bold">{item.unit}</span>
+  </div>
+  </div>
 
-                <span className="text-[11px] text-text-muted shrink-0">
-                  {tx.txType === "RESTOCK" ? "Barang Masuk" : "Disalurkan"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+  <div className="flex items-center justify-between text-xs pt-2 border-t border-border/80">
+  <span className="text-text-muted">Ketahanan Konsumsi:</span>
+  <span className={`font-bold ${isCritical ? "text-status-danger" : "text-text-main"}`}>
+  {isCritical ? "Kritis (< 24 Jam)" : `~${item.burnRateDays} Hari`}
+  </span>
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  )}
+  </div>
 
-      {/* 4. Modal Terima Barang Masuk */}
-      <Dialog
-        open={restockOpen}
-        onOpenChange={setRestockOpen}
-        title="Catat Barang Masuk (Restock)"
-        description="Masukkan data bantuan logistik yang baru tiba di gudang posko."
-      >
-        <form onSubmit={handleSaveRestock} className="space-y-3 pt-1 text-xs">
-          <div className="space-y-1">
-            <label className="font-semibold text-text-main block">Nama Barang</label>
-            <Input
-              placeholder="misal: Beras Premium 5kg / Selimut"
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-              required
-            />
-          </div>
+  {/* 4. Ledger Riwayat Keluar-Masuk Barang (Immutable Audit Trail) */}
+  <Card className="shadow-2xs">
+  <CardHeader>
+  <CardTitle className="text-sm flex items-center justify-between">
+  <span className="flex items-center gap-1.5">
+  <Icon name="waybill" variant="bold" size={16} className="text-primary" />
+  Catatan Ledger Keluar-Masuk Barang (Single-Writer)
+  </span>
+  <span className="text-xs font-normal text-text-muted">
+  {transactions.length} Transaksi Terverifikasi
+  </span>
+  </CardTitle>
+  </CardHeader>
+  <CardContent>
+  <div className="divide-y divide-border text-xs">
+  {transactions.length === 0 ? (
+  <p className="text-xs text-text-subtle py-4 text-center">Belum ada catatan transaksi stok.</p>
+  ) : (
+  transactions.map((tx) => (
+  <div
+  key={tx.id}
+  className="py-2.5 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
+  >
+  <div className="flex items-center gap-2.5 min-w-0">
+  <span
+  className={`px-2 py-0.5 rounded-md font-black text-[11px] ${
+  tx.quantityChange > 0
+  ? "bg-status-safe-bg text-status-safe border border-status-safe-border"
+  : "bg-surface-muted text-text-muted border border-border"
+  }`}
+  >
+  {tx.quantityChange > 0 ? `+${tx.quantityChange}` : tx.quantityChange}
+  </span>
+  <div className="min-w-0">
+  <p className="font-bold text-text-main truncate">
+  {tx.note || "Perubahan Saldo Stok Fisik"}
+  </p>
+  <p className="text-[11px] text-text-muted">
+  Otorisasi: {tx.officerName}
+  {tx.referenceTicketId ? ` • Ref: ${tx.referenceTicketId}` : ""}
+  </p>
+  </div>
+  </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="font-semibold text-text-main block">Jumlah</label>
-              <Input
-                type="number"
-                placeholder="misal: 50"
-                value={qty}
-                onChange={(e) => setQty(e.target.value === "" ? "" : Number(e.target.value))}
-                required
-                min={1}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="font-semibold text-text-main block">Satuan</label>
-              <Input
-                placeholder="KG / DUS / KOTAK"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+  <div className="text-right shrink-0">
+  <Badge
+  variant={
+  tx.txType === "RESTOCK"
+  ? "safe"
+  : tx.txType === "DISTRIBUTION"
+  ? "neutral"
+  : tx.txType === "DAMAGE"
+  ? "danger"
+  : "warning"
+  }
+  size="sm"
+  >
+  {tx.txType === "RESTOCK"
+  ? "Barang Masuk"
+  : tx.txType === "DISTRIBUTION"
+  ? "Disalurkan"
+  : tx.txType === "DAMAGE"
+  ? "Rusak"
+  : "Transfer"}
+  </Badge>
+  </div>
+  </div>
+  ))
+  )}
+  </div>
+  </CardContent>
+  </Card>
 
-          <div className="pt-2 flex items-center gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              className="flex-1"
-              onClick={() => setRestockOpen(false)}
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              className="flex-1 justify-center"
-            >
-              Simpan Stok Masuk
-            </Button>
-          </div>
-        </form>
-      </Dialog>
-    </div>
+  {/* 5. Modal Terima Barang Masuk (Restock Single-Writer) */}
+  <Dialog
+  open={restockOpen}
+  onOpenChange={setRestockOpen}
+  title="Catat Barang Masuk (Restock Gudang)"
+  description="Catat penerimaan bantuan logistik baru dengan standardisasi Kamus Bencana uint8 atau input kustom."
+  >
+  <form onSubmit={handleSaveRestock} className="space-y-3 pt-1 text-xs">
+  {errorMessage && (
+  <div className="p-2.5 rounded-lg bg-status-danger-bg border border-status-danger-border text-status-danger text-xs font-semibold">
+  {errorMessage}
+  </div>
+  )}
+
+  {/* Toggle Katalog vs Kustom */}
+  <div className="flex items-center gap-2 p-1 bg-surface-subtle border border-border rounded-lg">
+  <button
+  type="button"
+  onClick={() => setUseCatalog(true)}
+  className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${
+  useCatalog ? "bg-surface shadow-2xs text-text-main border border-border" : "text-text-muted"
+  }`}
+  >
+  Pilih dari Kamus Bencana
+  </button>
+  <button
+  type="button"
+  onClick={() => setUseCatalog(false)}
+  className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${
+  !useCatalog ? "bg-surface shadow-2xs text-text-main border border-border" : "text-text-muted"
+  }`}
+  >
+  Input Kustom Bebas
+  </button>
+  </div>
+
+  {useCatalog ? (
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Pilih Komoditas Kamus Bencana</label>
+  <select
+  value={selectedCatalogId}
+  onChange={(e) => {
+  const id = parseInt(e.target.value);
+  setSelectedCatalogId(id);
+  const item = DISASTER_NEEDS_CATALOG[id];
+  if (item) {
+  setCategory(item.cluster as any);
+  }
+  }}
+  className="w-full h-10 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  >
+  {catalogItems.map((c) => (
+  <option key={c.id} value={c.id}>
+  [0x{c.id.toString(16).padStart(2, "0")}] {c.nameId} ({c.cluster})
+  </option>
+  ))}
+  </select>
+  </div>
+  ) : (
+  <div className="space-y-2">
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Nama Barang</label>
+  <Input
+  placeholder="Contoh: Genset Darurat 5000W / Popok Dewasa"
+  value={customItemName}
+  onChange={(e) => setCustomItemName(e.target.value)}
+  required
+  />
+  </div>
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Kategori Komoditas</label>
+  <select
+  value={category}
+  onChange={(e) => setCategory(e.target.value as any)}
+  className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  >
+  <option value="FOOD">Pangan & Air Minum (FOOD)</option>
+  <option value="CLOTHING">Sandang & Alas Tidur (CLOTHING)</option>
+  <option value="MEDICAL">Medis & Obat-Obatan (MEDICAL)</option>
+  <option value="HYGIENE">Sanitasi & Kebersihan (HYGIENE)</option>
+  <option value="SHELTER">Tenda & Hunian Sementara (SHELTER)</option>
+  <option value="INFANT">Perlengkapan Bayi (INFANT)</option>
+  <option value="ASSISTIVE">Alat Bantu Disabilitas (ASSISTIVE)</option>
+  <option value="EMERGENCY_TOOLS">Peralatan Darurat (EMERGENCY_TOOLS)</option>
+  </select>
+  </div>
+  </div>
+  )}
+
+  <div className="grid grid-cols-2 gap-2">
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Jumlah Kuantitas</label>
+  <Input
+  type="number"
+  placeholder="misal: 100"
+  value={qty}
+  onChange={(e) => setQty(e.target.value === "" ? "" : Number(e.target.value))}
+  required
+  min={1}
+  className="h-9"
+  />
+  </div>
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Satuan Fisik</label>
+  <select
+  value={unit}
+  onChange={(e) => setUnit(e.target.value)}
+  className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  >
+  <option value="KG">KG</option>
+  <option value="LITER">LITER</option>
+  <option value="KOTAK">KOTAK</option>
+  <option value="DUS">DUS</option>
+  <option value="STRIP">STRIP</option>
+  <option value="BOTOL">BOTOL</option>
+  <option value="PCS">PCS</option>
+  <option value="SAK">SAK</option>
+  <option value="GALON">GALON</option>
+  <option value="TABUNG">TABUNG</option>
+  <option value="UNIT">UNIT</option>
+  </select>
+  </div>
+  </div>
+
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Catatan Penerimaan</label>
+  <Input
+  placeholder="Contoh: Bantuan truk PMI Induk / Donasi warga"
+  value={notes}
+  onChange={(e) => setNotes(e.target.value)}
+  className="h-9"
+  />
+  </div>
+
+  <div className="pt-2 flex items-center gap-2">
+  <Button
+  type="button"
+  variant="secondary"
+  size="md"
+  className="flex-1"
+  onClick={() => setRestockOpen(false)}
+  >
+  Batal
+  </Button>
+  <Button
+  type="submit"
+  variant="primary"
+  size="md"
+  disabled={isSubmitting || !isLogisticsOfficer}
+  className="flex-1 justify-center"
+  >
+  {isSubmitting ? "Menyimpan..." : "Simpan Stok Masuk"}
+  </Button>
+  </div>
+  </form>
+  </Dialog>
+  </div>
   );
 }

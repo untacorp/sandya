@@ -1,4 +1,4 @@
-# 🚫 Anti-Patterns & UI Slop Resolution Guide (Var-UI Base)
+#  Anti-Patterns & UI Slop Resolution Guide (Var-UI Base)
 
 Dokumen ini membedah 14 elemen visual klise khas generator AI (*AI Slop UI*) beserta analisis teknis dan panduan refactoring ke bentuk desain otentik berbasis standar desainer **Vargen Studio**.
 
@@ -15,7 +15,7 @@ Menempatkan *pill badge*, kapsul mungil, atau tagline melayang tepat di atas jud
 ---
 
 ## 3. Penggunaan Emoji Unicode dalam UI (DILARANG HARAM SAMA SEKALI)
-Menjejalkan emoji Unicode (seperti 🔥, 🚀, ⚡, 🎨, 📍, 🕒, ✨, ✉️, dll) dilarang total. Gunakan SVG stroke icons minimalis atau teks murni.
+Menjejalkan emoji Unicode (seperti , , , , , , , , dll) dilarang total. Gunakan SVG stroke icons minimalis atau teks murni.
 
 ---
 

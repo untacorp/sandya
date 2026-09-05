@@ -24,10 +24,10 @@
 - Mengubah, menghapus, atau memutasi data warga/logistik (mode ini murni *Read-Only*).
 - Mengakses konsol internal manajemen organisasi atau posko (`/(posko)/[id]`).
 - Mengakses Saluran Komunikasi Taktis / Intercom Radio / PTT Suara (**Zero Chat Access**).
-- Memancarkan siaran alarm bahaya `🚨 #sos`.
+- Memancarkan siaran alarm bahaya ` #sos`.
 
 ### Prekondisi
-- Aplikasi Sanidya terbuka di HP warga / HP relawan di meja informasi publik.
+- Aplikasi Sandya terbuka di HP warga / HP relawan di meja informasi publik.
 
 ### Postkondisi
 - Lokasi posko dan nomor tenda kerabat ditemukan oleh warga.
@@ -39,11 +39,11 @@
 
 ```mermaid
 flowchart LR
-    A(["1. Buka Sanidya -> Pilih '[3] Mode Warga'"]) --> B["2. Input Nama Kerabat & Asal Dusun"]
-    B --> C["3. Query Pencocokan Graf SQLite Lokal"]
-    C --> D{"Keluarga Ditemukan?"}
-    D -->|Ya| E(["4. Tampilkan Nama Posko & Nomor Tenda"])
-    D -->|Tidak| F["5. Scan Poster Posko Lain / Simpan Antrean"]
+  A(["1. Buka Sandya -> Pilih '[3] Mode Warga'"]) --> B["2. Input Nama Kerabat & Asal Dusun"]
+  B --> C["3. Query Pencocokan Graf SQLite Lokal"]
+  C --> D{"Keluarga Ditemukan?"}
+  D -->|Ya| E(["4. Tampilkan Nama Posko & Nomor Tenda"])
+  D -->|Tidak| F["5. Scan Poster Posko Lain / Simpan Antrean"]
 ```
 
 ---
@@ -52,39 +52,39 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Warga Buka Aplikasi /"]) --> LandingScreen["Layar Gerbang Utama<br/>Pilih: '[3] Pusat Pencarian Keluarga (Mode Warga)'"]
-    
-    LandingScreen --> GuestPortal["Masuk Portal Warga: /(auth)/guest<br/>(Antarmuka Sederhana Bebas Login)"]
-    
-    GuestPortal --> SearchMethodChoice{"Pilih Cara Pelacakan"}
-    
-    %% JALUR A: KETIK NAMA KERABAT
-    SearchMethodChoice -->|"1. Ketik Nama Kerabat"| InputKinNameForm["Form Pencarian Kerabat:<br/>• Nama Lengkap yang Dicari (e.g. 'Siti Rahmawati')<br/>• Asal Dusun/Desa (e.g. 'Dusun Cijedil')<br/>• Estimasi Usia (Opsional)"]
-    InputKinNameForm --> TapSearch["Warga Ketuk: 'Cari Kerabat Saya'"]
-    
-    TapSearch --> QueryLocalDB[("Query SQLite Lokal di Seluruh Posko Terdata")]
-    QueryLocalDB --> MatchScoreCheck{"Evaluasi Skor Kecocokan (Confidence)"}
-    
-    MatchScoreCheck -->|Skor > 95% (Exact Match)| ShowReunionCard["🎉 KELUARGA DITEMUKAN!<br/>Tampilkan Kartu Hasil Reuni:<br/>• Nama: Siti Rahmawati (32 Tahun)<br/>• Terdaftar di: ⛺ Posko B (SDN 1 Pacet)<br/>• Lokasi Tenda: Ruang Kelas 2B<br/>• Waktu Terdata: Hari Ini, 10:15 WIB<br/>• Kondisi: Sehat / Stabil"]
-    
-    MatchScoreCheck -->|Skor 70-94% (Fuzzy Match)| ShowPossibleMatches["Tampilkan Daftar Nama Mirip di Posko Terdekat"]
-    
-    MatchScoreCheck -->|0% (Tidak Ditemukan)| ShowNotFoundState["Tampilkan Pesan: 'Belum Terdata di Posko-Posko Ini'"]
-    
-    ShowReunionCard --> ViewReunionPassAction["Warga Ketuk: 'Simpan / Foto Surat Keterangan Reuni'"]
-    ViewReunionPassAction --> DisplayDigitalPass["Tampilkan Lembar Digital Family Reunion Pass<br/>(Berisi QR Validasi Petugas untuk Izin Penjemputan)"]
-    
-    %% JALUR B: SCAN POSTER POSKO FISIK
-    SearchMethodChoice -->|"2. Pindai Poster Posko Lain"| OpenPosterScanner["Buka Kamera Pemindai Poster di HP Warga"]
-    OpenPosterScanner --> ScanPhysicalPoster["/Sorot Kamera ke Kotak QR Poster di Dinding Tenda/"]
-    ScanPhysicalPoster --> DecodePosterData["Dekode Data Posko -> Simpan ke SQLite HP Warga"]
-    DecodePosterData --> AutoQueryAfterScan["Sistem Otomatis Cari Ulang Nama Kerabat di Data Poster Baru"]
-    AutoQueryAfterScan --> MatchScoreCheck
-    
-    ShowNotFoundState --> SaveSearchQueue["Simpan Permintaan Pencarian di HP Warga<br/>(Akan Dicocokkan Otomatis Saat Ada Data Posko Baru)"]
-    
-    DisplayDigitalPass --> EndState(["Selesai / Lokasi Keluarga Diketahui"])
-    SaveSearchQueue --> EndState
+  Start(["Mulai: Warga Buka Aplikasi /"]) --> LandingScreen["Layar Gerbang Utama<br/>Pilih: '[3] Pusat Pencarian Keluarga (Mode Warga)'"]
+  
+  LandingScreen --> GuestPortal["Masuk Portal Warga: /(auth)/guest<br/>(Antarmuka Sederhana Bebas Login)"]
+  
+  GuestPortal --> SearchMethodChoice{"Pilih Cara Pelacakan"}
+  
+  %% JALUR A: KETIK NAMA KERABAT
+  SearchMethodChoice -->|"1. Ketik Nama Kerabat"| InputKinNameForm["Form Pencarian Kerabat:<br/>• Nama Lengkap yang Dicari (e.g. 'Siti Rahmawati')<br/>• Asal Dusun/Desa (e.g. 'Dusun Cijedil')<br/>• Estimasi Usia (Opsional)"]
+  InputKinNameForm --> TapSearch["Warga Ketuk: 'Cari Kerabat Saya'"]
+  
+  TapSearch --> QueryLocalDB[("Query SQLite Lokal di Seluruh Posko Terdata")]
+  QueryLocalDB --> MatchScoreCheck{"Evaluasi Skor Kecocokan (Confidence)"}
+  
+  MatchScoreCheck -->|Skor > 95% (Exact Match)| ShowReunionCard[" KELUARGA DITEMUKAN!<br/>Tampilkan Kartu Hasil Reuni:<br/>• Nama: Siti Rahmawati (32 Tahun)<br/>• Terdaftar di:  Posko B (SDN 1 Pacet)<br/>• Lokasi Tenda: Ruang Kelas 2B<br/>• Waktu Terdata: Hari Ini, 10:15 WIB<br/>• Kondisi: Sehat / Stabil"]
+  
+  MatchScoreCheck -->|Skor 70-94% (Fuzzy Match)| ShowPossibleMatches["Tampilkan Daftar Nama Mirip di Posko Terdekat"]
+  
+  MatchScoreCheck -->|0% (Tidak Ditemukan)| ShowNotFoundState["Tampilkan Pesan: 'Belum Terdata di Posko-Posko Ini'"]
+  
+  ShowReunionCard --> ViewReunionPassAction["Warga Ketuk: 'Simpan / Foto Surat Keterangan Reuni'"]
+  ViewReunionPassAction --> DisplayDigitalPass["Tampilkan Lembar Digital Family Reunion Pass<br/>(Berisi QR Validasi Petugas untuk Izin Penjemputan)"]
+  
+  %% JALUR B: SCAN POSTER POSKO FISIK
+  SearchMethodChoice -->|"2. Pindai Poster Posko Lain"| OpenPosterScanner["Buka Kamera Pemindai Poster di HP Warga"]
+  OpenPosterScanner --> ScanPhysicalPoster["/Sorot Kamera ke Kotak QR Poster di Dinding Tenda/"]
+  ScanPhysicalPoster --> DecodePosterData["Dekode Data Posko -> Simpan ke SQLite HP Warga"]
+  DecodePosterData --> AutoQueryAfterScan["Sistem Otomatis Cari Ulang Nama Kerabat di Data Poster Baru"]
+  AutoQueryAfterScan --> MatchScoreCheck
+  
+  ShowNotFoundState --> SaveSearchQueue["Simpan Permintaan Pencarian di HP Warga<br/>(Akan Dicocokkan Otomatis Saat Ada Data Posko Baru)"]
+  
+  DisplayDigitalPass --> EndState(["Selesai / Lokasi Keluarga Diketahui"])
+  SaveSearchQueue --> EndState
 ```
 
 ---

@@ -14,19 +14,19 @@ CloudOps is a high-scale multi-tenant B2B SaaS platform providing cloud infrastr
 ### System Architecture Diagram
 ```mermaid
 graph TD
-    Client[Next.js Web / Desktop / CLI] -->|HTTPS / WSS| Gateway[Reverse Proxy / Cloudflare]
-    Gateway --> RouteHandler[Next.js App Router / tRPC / GraphQL]
-    RouteHandler --> TenantMiddleware[Tenant Isolation & Auth Middleware]
-    TenantMiddleware --> RBACGuard[RBAC / ABAC Permission Evaluator]
-    RBACGuard --> UseCases[Application Use Cases]
-    UseCases --> DomainCore[Domain Invariants & Aggregates]
-    UseCases --> Postgres[(PostgreSQL with Tenant RLS)]
-    UseCases --> Redis[(Redis Cache & Rate Limiter)]
-    UseCases --> Outbox[(Transactional Outbox)]
-    Outbox --> BullMQ[(BullMQ Worker Queue)]
-    BullMQ --> ReportWorker[Async Analytics & Billing Worker]
-    Stripe[Stripe Webhook Gateway] --> WebhookHandler[Idempotent Webhook Receiver]
-    WebhookHandler --> Outbox
+  Client[Next.js Web / Desktop / CLI] -->|HTTPS / WSS| Gateway[Reverse Proxy / Cloudflare]
+  Gateway --> RouteHandler[Next.js App Router / tRPC / GraphQL]
+  RouteHandler --> TenantMiddleware[Tenant Isolation & Auth Middleware]
+  TenantMiddleware --> RBACGuard[RBAC / ABAC Permission Evaluator]
+  RBACGuard --> UseCases[Application Use Cases]
+  UseCases --> DomainCore[Domain Invariants & Aggregates]
+  UseCases --> Postgres[(PostgreSQL with Tenant RLS)]
+  UseCases --> Redis[(Redis Cache & Rate Limiter)]
+  UseCases --> Outbox[(Transactional Outbox)]
+  Outbox --> BullMQ[(BullMQ Worker Queue)]
+  BullMQ --> ReportWorker[Async Analytics & Billing Worker]
+  Stripe[Stripe Webhook Gateway] --> WebhookHandler[Idempotent Webhook Receiver]
+  WebhookHandler --> Outbox
 ```
 
 ---
@@ -51,24 +51,24 @@ export class SubscriptionAggregate {
   private constructor(private props: SubscriptionProps) {}
 
   addSeats(additionalSeats: number): void {
-    if (this.props.status !== 'ACTIVE' && this.props.status !== 'TRIALING') {
-      throw new DomainInvariantViolationError('Cannot modify seats on an inactive subscription.');
-    }
-    if (additionalSeats <= 0) {
-      throw new DomainInvariantViolationError('Additional seats must be positive.');
-    }
-    this.props.seatLimit += additionalSeats;
-    this.props.version += 1;
+  if (this.props.status !== 'ACTIVE' && this.props.status !== 'TRIALING') {
+  throw new DomainInvariantViolationError('Cannot modify seats on an inactive subscription.');
+  }
+  if (additionalSeats <= 0) {
+  throw new DomainInvariantViolationError('Additional seats must be positive.');
+  }
+  this.props.seatLimit += additionalSeats;
+  this.props.version += 1;
   }
 
   assignSeat(): void {
-    if (this.props.currentSeatsUsed >= this.props.seatLimit) {
-      throw new SeatQuotaExceededError(
-        `Tenant has reached seat quota of ${this.props.seatLimit} seats. Please upgrade plan.`
-      );
-    }
-    this.props.currentSeatsUsed += 1;
-    this.props.version += 1;
+  if (this.props.currentSeatsUsed >= this.props.seatLimit) {
+  throw new SeatQuotaExceededError(
+  `Tenant has reached seat quota of ${this.props.seatLimit} seats. Please upgrade plan.`
+  );
+  }
+  this.props.currentSeatsUsed += 1;
+  this.props.version += 1;
   }
 }
 ```
@@ -79,15 +79,15 @@ export class SubscriptionAggregate {
 
 ```mermaid
 stateDiagram-v2
-    [*] --> TRIALING : TenantSignup()
-    TRIALING --> ACTIVE : AddPaymentMethod() [ValidCard]
-    TRIALING --> CANCELED : TrialExpired()
-    ACTIVE --> PAST_DUE : InvoicePaymentFailed()
-    PAST_DUE --> ACTIVE : InvoicePaymentSucceeded()
-    PAST_DUE --> UNPAID : GracePeriodExceeded(14days)
-    ACTIVE --> CANCELED : CancelSubscription()
-    UNPAID --> CANCELED : FinalizeTermination()
-    CANCELED --> [*]
+  [*] --> TRIALING : TenantSignup()
+  TRIALING --> ACTIVE : AddPaymentMethod() [ValidCard]
+  TRIALING --> CANCELED : TrialExpired()
+  ACTIVE --> PAST_DUE : InvoicePaymentFailed()
+  PAST_DUE --> ACTIVE : InvoicePaymentSucceeded()
+  PAST_DUE --> UNPAID : GracePeriodExceeded(14days)
+  ACTIVE --> CANCELED : CancelSubscription()
+  UNPAID --> CANCELED : FinalizeTermination()
+  CANCELED --> [*]
 ```
 
 ---
@@ -98,20 +98,20 @@ stateDiagram-v2
 ```typescript
 export const teamRouter = router({
   inviteMember: protectedProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        role: z.enum(['MEMBER', 'ADMIN', 'BILLING_MANAGER']),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const useCase = ctx.container.resolve(InviteTeamMemberUseCase);
-      return await useCase.execute({
-        tenantId: ctx.session.tenantId,
-        actorId: ctx.session.userId,
-        ...input,
-      });
-    }),
+  .input(
+  z.object({
+  email: z.string().email(),
+  role: z.enum(['MEMBER', 'ADMIN', 'BILLING_MANAGER']),
+  })
+  )
+  .mutation(async ({ ctx, input }) => {
+  const useCase = ctx.container.resolve(InviteTeamMemberUseCase);
+  return await useCase.execute({
+  tenantId: ctx.session.tenantId,
+  actorId: ctx.session.userId,
+  ...input,
+  });
+  }),
 });
 ```
 
@@ -138,7 +138,7 @@ export async function handleStripeWebhook(req: Request): Promise<Response> {
   // Check Redis Idempotency Key
   const isDuplicate = await redis.set(`stripe:event:${event.id}`, 'PROCESSED', 'NX', 'EX', 86400);
   if (!isDuplicate) {
-    return new Response(JSON.stringify({ received: true, note: 'duplicate_ignored' }), { status: 200 });
+  return new Response(JSON.stringify({ received: true, note: 'duplicate_ignored' }), { status: 200 });
   }
 
   // Enqueue to Transactional Outbox / BullMQ for async processing
@@ -152,11 +152,11 @@ export async function handleStripeWebhook(req: Request): Promise<Response> {
 ## 5. Security & Multi-Tenant Isolation
 
 1. **Row-Level Security (Postgres RLS)**:
-   Every tenant query automatically executes with `SET LOCAL app.current_tenant_id = '<tenant_id>'`.
+  Every tenant query automatically executes with `SET LOCAL app.current_tenant_id = '<tenant_id>'`.
 2. **RBAC Permissions Matrix**:
-   - `BILLING_MANAGER`: `billing:read`, `billing:update`, `invoices:export`.
-   - `ADMIN`: `team:invite`, `team:remove`, `policy:create`, `billing:*`.
-   - `MEMBER`: `resources:read`, `resources:deploy`.
+  - `BILLING_MANAGER`: `billing:read`, `billing:update`, `invoices:export`.
+  - `ADMIN`: `team:invite`, `team:remove`, `policy:create`, `billing:*`.
+  - `MEMBER`: `resources:read`, `resources:deploy`.
 
 ---
 

@@ -1,4 +1,4 @@
-# Reference Example: Disaster Pos Management & QR Scanner Frontend Plan (Sanidya Architecture)
+# Reference Example: Disaster Pos Management & QR Scanner Frontend Plan (Sandya Architecture)
 
 > **Status**: Production Reference Architecture  
 > **Stack**: Next.js 16 (App Router, React 19 RSC), Tauri v2 Native Bridge, Tailwind CSS v4, TanStack Query v5, Zustand, React Hook Form + Zod  
@@ -20,15 +20,15 @@
 ### Route Navigation Graph
 ```mermaid
 flowchart LR
-    Root["Root Layout"] --> Splash["/ (Landing)"]
-    Splash --> SelectPos["/pos/select"]
-    SelectPos --> PosShell["Pos Shell Layout (/pos/[posId])"]
-    
-    PosShell --> Dashboard["/pos/[posId] (Overview)"]
-    PosShell --> Intake["/pos/[posId]/intake (Form)"]
-    PosShell --> SyncHub["/pos/[posId]/sync (QR Hub)"]
-    
-    SyncHub -.->|Intercepting Route| ScannerModal["@modal/(.)scanner"]
+  Root["Root Layout"] --> Splash["/ (Landing)"]
+  Splash --> SelectPos["/pos/select"]
+  SelectPos --> PosShell["Pos Shell Layout (/pos/[posId])"]
+  
+  PosShell --> Dashboard["/pos/[posId] (Overview)"]
+  PosShell --> Intake["/pos/[posId]/intake (Form)"]
+  PosShell --> SyncHub["/pos/[posId]/sync (QR Hub)"]
+  
+  SyncHub -.->|Intercepting Route| ScannerModal["@modal/(.)scanner"]
 ```
 
 ---
@@ -37,44 +37,44 @@ flowchart LR
 
 ```mermaid
 graph TD
-    classDef server fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
-    classDef client fill:#10b981,stroke:#059669,color:#ffffff;
-    classDef shared fill:#475569,stroke:#334155,color:#ffffff;
+  classDef server fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
+  classDef client fill:#10b981,stroke:#059669,color:#ffffff;
+  classDef shared fill:#475569,stroke:#334155,color:#ffffff;
 
-    subgraph Server_Tree ["React Server Components (RSC)"]
-        DashboardPage["PosDashboardPage (/pos/[posId])"]:::server
-        PosMetadataBanner["PosMetadataBanner (Camp Info)"]:::server
-        StatsSummaryGrid["StatsSummaryGrid (Demographics)"]:::server
-    end
+  subgraph Server_Tree ["React Server Components (RSC)"]
+  DashboardPage["PosDashboardPage (/pos/[posId])"]:::server
+  PosMetadataBanner["PosMetadataBanner (Camp Info)"]:::server
+  StatsSummaryGrid["StatsSummaryGrid (Demographics)"]:::server
+  end
 
-    subgraph Client_Islands ["Client Components ('use client')"]
-        SearchFilterBar["EvacueeSearchFilter (URL State)"]:::client
-        EvacueeTable["OptimisticEvacueeTable"]:::client
-        EvacueeRow["EvacueeTableRow (Quick Actions)"]:::client
-        IntakeFAB["FloatingIntakeButton"]:::client
-        QRCanvasModal["QRExportCanvasModal"]:::client
-        ConflictModal["ConflictResolverModal"]:::client
-    end
+  subgraph Client_Islands ["Client Components ('use client')"]
+  SearchFilterBar["EvacueeSearchFilter (URL State)"]:::client
+  EvacueeTable["OptimisticEvacueeTable"]:::client
+  EvacueeRow["EvacueeTableRow (Quick Actions)"]:::client
+  IntakeFAB["FloatingIntakeButton"]:::client
+  QRCanvasModal["QRExportCanvasModal"]:::client
+  ConflictModal["ConflictResolverModal"]:::client
+  end
 
-    subgraph Shared_Primitives ["Shared UI Primitives"]
-        Badge["Badge (CVA: pending/synced)"]:::shared
-        Button["Button (CVA)"]:::shared
-        Dialog["Dialog (Radix Primitive)"]:::shared
-    end
+  subgraph Shared_Primitives ["Shared UI Primitives"]
+  Badge["Badge (CVA: pending/synced)"]:::shared
+  Button["Button (CVA)"]:::shared
+  Dialog["Dialog (Radix Primitive)"]:::shared
+  end
 
-    DashboardPage --> PosMetadataBanner
-    DashboardPage --> StatsSummaryGrid
-    DashboardPage --> SearchFilterBar
-    DashboardPage --> EvacueeTable
-    DashboardPage --> IntakeFAB
+  DashboardPage --> PosMetadataBanner
+  DashboardPage --> StatsSummaryGrid
+  DashboardPage --> SearchFilterBar
+  DashboardPage --> EvacueeTable
+  DashboardPage --> IntakeFAB
 
-    EvacueeTable --> EvacueeRow
-    EvacueeRow --> Badge
-    IntakeFAB --> Button
-    DashboardPage --> QRCanvasModal
-    DashboardPage --> ConflictModal
-    QRCanvasModal --> Dialog
-    ConflictModal --> Dialog
+  EvacueeTable --> EvacueeRow
+  EvacueeRow --> Badge
+  IntakeFAB --> Button
+  DashboardPage --> QRCanvasModal
+  DashboardPage --> ConflictModal
+  QRCanvasModal --> Dialog
+  ConflictModal --> Dialog
 ```
 
 ---
@@ -89,26 +89,26 @@ graph TD
 ### B. Optimistic Mutation Sequence
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Vol as Field Volunteer
-    participant Form as IntakeForm ('use client')
-    participant Cache as TanStack Query Cache
-    participant Tauri as Tauri SQLite Bridge
+  autonumber
+  actor Vol as Field Volunteer
+  participant Form as IntakeForm ('use client')
+  participant Cache as TanStack Query Cache
+  participant Tauri as Tauri SQLite Bridge
 
-    Vol->>Form: Submits evacuee data
-    Form->>Form: Validate with Zod
-    Form->>Cache: onMutate: Snapshot & inject record with [PENDING] badge
-    Cache-->>Vol: Instant table update (<16ms)
-    
-    Form->>Tauri: invoke('record_evacuee_intake', payload)
-    alt Write Success
-        Tauri-->>Form: Saved with permanent UUID
-        Form->>Cache: Commit & update sync counter
-    else Storage Failure
-        Tauri-->>Form: Error (Disk / Constraint)
-        Form->>Cache: onError: Rollback to previous cache snapshot
-        Form-->>Vol: Show Error Banner: "Penyimpanan lokal gagal."
-    end
+  Vol->>Form: Submits evacuee data
+  Form->>Form: Validate with Zod
+  Form->>Cache: onMutate: Snapshot & inject record with [PENDING] badge
+  Cache-->>Vol: Instant table update (<16ms)
+  
+  Form->>Tauri: invoke('record_evacuee_intake', payload)
+  alt Write Success
+  Tauri-->>Form: Saved with permanent UUID
+  Form->>Cache: Commit & update sync counter
+  else Storage Failure
+  Tauri-->>Form: Error (Disk / Constraint)
+  Form->>Cache: onError: Rollback to previous cache snapshot
+  Form-->>Vol: Show Error Banner: "Penyimpanan lokal gagal."
+  end
 ```
 
 ---

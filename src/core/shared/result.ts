@@ -12,10 +12,10 @@ export interface AppError {
 
 export class DomainError implements AppError {
   constructor(
-    public readonly code: string,
-    public readonly message: string,
-    public readonly status: number = 400,
-    public readonly details?: Record<string, unknown> | undefined
+  public readonly code: string,
+  public readonly message: string,
+  public readonly status: number = 400,
+  public readonly details?: Record<string, unknown> | undefined
   ) {}
 }
 
@@ -34,7 +34,7 @@ export function mapResult<T, U, E>(
   fn: (val: T) => U
 ): Result<U, E> {
   if (result.ok) {
-    return Ok(fn(result.value));
+  return Ok(fn(result.value));
   }
   return result;
 }
@@ -47,7 +47,7 @@ export function flatMapResult<T, U, E>(
   fn: (val: T) => Result<U, E>
 ): Result<U, E> {
   if (result.ok) {
-    return fn(result.value);
+  return fn(result.value);
   }
   return result;
 }

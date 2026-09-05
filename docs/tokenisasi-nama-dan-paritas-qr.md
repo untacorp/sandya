@@ -6,13 +6,13 @@ Dokumen ini mendokumentasikan hasil evaluasi empiris dari pengujian simulator QR
 
 ## 1. Evaluasi Empiris & Koreksi Rencana Sebelumnya
 
-Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](file:///home/auttomus/Documents/Code/PROJECT/sanidya_v2/experiments/qr-simulation/), ditemukan dua kegagalan fundamental pada rancangan 1 QR tunggal konvensional:
+Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](file:///home/auttomus/Documents/Code/PROJECT/sandya/experiments/qr-simulation/), ditemukan dua kegagalan fundamental pada rancangan 1 QR tunggal konvensional:
 
-### 🔴 Kegagalan 1: *Name Byte Bottleneck* (Batas Kapasitas 100 Orang)
+###  Kegagalan 1: *Name Byte Bottleneck* (Batas Kapasitas 100 Orang)
 * **Temuan**: Meskipun teks kebutuhan logistik sudah dikompresi dengan token kamus, nama lengkap pengungsi (`fullName`) yang disimpan sebagai string UTF-8 mentah memakan rata-rata **12–20 bytes per orang**.
 * **Dampak**: 1 QR Code tunggal sudah mengalami *overflow* (melebihi kapasitas maksimum Versi 40) ketika jumlah pengungsi mencapai **$\ge 150\text{ orang}$**.
 
-### 🔴 Kegagalan 2: Kerentanan *Finder Pattern* pada Sobekan Sudut
+###  Kegagalan 2: Kerentanan *Finder Pattern* pada Sobekan Sudut
 * **Temuan**: Uji simulasi sobekan sudut (*Corner Tear*) dan lipatan diagonal (*Crease Fold*) menyebabkan proses decode **gagal total**, meskipun tingkat koreksi error disetel ke level tertinggi (Level Q / 25%).
 * **Penyebab**: Algoritma QR Code sangat bergantung pada **3 Kotak Sudut (*Finder Patterns*)** untuk menghitung rotasi dan perspektif kamera. Jika 1 sudut sobek, kamera HP kehilangan orientasi geometris sebelum algoritma Reed-Solomon sempat bekerja.
 
@@ -20,7 +20,7 @@ Berdasarkan hasil pengujian *testbed* di [`experiments/qr-simulation/`](file:///
 
 ## 2. Solusi 1: Tokenisasi Nama Deterministik Indonesia
 
-Untuk memangkas ukuran byte nama tanpa model AI dan tanpa risiko salah eja, Sanidya menerapkan **Deterministic Name Tokenizer**:
+Untuk memangkas ukuran byte nama tanpa model AI dan tanpa risiko salah eja, Sandya menerapkan **Deterministic Name Tokenizer**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster fisik dibagi me
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  ⛺ SANIDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
+│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
 │  Posko: RW 03 Cijedil | Total Data: 500 Pengungsi        │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
@@ -77,7 +77,7 @@ Alih-alih memaksakan 1 QR raksasa yang rapuh di sudutnya, poster fisik dibagi me
 │   │ Data Part 3 │       │ Paritas XOR │                  │
 │   └─────────────┘       └─────────────┘                  │
 │                                                          │
-│  ✨ KETAHANAN KERUSAKAN TOTAL:                           │
+│   KETAHANAN KERUSAKAN TOTAL:                           │
 │  Relawan baru HANYA PERLU MEMINDAI 3 DARI 4 QR.          │
 │  Jika 1 QR sobek / hilang / terkena lumpur total,        │
 │  aplikasi otomatis merekonstruksi data yang hilang!      │
@@ -99,7 +99,7 @@ $$\text{Data } B = A \oplus C \oplus D$$
 
 ## 4. Kamus Dinamis di Header Payload (*Local Symbol Table*)
 
-Untuk menangani kata nama langka yang berulang dalam satu keluarga (misalnya marga atau nama belakang yang sama pada 10 anggota keluarga di satu posko), Sanidya menyematkan **Tabel Simbol Dinamis (Local Symbol Table)** di bagian *header* payload QR:
+Untuk menangani kata nama langka yang berulang dalam satu keluarga (misalnya marga atau nama belakang yang sama pada 10 anggota keluarga di satu posko), Sandya menyematkan **Tabel Simbol Dinamis (Local Symbol Table)** di bagian *header* payload QR:
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -142,7 +142,7 @@ Untuk menyusun **Kamus Nama Bawaan (*Pre-Shared Name Dictionary*)** berisi 1.000
 
 ### 6. Optimasi Lanjutan: Ultra-Dense Bitpacking v4 (~9–12 Bytes/Orang)
 
-Untuk memeras ukuran data mentah dari **$24\text{ Bytes} \rightarrow \mathbf{9 - 1 2\text{ Bytes}}$** per pengungsi (dan **$\approx 5 - 6\text{ Bytes}$** setelah kompresi Zstandard/Deflate), Sanidya menerapkan 4 teknik pengepakan biner tingkat lanjut:
+Untuk memeras ukuran data mentah dari **$24\text{ Bytes} \rightarrow \mathbf{9 - 1 2\text{ Bytes}}$** per pengungsi (dan **$\approx 5 - 6\text{ Bytes}$** setelah kompresi Zstandard/Deflate), Sandya menerapkan 4 teknik pengepakan biner tingkat lanjut:
 
 ### A. Dynamic NIK & Regional Prefix Offloading (0 hingga 5 Bytes)
 * Di kondisi darurat, mayoritas pengungsi kehilangan/lupa KTP $\rightarrow$ Bit flag `hasNationalId = 0`, alokasi NIK menjadi **0 Byte (Hemat 100%)**.
@@ -160,7 +160,7 @@ Untuk memeras ukuran data mentah dari **$24\text{ Bytes} \rightarrow \mathbf{9 -
 * `nameTokenCount` (4 bits) dan `urgentNeedCount` (4 bits) digabungkan ke dalam **1 Byte tunggal**:
   $$\text{Byte Counter} = (\text{nameCount} \ll 4) \mid (\text{needCount} \& \text{0x0F})$$
 
-### 📊 Hasil Pengecilan Byte per Record (Kondisi Lapangan Nyata):
+###  Hasil Pengecilan Byte per Record (Kondisi Lapangan Nyata):
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │             STRUKTUR ULTRA-DENSE 1 PENGUNGSI (KONDISI NYATA)│
@@ -200,8 +200,8 @@ Sistem Paritas Multi-QR dapat diskalakan sesuai dengan ukuran posko darurat:
 | **Penyimpanan NIK** | 8 Bytes (`uint64`) | 8 Bytes (`uint64`) | **Dinamis ($0\text{ B}$ jika hilang, $5\text{ B}$ jika sewilayah)** |
 | **Media Layar Utama** | 1 QR Statis (Overflow) | 1 QR Statis (Overflow) | **Animated Multipart QR (Hingga 5.000+ Jiwa)** |
 | **Kapasitas Poster Cetak (A4)** | $\approx 100$ Orang | 300 Orang (4 QR) | **$500 - 1.000\text{ Orang}$ (4–8 QR Paritas)** |
-| **Ketahanan Sobekan Sudut** | ❌ Gagal Total | ✅ Pulih via Paritas | ✅ **100% Pulih Mutlak (Paritas XOR)** |
-| **Keamanan Ejaan KTP** | Rentan salah tafsir | ✅ Strict Exact Match | ✅ **Strict Exact Match + Fallback Literal** |
+| **Ketahanan Sobekan Sudut** | [FAIL] Gagal Total | [PASS] Pulih via Paritas | [PASS] **100% Pulih Mutlak (Paritas XOR)** |
+| **Keamanan Ejaan KTP** | Rentan salah tafsir | [PASS] Strict Exact Match | [PASS] **Strict Exact Match + Fallback Literal** |
 
 
 

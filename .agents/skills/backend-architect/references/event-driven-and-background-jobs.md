@@ -4,7 +4,7 @@ This guide defines how to reliably process asynchronous tasks, guarantee zero ev
 
 ---
 
-## 📬 1. The Dual-Write Problem & Transactional Outbox Pattern
+##  1. The Dual-Write Problem & Transactional Outbox Pattern
 
 ### The Problem
 When a database update and a message broker publish happen in the same API request:
@@ -22,8 +22,8 @@ When a database update and a message broker publish happen in the same API reque
 │  1. INSERT / UPDATE business_table                            │
 │  2. INSERT INTO transactional_outbox (event_name, payload)     │
 └──────────────────────────────┬─────────────────────────────────┘
-                               │
-                               ▼
+  │
+  ▼
 ┌────────────────────────────────────────────────────────────────┐
 │ OUTBOX RELAY / POLLER (BullMQ / Cron / Debezium)               │
 │  1. Read unprocessed events WHERE status = 'PENDING'           │
@@ -35,17 +35,17 @@ When a database update and a message broker publish happen in the same API reque
 ### Outbox Table Schema (PostgreSQL DDL)
 ```sql
 CREATE TABLE transactional_outbox (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    aggregate_type VARCHAR(64) NOT NULL,
-    aggregate_id VARCHAR(64) NOT NULL,
-    event_type VARCHAR(128) NOT NULL,
-    payload JSONB NOT NULL,
-    headers JSONB DEFAULT '{}'::jsonb,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    retry_count INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    processed_at TIMESTAMPTZ
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  aggregate_type VARCHAR(64) NOT NULL,
+  aggregate_id VARCHAR(64) NOT NULL,
+  event_type VARCHAR(128) NOT NULL,
+  payload JSONB NOT NULL,
+  headers JSONB DEFAULT '{}'::jsonb,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  processed_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_outbox_pending ON transactional_outbox (created_at) WHERE status = 'PENDING';
@@ -53,7 +53,7 @@ CREATE INDEX idx_outbox_pending ON transactional_outbox (created_at) WHERE statu
 
 ---
 
-## ⚙️ 2. Queue & Worker Architecture (BullMQ / Redis)
+##  2. Queue & Worker Architecture (BullMQ / Redis)
 
 ### Queue Topology Standard
 - Separate queues by priority and workload type:
@@ -71,29 +71,29 @@ export const outboxRelayQueue = new Queue('outbox-relay', { connection: redisCon
 export const outboxWorker = new Worker(
   'outbox-relay',
   async (job) => {
-    const { eventType, aggregateId, payload } = job.data;
-    
-    // Idempotent processing check
-    const isAlreadyProcessed = await checkEventProcessed(job.id);
-    if (isAlreadyProcessed) return;
+  const { eventType, aggregateId, payload } = job.data;
+  
+  // Idempotent processing check
+  const isAlreadyProcessed = await checkEventProcessed(job.id);
+  if (isAlreadyProcessed) return;
 
-    await dispatchDomainEvent(eventType, aggregateId, payload);
-    await markEventProcessed(job.id);
+  await dispatchDomainEvent(eventType, aggregateId, payload);
+  await markEventProcessed(job.id);
   },
   {
-    connection: redisConnection,
-    concurrency: 10,
-    limiter: {
-      max: 100,
-      duration: 1000, // 100 jobs per second rate limit
-    },
+  connection: redisConnection,
+  concurrency: 10,
+  limiter: {
+  max: 100,
+  duration: 1000, // 100 jobs per second rate limit
+  },
   }
 );
 ```
 
 ---
 
-## 🔁 3. Retry Strategy: Exponential Backoff with Jitter
+##  3. Retry Strategy: Exponential Backoff with Jitter
 
 Fixed retries cause **thundering herd** problems when downstream services recover. Always configure exponential backoff with full jitter:
 
@@ -103,8 +103,8 @@ $$\text{Delay} = \min(\text{MaxDelay}, \text{InitialDelay} \times 2^{\text{attem
 export const DEFAULT_JOB_OPTIONS = {
   attempts: 5,
   backoff: {
-    type: 'exponential',
-    delay: 2000, // 2s -> 4s -> 8s -> 16s -> 32s
+  type: 'exponential',
+  delay: 2000, // 2s -> 4s -> 8s -> 16s -> 32s
   },
   removeOnComplete: { count: 1000 },
   removeOnFail: false, // Keep failed jobs for DLQ inspection
@@ -113,7 +113,7 @@ export const DEFAULT_JOB_OPTIONS = {
 
 ---
 
-## 🪦 4. Dead Letter Queue (DLQ) & Poison Pill Handling
+##  4. Dead Letter Queue (DLQ) & Poison Pill Handling
 
 When all retry attempts are exhausted:
 1. Move the failed job to the **Dead Letter Queue (DLQ)**.
@@ -123,22 +123,22 @@ When all retry attempts are exhausted:
 ```typescript
 outboxWorker.on('failed', async (job, err) => {
   if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
-    console.error(`🚨 Job ${job.id} failed permanently: ${err.message}`);
-    await deadLetterQueue.add('poison-pill', {
-      originalQueue: job.queueName,
-      jobId: job.id,
-      data: job.data,
-      failedReason: err.message,
-      stacktrace: err.stack,
-      failedAt: new Date().toISOString(),
-    });
+  console.error(` Job ${job.id} failed permanently: ${err.message}`);
+  await deadLetterQueue.add('poison-pill', {
+  originalQueue: job.queueName,
+  jobId: job.id,
+  data: job.data,
+  failedReason: err.message,
+  stacktrace: err.stack,
+  failedAt: new Date().toISOString(),
+  });
   }
 });
 ```
 
 ---
 
-## 🎭 5. Distributed Sagas (Choreography vs Orchestration)
+##  5. Distributed Sagas (Choreography vs Orchestration)
 
 When a business transaction spans multiple services or local databases without shared distributed ACID locks:
 

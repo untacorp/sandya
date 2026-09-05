@@ -29,9 +29,9 @@ Use this template when producing database architecture specifications in `docs/d
 
 ```mermaid
 erDiagram
-    TENANTS ||--o{ POS_LOCATIONS : "owns"
-    POS_LOCATIONS ||--o{ EVACUEES : "shelters"
-    EVACUEES ||--o{ EVACUEE_NEEDS : "registers"
+  TENANTS ||--o{ POS_LOCATIONS : "owns"
+  POS_LOCATIONS ||--o{ EVACUEES : "shelters"
+  EVACUEES ||--o{ EVACUEE_NEEDS : "registers"
 ```
 
 ---
@@ -47,19 +47,19 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = now();
-    RETURN NEW;
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 -- 2. Master Tables
 CREATE TABLE tenants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- or uuid_generate_v7()
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(64) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- or uuid_generate_v7()
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(64) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ
 );
 
 CREATE UNIQUE INDEX uq_tenants_slug_active 
@@ -74,15 +74,15 @@ WHERE deleted_at IS NULL;
 ```sql
 -- SQLite Schema (WAL Mode Enabled)
 CREATE TABLE local_evacuees (
-    id TEXT PRIMARY KEY,                       -- UUIDv7
-    pos_id TEXT NOT NULL,
-    nik TEXT,
-    full_name TEXT NOT NULL,
-    age INTEGER CHECK (age >= 0 AND age <= 130),
-    gender TEXT CHECK (gender IN ('M', 'F')),
-    sync_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (sync_status IN ('PENDING', 'SYNCED')),
-    created_at INTEGER NOT NULL,               -- Epoch ms
-    updated_at INTEGER NOT NULL
+  id TEXT PRIMARY KEY,                       -- UUIDv7
+  pos_id TEXT NOT NULL,
+  nik TEXT,
+  full_name TEXT NOT NULL,
+  age INTEGER CHECK (age >= 0 AND age <= 130),
+  gender TEXT CHECK (gender IN ('M', 'F')),
+  sync_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (sync_status IN ('PENDING', 'SYNCED')),
+  created_at INTEGER NOT NULL,               -- Epoch ms
+  updated_at INTEGER NOT NULL
 );
 
 CREATE INDEX idx_local_evacuees_sync 

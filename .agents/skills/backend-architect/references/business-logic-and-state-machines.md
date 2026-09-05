@@ -4,7 +4,7 @@ This guide defines how to implement bulletproof business logic, enforce domain i
 
 ---
 
-## 🚦 1. Finite State Machines (FSM) for Domain Entities
+##  1. Finite State Machines (FSM) for Domain Entities
 
 Never manage multi-step entity lifecycles with loose boolean flags (e.g. `isApproved`, `isSent`, `isArchived`). Always use an explicit Finite State Machine with strictly defined:
 1. **Allowed States** (Enum).
@@ -26,16 +26,16 @@ Never manage multi-step entity lifecycles with loose boolean flags (e.g. `isAppr
 ### Visual State Diagram (Mermaid)
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT
-    DRAFT --> PENDING_REVIEW : SubmitForApproval()
-    PENDING_REVIEW --> APPROVED : Approve() [ActorIsApprover]
-    PENDING_REVIEW --> REJECTED : Reject(reason)
-    APPROVED --> IN_TRANSIT : AssignCourier(courierId)
-    IN_TRANSIT --> DELIVERED : AcknowledgeReceipt(signature)
-    IN_TRANSIT --> FAILED : ReportFailedDelivery(reason)
-    DELIVERED --> [*]
-    REJECTED --> [*]
-    FAILED --> [*]
+  [*] --> DRAFT
+  DRAFT --> PENDING_REVIEW : SubmitForApproval()
+  PENDING_REVIEW --> APPROVED : Approve() [ActorIsApprover]
+  PENDING_REVIEW --> REJECTED : Reject(reason)
+  APPROVED --> IN_TRANSIT : AssignCourier(courierId)
+  IN_TRANSIT --> DELIVERED : AcknowledgeReceipt(signature)
+  IN_TRANSIT --> FAILED : ReportFailedDelivery(reason)
+  DELIVERED --> [*]
+  REJECTED --> [*]
+  FAILED --> [*]
 ```
 
 ### Type-Safe FSM Implementation (TypeScript)
@@ -56,27 +56,27 @@ export class AidDispatchAggregate {
   private state: DispatchState = 'DRAFT';
 
   transitionTo(nextState: DispatchState, guard?: () => boolean): void {
-    const allowed = ALLOWED_DISPATCH_TRANSITIONS[this.state];
-    if (!allowed.includes(nextState)) {
-      throw new DomainInvariantViolationError(
-        `Illegal state transition from '${this.state}' to '${nextState}'`
-      );
-    }
+  const allowed = ALLOWED_DISPATCH_TRANSITIONS[this.state];
+  if (!allowed.includes(nextState)) {
+  throw new DomainInvariantViolationError(
+  `Illegal state transition from '${this.state}' to '${nextState}'`
+  );
+  }
 
-    if (guard && !guard()) {
-      throw new DomainInvariantViolationError(
-        `Guard check failed for transition '${this.state}' -> '${nextState}'`
-      );
-    }
+  if (guard && !guard()) {
+  throw new DomainInvariantViolationError(
+  `Guard check failed for transition '${this.state}' -> '${nextState}'`
+  );
+  }
 
-    this.state = nextState;
+  this.state = nextState;
   }
 }
 ```
 
 ---
 
-## 🔒 2. Concurrency Control: Optimistic vs Pessimistic Locking
+##  2. Concurrency Control: Optimistic vs Pessimistic Locking
 
 In multi-user, distributed, or high-throughput environments, concurrent writes can cause lost updates or overselling inventory.
 
@@ -102,25 +102,25 @@ Use Pessimistic Locking for critical inventory, balance deductions, or ticket cl
 await db.transaction(async (tx) => {
   // Lock the stock item row during the transaction
   const [stockItem] = await tx
-    .select()
-    .from(inventoryStock)
-    .where(eq(inventoryStock.id, itemId))
-    .for('update'); // SELECT ... FOR UPDATE
+  .select()
+  .from(inventoryStock)
+  .where(eq(inventoryStock.id, itemId))
+  .for('update'); // SELECT ... FOR UPDATE
 
   if (!stockItem || stockItem.quantity < requestedQty) {
-    throw new InsufficientStockError();
+  throw new InsufficientStockError();
   }
 
   await tx
-    .update(inventoryStock)
-    .set({ quantity: stockItem.quantity - requestedQty })
-    .where(eq(inventoryStock.id, itemId));
+  .update(inventoryStock)
+  .set({ quantity: stockItem.quantity - requestedQty })
+  .where(eq(inventoryStock.id, itemId));
 });
 ```
 
 ---
 
-## 🎯 3. Value Objects for Enforcing Domain Rules
+##  3. Value Objects for Enforcing Domain Rules
 
 Never pass raw primitive types (`string`, `number`) across domain boundaries if they have business rules. Wrap them in **Value Objects**:
 
@@ -130,19 +130,19 @@ export class NationalId {
   private readonly value: string;
 
   constructor(raw: string) {
-    const cleaned = raw.trim();
-    if (!/^\d{16}$/.test(cleaned)) {
-      throw new InvalidNationalIdError('National ID must be exactly 16 numeric digits.');
-    }
-    this.value = cleaned;
+  const cleaned = raw.trim();
+  if (!/^\d{16}$/.test(cleaned)) {
+  throw new InvalidNationalIdError('National ID must be exactly 16 numeric digits.');
+  }
+  this.value = cleaned;
   }
 
   getValue(): string {
-    return this.value;
+  return this.value;
   }
 
   equals(other: NationalId): boolean {
-    return this.value === other.value;
+  return this.value === other.value;
   }
 }
 ```

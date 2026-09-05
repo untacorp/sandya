@@ -36,11 +36,11 @@
 
 ```mermaid
 flowchart LR
-    A["1. Masuk Mode Warga: /guest"] --> B["2. Input Nama Kerabat & Asal Dusun"]
-    B --> C["3. Query Pencocokan Graf SQLite Lokal"]
-    C --> D{"Kecocokan Ditemukan?"}
-    D -->|Ya| E(["4. Tampilkan Lokasi Posko & Tenda Kerabat"])
-    D -->|Tidak| F["5. Scan Poster Posko Lain / Simpan Antrean"]
+  A["1. Masuk Mode Warga: /guest"] --> B["2. Input Nama Kerabat & Asal Dusun"]
+  B --> C["3. Query Pencocokan Graf SQLite Lokal"]
+  C --> D{"Kecocokan Ditemukan?"}
+  D -->|Ya| E(["4. Tampilkan Lokasi Posko & Tenda Kerabat"])
+  D -->|Tidak| F["5. Scan Poster Posko Lain / Simpan Antrean"]
 ```
 
 ---
@@ -49,39 +49,39 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Di Gerbang Utama /"]) --> ChooseGuestMode["Pilih Kartu 3: 'Pusat Pencarian Keluarga'<br/>Rute: /guest (Mode Tamu Tanpa Login)"]
-    
-    ChooseGuestMode --> SearchOption{"Pilih Cara Pencarian"}
-    
-    %% JALUR A: PENCARIAN NAMA DI DATABASE LOKAL
-    SearchOption -->|"1. Ketik Nama Kerabat"| InputSearchForm["Form Pencarian Sederhana:<br/>• Nama Lengkap Kerabat (e.g., 'Siti Rahmawati')<br/>• Asal Dusun/Desa (e.g., 'Dusun Cijedil')"]
-    InputSearchForm --> ExecuteSearch["User Ketuk: 'Cari Kerabat Saya'"]
-    
-    ExecuteSearch --> QueryLocalGraph[("Query SQLite Lokal:<br/>SELECT * FROM refugees<br/>WHERE full_name MATCH ? OR missing_kin_name MATCH ?")]
-    
-    QueryLocalGraph --> MatchEval{"Evaluasi Skor Kecocokan (Confidence)"}
-    
-    MatchEval -->|Skor > 95% (Exact Match)| ShowHighMatchModal["🎉 KELUARGA DITEMUKAN!<br/>Tampilkan Kartu Hasil Reuni:<br/>• Nama: Siti Rahmawati (32 th)<br/>• Terdaftar di: Posko B (SDN 1 Pacet)<br/>• Penempatan: Ruang Kelas 2B<br/>• Waktu Terdata: Hari ini 10:15 WIB"]
-    
-    MatchEval -->|Skor 70-94% (Possible Match)| ShowFuzzyMatches["Tampilkan Daftar Kemungkinan Kerabat:<br/>(Beberapa nama mirip di posko sekitar)"]
-    
-    MatchEval -->|0% (Tidak Ditemukan)| ShowNotFound["Tampilkan Status: 'Belum Terdata di Posko Ini'"]
-    
-    ShowHighMatchModal --> PrintReunionPass["User Ketuk: 'Tampilkan / Cetak Surat Keterangan Reuni'"]
-    PrintReunionPass --> EndSuccessState(["Selesai: Lokasi Keluarga Diketahui"])
-    
-    %% JALUR B: PINDAI POSTER POSKO LAIN (AIR-GAPPED LOOKUP)
-    ShowNotFound --> ScanOtherPosPosterTap["User Membawa Foto / Di Depan Poster Posko Lain"]
-    ScanOtherPosPosterTap --> OpenPosterScanner["Buka Scanner Poster di /guest"]
-    OpenPosterScanner --> ScanPosterBoxes["Pindai Kotak-Kotak QR Poster Posko Lain"]
-    
-    ScanPosterBoxes --> RestoreAndQuery["Dekode Data Poster -> Query Nama Kerabat Seketika"]
-    RestoreAndQuery --> MatchEval
+  Start(["Mulai: Di Gerbang Utama /"]) --> ChooseGuestMode["Pilih Kartu 3: 'Pusat Pencarian Keluarga'<br/>Rute: /guest (Mode Tamu Tanpa Login)"]
+  
+  ChooseGuestMode --> SearchOption{"Pilih Cara Pencarian"}
+  
+  %% JALUR A: PENCARIAN NAMA DI DATABASE LOKAL
+  SearchOption -->|"1. Ketik Nama Kerabat"| InputSearchForm["Form Pencarian Sederhana:<br/>• Nama Lengkap Kerabat (e.g., 'Siti Rahmawati')<br/>• Asal Dusun/Desa (e.g., 'Dusun Cijedil')"]
+  InputSearchForm --> ExecuteSearch["User Ketuk: 'Cari Kerabat Saya'"]
+  
+  ExecuteSearch --> QueryLocalGraph[("Query SQLite Lokal:<br/>SELECT * FROM refugees<br/>WHERE full_name MATCH ? OR missing_kin_name MATCH ?")]
+  
+  QueryLocalGraph --> MatchEval{"Evaluasi Skor Kecocokan (Confidence)"}
+  
+  MatchEval -->|Skor > 95% (Exact Match)| ShowHighMatchModal[" KELUARGA DITEMUKAN!<br/>Tampilkan Kartu Hasil Reuni:<br/>• Nama: Siti Rahmawati (32 th)<br/>• Terdaftar di: Posko B (SDN 1 Pacet)<br/>• Penempatan: Ruang Kelas 2B<br/>• Waktu Terdata: Hari ini 10:15 WIB"]
+  
+  MatchEval -->|Skor 70-94% (Possible Match)| ShowFuzzyMatches["Tampilkan Daftar Kemungkinan Kerabat:<br/>(Beberapa nama mirip di posko sekitar)"]
+  
+  MatchEval -->|0% (Tidak Ditemukan)| ShowNotFound["Tampilkan Status: 'Belum Terdata di Posko Ini'"]
+  
+  ShowHighMatchModal --> PrintReunionPass["User Ketuk: 'Tampilkan / Cetak Surat Keterangan Reuni'"]
+  PrintReunionPass --> EndSuccessState(["Selesai: Lokasi Keluarga Diketahui"])
+  
+  %% JALUR B: PINDAI POSTER POSKO LAIN (AIR-GAPPED LOOKUP)
+  ShowNotFound --> ScanOtherPosPosterTap["User Membawa Foto / Di Depan Poster Posko Lain"]
+  ScanOtherPosPosterTap --> OpenPosterScanner["Buka Scanner Poster di /guest"]
+  OpenPosterScanner --> ScanPosterBoxes["Pindai Kotak-Kotak QR Poster Posko Lain"]
+  
+  ScanPosterBoxes --> RestoreAndQuery["Dekode Data Poster -> Query Nama Kerabat Seketika"]
+  RestoreAndQuery --> MatchEval
 
-    ShowFuzzyMatches --> ViewFuzzyDetail["Warga Verifikasi Ciri-Ciri Fisik & Usia"]
-    ViewFuzzyDetail --> ConfirmMatchByUser{"Apakah Ini Keluarga Anda?"}
-    ConfirmMatchByUser -->|Ya| ShowHighMatchModal
-    ConfirmMatchByUser -->|Bukan| ShowNotFound
+  ShowFuzzyMatches --> ViewFuzzyDetail["Warga Verifikasi Ciri-Ciri Fisik & Usia"]
+  ViewFuzzyDetail --> ConfirmMatchByUser{"Apakah Ini Keluarga Anda?"}
+  ConfirmMatchByUser -->|Ya| ShowHighMatchModal
+  ConfirmMatchByUser -->|Bukan| ShowNotFound
 ```
 
 ---

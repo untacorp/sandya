@@ -42,11 +42,11 @@
 
 ```mermaid
 flowchart LR
-    A(["1. Scan QR Logistik: /activate"]) --> B["2. Masuk Konsol Stok Gudang Posko"]
-    B --> C["3. Catat Barang Masuk (Restock / Drop Bantuan)"]
-    C --> D["4. Proses Antrean Tiket Warga & Medis (ALLOCATED)"]
-    D --> E["5. Serahkan Fisik Barang ke Relawan Pengantar"]
-    E --> F(["6. Pantau Radar Stok Posko Tetangga di Misi"])
+  A(["1. Scan QR Logistik: /activate"]) --> B["2. Masuk Konsol Stok Gudang Posko"]
+  B --> C["3. Catat Barang Masuk (Restock / Drop Bantuan)"]
+  C --> D["4. Proses Antrean Tiket Warga & Medis (ALLOCATED)"]
+  D --> E["5. Serahkan Fisik Barang ke Relawan Pengantar"]
+  E --> F(["6. Pantau Radar Stok Posko Tetangga di Misi"])
 ```
 
 ---
@@ -55,52 +55,52 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Petugas Tiba di Gudang Posko"]) --> OpenApp["Buka Aplikasi Sanidya -> Pilih '[1] Scan Kartu Tugas'"]
-    
-    OpenApp --> ScanLogisticsPass["/Sorot Kamera ke QR Logistik dari Koordinator Posko/"]
-    ScanLogisticsPass --> VerifyLogSig["Validasi Tanda Tangan Koordinator Posko (Ed25519)"]
-    
-    VerifyLogSig --> SaveLogSession[("Simpan Sesi Logistik di SQLite Lokal")]
-    SaveLogSession --> OpenLogisticsDashboard["Masuk TAB LOGISTIK GUDANG AKTIF<br/>Rute: /(posko)/[poskoId]/logistics"]
-    
-    %% KONSOL STOK GUDANG POSKO
-    OpenLogisticsDashboard --> ViewWarehouse["Tampilan Stok Gudang Posko Ini:<br/>• Beras: 450 kg (Aman 4 Hari)<br/>• Susu Bayi: 8 Kotak (⚠️ KRITIS: Habis 6 Jam!)<br/>• Selimut: 80 Pcs (Aman)<br/>• Paracetamol: 12 Strip"]
-    
-    ViewWarehouse --> LogActions{"Pilih Tindakan Logistik"}
-    
-    %% TINDAKAN A: CATAT RESTOCK MASUK
-    LogActions -->|"1. Catat Restock Masuk"| OpenRestockModal["Buka Form Penerimaan Barang Masuk"]
-    OpenRestockModal --> InputRestockItem["Pilih Komoditas & Kuantitas Masuk:<br/>• Komoditas: Beras Premium 5kg<br/>• Jumlah: +50 Karung (+250 kg)<br/>• Sumber: Drop Bantuan Gudang Sentral Misi"]
-    InputRestockItem --> SaveRestockTap["Logistik Ketuk: 'Simpan Restock Masuk'"]
-    SaveRestockTap --> UpdateStockDB[("UPDATE inventory_items (+250 kg)")]
-    UpdateStockDB --> InsertTxRestock[("INSERT INTO inventory_transactions<br/>(tx_type: 'RESTOCK', qty: +250)")]
-    
-    %% TINDAKAN B: PROSES TIKET WARGA & MEDIS (SINGLE-WRITER MUTATION)
-    LogActions -->|"2. Proses Antrean Tiket Warga"| OpenTicketQueue["Buka Antrean Tiket: /logistics/distribute<br/>(List Tiket Berstatus PENDING)"]
-    OpenTicketQueue --> SelectTicket["Pilih Tiket #TK-204:<br/>Warga: Siti Rahmawati (2 Kotak Susu Bayi)"]
-    
-    SelectTicket --> CheckPhysicalStock{"Apakah Fisik Susu Bayi Tersedia di Gudang?"}
-    
-    CheckPhysicalStock -->|Stok Cukup| ApproveAndDeductTap["Logistik Ketuk: 'Setujui & Alokasikan'"]
-    ApproveAndDeductTap --> DeductStockDB[("UPDATE inventory_items (Stok Susu -2)")]
-    DeductStockDB --> InsertTxDistDB[("INSERT INTO inventory_transactions<br/>(tx_type: 'DISTRIBUTION', qty: -2, ref: TK-204)")]
-    InsertTxDistDB --> SetAllocated[("UPDATE needs_requests SET status = 'ALLOCATED'")]
-    SetAllocated --> HandoverToVolunteer["Serahkan Fisik 2 Kotak Susu ke Relawan Lapangan"]
-    
-    CheckPhysicalStock -->|Stok Habis / Kosong| RejectOrRequest{"Tindakan Saat Stok Habis"}
-    RejectOrRequest -->|Tolak Tiket| RejectTicket["Set Status: REJECTED (Stok Kosong)"]
-    RejectOrRequest -->|Minta ke Posko Lain| CreateInterPoskoReq["Buat Tiket Permintaan ke Posko Tetangga"]
-    
-    %% TINDAKAN C: RADAR STOK MISI & SURAT JALAN
-    LogActions -->|"3. Radar Stok Misi & Waybill"| OpenMissionStockRadar["Buka Posko Switcher -> Lihat Stok Posko Lain di Misi"]
-    OpenMissionStockRadar --> ViewOtherStocks["Pantau Ketersediaan Stok Posko Sekitar:<br/>• Posko RW 02: Surplus 40 Kotak Susu Bayi<br/>• Gudang Sentral: Tersedia 200 Selimut"]
-    ViewOtherStocks --> RequestInterPoskoDispatch["Buat Pengajuan Surat Jalan Permintaan Stok ke Posko RW 02"]
-    
-    InsertTxRestock --> RefreshWarehouse["Tampilan Stok Gudang Terupdate"]
-    HandoverToVolunteer --> RefreshWarehouse
-    RejectTicket --> RefreshWarehouse
-    RequestInterPoskoDispatch --> RefreshWarehouse
-    RefreshWarehouse --> EndState(["Selesai / Stok Terjaga"])
+  Start(["Mulai: Petugas Tiba di Gudang Posko"]) --> OpenApp["Buka Aplikasi Sandya -> Pilih '[1] Scan Kartu Tugas'"]
+  
+  OpenApp --> ScanLogisticsPass["/Sorot Kamera ke QR Logistik dari Koordinator Posko/"]
+  ScanLogisticsPass --> VerifyLogSig["Validasi Tanda Tangan Koordinator Posko (Ed25519)"]
+  
+  VerifyLogSig --> SaveLogSession[("Simpan Sesi Logistik di SQLite Lokal")]
+  SaveLogSession --> OpenLogisticsDashboard["Masuk TAB LOGISTIK GUDANG AKTIF<br/>Rute: /(posko)/[poskoId]/logistics"]
+  
+  %% KONSOL STOK GUDANG POSKO
+  OpenLogisticsDashboard --> ViewWarehouse["Tampilan Stok Gudang Posko Ini:<br/>• Beras: 450 kg (Aman 4 Hari)<br/>• Susu Bayi: 8 Kotak ( KRITIS: Habis 6 Jam!)<br/>• Selimut: 80 Pcs (Aman)<br/>• Paracetamol: 12 Strip"]
+  
+  ViewWarehouse --> LogActions{"Pilih Tindakan Logistik"}
+  
+  %% TINDAKAN A: CATAT RESTOCK MASUK
+  LogActions -->|"1. Catat Restock Masuk"| OpenRestockModal["Buka Form Penerimaan Barang Masuk"]
+  OpenRestockModal --> InputRestockItem["Pilih Komoditas & Kuantitas Masuk:<br/>• Komoditas: Beras Premium 5kg<br/>• Jumlah: +50 Karung (+250 kg)<br/>• Sumber: Drop Bantuan Gudang Sentral Misi"]
+  InputRestockItem --> SaveRestockTap["Logistik Ketuk: 'Simpan Restock Masuk'"]
+  SaveRestockTap --> UpdateStockDB[("UPDATE inventory_items (+250 kg)")]
+  UpdateStockDB --> InsertTxRestock[("INSERT INTO inventory_transactions<br/>(tx_type: 'RESTOCK', qty: +250)")]
+  
+  %% TINDAKAN B: PROSES TIKET WARGA & MEDIS (SINGLE-WRITER MUTATION)
+  LogActions -->|"2. Proses Antrean Tiket Warga"| OpenTicketQueue["Buka Antrean Tiket: /logistics/distribute<br/>(List Tiket Berstatus PENDING)"]
+  OpenTicketQueue --> SelectTicket["Pilih Tiket #TK-204:<br/>Warga: Siti Rahmawati (2 Kotak Susu Bayi)"]
+  
+  SelectTicket --> CheckPhysicalStock{"Apakah Fisik Susu Bayi Tersedia di Gudang?"}
+  
+  CheckPhysicalStock -->|Stok Cukup| ApproveAndDeductTap["Logistik Ketuk: 'Setujui & Alokasikan'"]
+  ApproveAndDeductTap --> DeductStockDB[("UPDATE inventory_items (Stok Susu -2)")]
+  DeductStockDB --> InsertTxDistDB[("INSERT INTO inventory_transactions<br/>(tx_type: 'DISTRIBUTION', qty: -2, ref: TK-204)")]
+  InsertTxDistDB --> SetAllocated[("UPDATE needs_requests SET status = 'ALLOCATED'")]
+  SetAllocated --> HandoverToVolunteer["Serahkan Fisik 2 Kotak Susu ke Relawan Lapangan"]
+  
+  CheckPhysicalStock -->|Stok Habis / Kosong| RejectOrRequest{"Tindakan Saat Stok Habis"}
+  RejectOrRequest -->|Tolak Tiket| RejectTicket["Set Status: REJECTED (Stok Kosong)"]
+  RejectOrRequest -->|Minta ke Posko Lain| CreateInterPoskoReq["Buat Tiket Permintaan ke Posko Tetangga"]
+  
+  %% TINDAKAN C: RADAR STOK MISI & SURAT JALAN
+  LogActions -->|"3. Radar Stok Misi & Waybill"| OpenMissionStockRadar["Buka Posko Switcher -> Lihat Stok Posko Lain di Misi"]
+  OpenMissionStockRadar --> ViewOtherStocks["Pantau Ketersediaan Stok Posko Sekitar:<br/>• Posko RW 02: Surplus 40 Kotak Susu Bayi<br/>• Gudang Sentral: Tersedia 200 Selimut"]
+  ViewOtherStocks --> RequestInterPoskoDispatch["Buat Pengajuan Surat Jalan Permintaan Stok ke Posko RW 02"]
+  
+  InsertTxRestock --> RefreshWarehouse["Tampilan Stok Gudang Terupdate"]
+  HandoverToVolunteer --> RefreshWarehouse
+  RejectTicket --> RefreshWarehouse
+  RequestInterPoskoDispatch --> RefreshWarehouse
+  RefreshWarehouse --> EndState(["Selesai / Stok Terjaga"])
 ```
 
 ---

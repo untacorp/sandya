@@ -1,34 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ServiceContainer } from '@/infrastructure/services/service-container';
 import { createProblemResponse } from '@/shared/errors/problem-details';
+import { HTTP_STATUS } from '@/core/shared/constants';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const poskoId = searchParams.get('poskoId') || 'posko-demo-001';
-    const container = ServiceContainer.getInstance();
+  const { searchParams } = new URL(req.url);
+  const poskoId = searchParams.get('poskoId') || 'posko-demo-001';
+  const container = ServiceContainer.getInstance();
 
-    const [triageHeatmap, burnRateForecast, reunionMatches] = await Promise.all([
-      container.analyticsService.getTriageHeatmap(poskoId),
-      container.analyticsService.getInventoryBurnRate(poskoId),
-      container.analyticsService.getFamilyReunionMatches(poskoId),
-    ]);
+  const [triageHeatmap, burnRateForecast, reunionMatches] = await Promise.all([
+  container.analyticsService.getTriageHeatmap(poskoId),
+  container.analyticsService.getInventoryBurnRate(poskoId),
+  container.analyticsService.getFamilyReunionMatches(poskoId),
+  ]);
 
-    return NextResponse.json({
-      success: true,
-      poskoId,
-      triageHeatmap,
-      burnRateForecast,
-      reunionMatches,
-      generatedAt: Date.now(),
-    });
+  return NextResponse.json({
+  success: true,
+  poskoId,
+  triageHeatmap,
+  burnRateForecast,
+  reunionMatches,
+  generatedAt: Date.now(),
+  });
   } catch (error) {
-    return createProblemResponse({
-      type: 'https://sanidya.id/errors/server-error',
-      title: 'Kesalahan Server Internal',
-      status: 500,
-      detail: (error as Error).message,
-      code: 'SERVER_ERROR',
-    });
+  return createProblemResponse({
+  type: 'https://sandya.id/errors/server-error',
+  title: 'Kesalahan Server Internal',
+  status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+  detail: (error as Error).message,
+  code: 'SERVER_ERROR',
+  });
   }
 }

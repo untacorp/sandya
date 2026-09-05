@@ -3,10 +3,10 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": [
-    "main"
+  "main"
   ],
   "permissions": [
-    "core:default",
-    "notification:default"
+  "core:default",
+  "notification:default"
   ]
 }

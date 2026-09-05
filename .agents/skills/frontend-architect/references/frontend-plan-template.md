@@ -25,7 +25,7 @@ Use this template when producing frontend architecture plans in `docs/frontend/<
 ### Route Navigation Graph
 ```mermaid
 flowchart LR
-    %% Insert Mermaid route navigation graph
+  %% Insert Mermaid route navigation graph
 ```
 
 ---
@@ -34,7 +34,7 @@ flowchart LR
 
 ```mermaid
 graph TD
-    %% Insert Server (RSC) vs Client ('use client') component hierarchy tree
+  %% Insert Server (RSC) vs Client ('use client') component hierarchy tree
 ```
 
 ---
@@ -47,8 +47,8 @@ graph TD
 - **Props**:
   ```typescript
   interface FeatureListProps {
-    posId: string;
-    searchQuery?: string;
+  posId: string;
+  searchQuery?: string;
   }
   ```
 

@@ -4,7 +4,7 @@ Folder ini berisi dokumen spesifikasi arsitektur sistem, rancangan modularitas, 
 
 ---
 
-## 📑 Dokumen dalam Folder Ini
+##  Dokumen dalam Folder Ini
 *(Dokumen rancangan arsitektur akan ditambahkan di sini)*
 
 - Template / Standar:

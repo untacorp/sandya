@@ -115,9 +115,9 @@ data:items[0]:price::NUMBER
 
 -- Flatten nested structures
 SELECT
-    t.id,
-    item.value:name::STRING as item_name,
-    item.value:qty::NUMBER as quantity
+  t.id,
+  item.value:name::STRING as item_name,
+  item.value:qty::NUMBER as quantity
 FROM my_table t,
 LATERAL FLATTEN(input => t.data:items) item
 ```
@@ -309,33 +309,33 @@ revenue / SUM(revenue) OVER (PARTITION BY category) as pct_of_category
 WITH
 -- Step 1: Define the base population
 base_users AS (
-    SELECT user_id, created_at, plan_type
-    FROM users
-    WHERE created_at >= DATE '2024-01-01'
-      AND status = 'active'
+  SELECT user_id, created_at, plan_type
+  FROM users
+  WHERE created_at >= DATE '2024-01-01'
+  AND status = 'active'
 ),
 
 -- Step 2: Calculate user-level metrics
 user_metrics AS (
-    SELECT
-        u.user_id,
-        u.plan_type,
-        COUNT(DISTINCT e.session_id) as session_count,
-        SUM(e.revenue) as total_revenue
-    FROM base_users u
-    LEFT JOIN events e ON u.user_id = e.user_id
-    GROUP BY u.user_id, u.plan_type
+  SELECT
+  u.user_id,
+  u.plan_type,
+  COUNT(DISTINCT e.session_id) as session_count,
+  SUM(e.revenue) as total_revenue
+  FROM base_users u
+  LEFT JOIN events e ON u.user_id = e.user_id
+  GROUP BY u.user_id, u.plan_type
 ),
 
 -- Step 3: Aggregate to summary level
 summary AS (
-    SELECT
-        plan_type,
-        COUNT(*) as user_count,
-        AVG(session_count) as avg_sessions,
-        SUM(total_revenue) as total_revenue
-    FROM user_metrics
-    GROUP BY plan_type
+  SELECT
+  plan_type,
+  COUNT(*) as user_count,
+  AVG(session_count) as avg_sessions,
+  SUM(total_revenue) as total_revenue
+  FROM user_metrics
+  GROUP BY plan_type
 )
 
 SELECT * FROM summary ORDER BY total_revenue DESC;
@@ -345,29 +345,29 @@ SELECT * FROM summary ORDER BY total_revenue DESC;
 
 ```sql
 WITH cohorts AS (
-    SELECT
-        user_id,
-        DATE_TRUNC('month', first_activity_date) as cohort_month
-    FROM users
+  SELECT
+  user_id,
+  DATE_TRUNC('month', first_activity_date) as cohort_month
+  FROM users
 ),
 activity AS (
-    SELECT
-        user_id,
-        DATE_TRUNC('month', activity_date) as activity_month
-    FROM user_activity
+  SELECT
+  user_id,
+  DATE_TRUNC('month', activity_date) as activity_month
+  FROM user_activity
 )
 SELECT
-    c.cohort_month,
-    COUNT(DISTINCT c.user_id) as cohort_size,
-    COUNT(DISTINCT CASE
-        WHEN a.activity_month = c.cohort_month THEN a.user_id
-    END) as month_0,
-    COUNT(DISTINCT CASE
-        WHEN a.activity_month = c.cohort_month + INTERVAL '1 month' THEN a.user_id
-    END) as month_1,
-    COUNT(DISTINCT CASE
-        WHEN a.activity_month = c.cohort_month + INTERVAL '3 months' THEN a.user_id
-    END) as month_3
+  c.cohort_month,
+  COUNT(DISTINCT c.user_id) as cohort_size,
+  COUNT(DISTINCT CASE
+  WHEN a.activity_month = c.cohort_month THEN a.user_id
+  END) as month_0,
+  COUNT(DISTINCT CASE
+  WHEN a.activity_month = c.cohort_month + INTERVAL '1 month' THEN a.user_id
+  END) as month_1,
+  COUNT(DISTINCT CASE
+  WHEN a.activity_month = c.cohort_month + INTERVAL '3 months' THEN a.user_id
+  END) as month_3
 FROM cohorts c
 LEFT JOIN activity a ON c.user_id = a.user_id
 GROUP BY c.cohort_month
@@ -378,25 +378,25 @@ ORDER BY c.cohort_month;
 
 ```sql
 WITH funnel AS (
-    SELECT
-        user_id,
-        MAX(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) as step_1_view,
-        MAX(CASE WHEN event = 'signup_start' THEN 1 ELSE 0 END) as step_2_start,
-        MAX(CASE WHEN event = 'signup_complete' THEN 1 ELSE 0 END) as step_3_complete,
-        MAX(CASE WHEN event = 'first_purchase' THEN 1 ELSE 0 END) as step_4_purchase
-    FROM events
-    WHERE event_date >= CURRENT_DATE - INTERVAL '30 days'
-    GROUP BY user_id
+  SELECT
+  user_id,
+  MAX(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) as step_1_view,
+  MAX(CASE WHEN event = 'signup_start' THEN 1 ELSE 0 END) as step_2_start,
+  MAX(CASE WHEN event = 'signup_complete' THEN 1 ELSE 0 END) as step_3_complete,
+  MAX(CASE WHEN event = 'first_purchase' THEN 1 ELSE 0 END) as step_4_purchase
+  FROM events
+  WHERE event_date >= CURRENT_DATE - INTERVAL '30 days'
+  GROUP BY user_id
 )
 SELECT
-    COUNT(*) as total_users,
-    SUM(step_1_view) as viewed,
-    SUM(step_2_start) as started_signup,
-    SUM(step_3_complete) as completed_signup,
-    SUM(step_4_purchase) as purchased,
-    ROUND(100.0 * SUM(step_2_start) / NULLIF(SUM(step_1_view), 0), 1) as view_to_start_pct,
-    ROUND(100.0 * SUM(step_3_complete) / NULLIF(SUM(step_2_start), 0), 1) as start_to_complete_pct,
-    ROUND(100.0 * SUM(step_4_purchase) / NULLIF(SUM(step_3_complete), 0), 1) as complete_to_purchase_pct
+  COUNT(*) as total_users,
+  SUM(step_1_view) as viewed,
+  SUM(step_2_start) as started_signup,
+  SUM(step_3_complete) as completed_signup,
+  SUM(step_4_purchase) as purchased,
+  ROUND(100.0 * SUM(step_2_start) / NULLIF(SUM(step_1_view), 0), 1) as view_to_start_pct,
+  ROUND(100.0 * SUM(step_3_complete) / NULLIF(SUM(step_2_start), 0), 1) as start_to_complete_pct,
+  ROUND(100.0 * SUM(step_4_purchase) / NULLIF(SUM(step_3_complete), 0), 1) as complete_to_purchase_pct
 FROM funnel;
 ```
 
@@ -405,13 +405,13 @@ FROM funnel;
 ```sql
 -- Keep the most recent record per key
 WITH ranked AS (
-    SELECT
-        *,
-        ROW_NUMBER() OVER (
-            PARTITION BY entity_id
-            ORDER BY updated_at DESC
-        ) as rn
-    FROM source_table
+  SELECT
+  *,
+  ROW_NUMBER() OVER (
+  PARTITION BY entity_id
+  ORDER BY updated_at DESC
+  ) as rn
+  FROM source_table
 )
 SELECT * FROM ranked WHERE rn = 1;
 ```

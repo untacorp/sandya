@@ -1,10 +1,10 @@
-# 🎨 Panduan Sistem Warna Segar Var-UI Base (Vargen Studio)
+#  Panduan Sistem Warna Segar Var-UI Base (Vargen Studio)
 
 Warna adalah indikator utama kesegaran dan profesionalitas antarmuka. Standar **Var-UI Base** melarang keras penggunaan background krem kekuningan / off-white kusam (`#FAF9F6`, `#FAF8F5`, `#F3F0EA`) yang berkesan lusuh dan kusam.
 
 ---
 
-## 🚫 Aturan Kebersihan Warna Var-UI Base
+##  Aturan Kebersihan Warna Var-UI Base
 
 1. **Wajib Canvas Putih Bersih / Slate Segar**: Gunakan **Crisp Clean White** (`#FFFFFF`) atau **Crisp Soft Slate** (`#F8FAFC`).
 2. **Kontras Teks Tinggi**: Teks utama menggunakan **Rich Deep Slate** (`#0F172A` / `#09090B` / `#111827`).
@@ -12,7 +12,7 @@ Warna adalah indikator utama kesegaran dan profesionalitas antarmuka. Standar **
 
 ---
 
-## ⚖️ Aturan Rasio Pewarnaan 60-30-10
+##  Aturan Rasio Pewarnaan 60-30-10
 
 - **60% Warna Dominan**: `#FFFFFF` atau `#F8FAFC`
 - **30% Warna Sekunder**: `#FFFFFF` atau `#F1F5F9` dengan border 1.5px
@@ -20,7 +20,7 @@ Warna adalah indikator utama kesegaran dan profesionalitas antarmuka. Standar **
 
 ---
 
-## 🎨 5 Palet Warna Segar Var-UI Base
+##  5 Palet Warna Segar Var-UI Base
 
 ### 1. Crisp Cobalt & Clean White (Youth Playful & Agency)
 - **Canvas**: `#FFFFFF`

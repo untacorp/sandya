@@ -6,7 +6,7 @@ import { PttVoiceCodec } from '@/core/audio/ptt-codec';
 import { Ed25519Signer } from '@/core/crypto/ed25519-signer';
 
 async function runBleMeshTests() {
-  console.log('🧪 RUNNING SANIDYA V2 BLE MESH (SMP v1) TEST SUITE...\n');
+  console.log('RUNNING Sandya BLE MESH (SMP v1) TEST SUITE...\n');
 
   // 1. Test SMP v1 Framing & Ed25519 Digital Signing
   console.log('Test 1: SMP v1 Packet Framing & Ed25519 Signature Verification');
@@ -14,18 +14,18 @@ async function runBleMeshTests() {
   const payloadData = Buffer.from('SOS_TACTICAL_EVAC_REQUIRED_TENDA_02', 'utf8');
 
   const rawPacket = SmpPacketCodec.encode(
-    {
-      version: 0x02,
-      packetType: SmpPacketType.TACTICAL_BROADCAST,
-      ttl: 7,
-      flags: 0x01,
-      timestamp: Math.floor(Date.now() / 1000),
-      senderPeerId: '1122334455667788',
-      recipientPeerId: '0000000000000000',
-      sequence: 105,
-      payload: payloadData,
-    },
-    keypair.privateKeyHex
+  {
+  version: 0x02,
+  packetType: SmpPacketType.TACTICAL_BROADCAST,
+  ttl: 7,
+  flags: 0x01,
+  timestamp: Math.floor(Date.now() / 1000),
+  senderPeerId: '1122334455667788',
+  recipientPeerId: '0000000000000000',
+  sequence: 105,
+  payload: payloadData,
+  },
+  keypair.privateKeyHex
   );
 
   const decodedResult = SmpPacketCodec.decode(rawPacket, keypair.publicKeyHex);
@@ -33,7 +33,7 @@ async function runBleMeshTests() {
   assert.strictEqual(decodedResult.value.sequence, 105);
   assert.strictEqual(decodedResult.value.packetType, SmpPacketType.TACTICAL_BROADCAST);
   assert.strictEqual(decodedResult.value.payload.toString('utf8'), payloadData.toString('utf8'));
-  console.log('  ✅ SMP v1 Packet Framing & Signature Verification Passed');
+  console.log('  [PASS] SMP v1 Packet Framing & Signature Verification Passed');
 
   // 2. Test LRU Seen-Cache Deduplication (Anti-Broadcast Storm)
   console.log('Test 2: LRU Seen-Cache $O(1)$ Duplicate Drop');
@@ -44,19 +44,19 @@ async function runBleMeshTests() {
   assert.strictEqual(seenCache.isDuplicate(hash1), false, 'First encounter must not be duplicate');
   // Second time seen (e.g. relayed from different neighbor) -> duplicate!
   assert.strictEqual(seenCache.isDuplicate(hash1), true, 'Second encounter must be flagged as duplicate');
-  console.log('  ✅ LRU Seen-Cache Deduplication Passed');
+  console.log('  [PASS] LRU Seen-Cache Deduplication Passed');
 
   // 3. Test Vector Clock Multi-Posko Delta Detection
   console.log('Test 3: Multi-Posko Vector Clock Tracker & Delta Sync Requests');
   const tracker = new VectorClockTracker({
-    'posko-01': 40,
-    'posko-02': 100,
+  'posko-01': 40,
+  'posko-02': 100,
   });
 
   const remoteProbe = {
-    'posko-01': 45, // Remote is ahead by 5 events
-    'posko-02': 100, // Identical
-    'posko-03': 12,  // New posko we don't have yet
+  'posko-01': 45, // Remote is ahead by 5 events
+  'posko-02': 100, // Identical
+  'posko-03': 12,  // New posko we don't have yet
   };
 
   const deltaRequests = tracker.computeDeltaRequirements(remoteProbe);
@@ -69,7 +69,7 @@ async function runBleMeshTests() {
   const reqPosko3 = deltaRequests.find((d) => d.poskoId === 'posko-03');
   assert.strictEqual(reqPosko3?.fromSeq, 1);
   assert.strictEqual(reqPosko3?.toSeq, 12);
-  console.log('  ✅ Vector Clock Delta Interval Detection Passed');
+  console.log('  [PASS] Vector Clock Delta Interval Detection Passed');
 
   // 4. Test PTT Voice Frame Splitter & Waveform Generator
   console.log('Test 4: PTT Voice Audio Frame Splitter & Waveform Calculation');
@@ -77,12 +77,12 @@ async function runBleMeshTests() {
   const pttFrames = PttVoiceCodec.splitPttToBleFrames('MEDIS', 3000, dummyVoicePcm);
   assert.ok(pttFrames.length >= 3, '1.2 KB should be split into multiple BLE frames');
   assert.strictEqual(pttFrames[0]!.waveform.length, 10, 'Should generate 10 waveform preview bars');
-  console.log('  ✅ PTT Voice Codec Passed');
+  console.log('  [PASS] PTT Voice Codec Passed');
 
-  console.log('\n🎉 ALL BLE MESH PROTOCOL TESTS PASSED SUCCESSFULLY (100% VERIFIED)!');
+  console.log('\n ALL BLE MESH PROTOCOL TESTS PASSED SUCCESSFULLY (100% VERIFIED)!');
 }
 
 runBleMeshTests().catch((err) => {
-  console.error('❌ BLE Mesh Test Failed:', err);
+  console.error('[FAIL] BLE Mesh Test Failed:', err);
   process.exit(1);
 });

@@ -10,65 +10,65 @@ This skill equips the agent to transform raw or complex application ideas into *
 
 ---
 
-## 🎯 Core Engineering Principles
+##  Core Engineering Principles
 
 Every database schema produced by this skill adheres to these standards:
 
 1. **Deterministic & Collision-Free Primary Keys**:
-   - Default to **UUIDv7** (time-ordered, index-friendly, client-generatable offline) or **ULID**.
-   - Use **BigSerial / Identity** only for strictly internal, monolithic OLTP systems without offline needs.
+  - Default to **UUIDv7** (time-ordered, index-friendly, client-generatable offline) or **ULID**.
+  - Use **BigSerial / Identity** only for strictly internal, monolithic OLTP systems without offline needs.
 2. **Strict Referential & Domain Integrity**:
-   - Explicit Foreign Key constraints with defined `ON DELETE` / `ON UPDATE` actions (`CASCADE`, `RESTRICT`, `SET NULL`).
-   - Domain validation using database-level `CHECK` constraints (e.g. non-negative balances, regex checks, valid ranges).
-   - Standardized status fields using Postgres `ENUM` or typed lookup tables.
+  - Explicit Foreign Key constraints with defined `ON DELETE` / `ON UPDATE` actions (`CASCADE`, `RESTRICT`, `SET NULL`).
+  - Domain validation using database-level `CHECK` constraints (e.g. non-negative balances, regex checks, valid ranges).
+  - Standardized status fields using Postgres `ENUM` or typed lookup tables.
 3. **Auditability & Safe Soft-Deletes**:
-   - Universal timestamp columns: `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`.
-   - Audit user tracking: `created_by UUID REFERENCES users(id)`, `updated_by UUID REFERENCES users(id)`.
-   - Soft-delete with **Partial Unique Indexes** (`WHERE deleted_at IS NULL`) to avoid duplicate key conflicts on deleted records.
+  - Universal timestamp columns: `created_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`.
+  - Audit user tracking: `created_by UUID REFERENCES users(id)`, `updated_by UUID REFERENCES users(id)`.
+  - Soft-delete with **Partial Unique Indexes** (`WHERE deleted_at IS NULL`) to avoid duplicate key conflicts on deleted records.
 4. **Optimized Indexing Strategy**:
-   - Apply the **ESR Rule** (*Equality, Sort, Range*) for composite B-tree indexes.
-   - Utilize specialized index types: **GIN** for JSONB/Full-text, **GiST** for PostGIS geospatial coordinates, and **BRIN** for massive time-ordered logs.
+  - Apply the **ESR Rule** (*Equality, Sort, Range*) for composite B-tree indexes.
+  - Utilize specialized index types: **GIN** for JSONB/Full-text, **GiST** for PostGIS geospatial coordinates, and **BRIN** for massive time-ordered logs.
 5. **Multi-Tenancy & Security (RLS)**:
-   - Tenant isolation using Row-Level Security (`ENABLE ROW LEVEL SECURITY`) with `tenant_id` columns and security barrier policies.
-   - PII data isolation and encryption tagging.
+  - Tenant isolation using Row-Level Security (`ENABLE ROW LEVEL SECURITY`) with `tenant_id` columns and security barrier policies.
+  - PII data isolation and encryption tagging.
 6. **Local-First & Distributed Sync Capability**:
-   - Support for embedded SQLite schemas, Transactional Outbox pattern (`events_outbox`), and Event Sourcing mutation logs for decentralized or offline applications.
+  - Support for embedded SQLite schemas, Transactional Outbox pattern (`events_outbox`), and Event Sourcing mutation logs for decentralized or offline applications.
 
 ---
 
-## 🧭 Step-by-Step Architecture Workflow
+##  Step-by-Step Architecture Workflow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ 1. DOMAIN & ENTITY EXTRACTION                               │
 │ Identify aggregates, entities, cardinality & tenant scopes │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 2. PARADIGM & ENGINE SELECTION                              │
 │ PostgreSQL (Cloud/RLS) vs SQLite (Local/Offline) vs Hybrid  │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 3. VISUAL ER MODELING (Mermaid `erDiagram`)                 │
 │ Map tables, PK/FK/UK, attributes, and relationships         │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 4. PHYSICAL DDL & CONSTRAINTS FORMULATION                   │
 │ Data types, UUIDv7, CHECK constraints, FK cascades          │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 5. INDEXING & ACCESS PATTERN OPTIMIZATION                   │
 │ Composite B-Tree (ESR), GIN/GiST, Partial & Unique indexes  │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 6. SECURITY, RLS & AUDIT LAYER                              │
 │ Row-Level Security policies, updated_at triggers            │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │ 7. ORM & MIGRATION DELIVERY                                 │
 │ Export Drizzle ORM (TS) / Prisma Schema / Raw SQL DDL       │
@@ -77,7 +77,7 @@ Every database schema produced by this skill adheres to these standards:
 
 ---
 
-## 📋 Detailed Phase Breakdown
+##  Detailed Phase Breakdown
 
 ### Phase 1: Domain & Entity Extraction
 - Extract core aggregate roots, parent-child relationships, and lookup reference tables.
@@ -97,10 +97,10 @@ Every database schema produced by this skill adheres to these standards:
 Generate clean, compliant Mermaid ER diagrams following [Mermaid ER Guide](./references/mermaid-er-guide.md):
 ```mermaid
 erDiagram
-    ORGANIZATIONS ||--o{ POS_LOCATIONS : owns
-    POS_LOCATIONS ||--o{ EVACUEES : registers
-    EVACUEES ||--o{ EVACUEE_NEEDS : requests
-    DISASTER_ITEMS ||--o{ EVACUEE_NEEDS : classifies
+  ORGANIZATIONS ||--o{ POS_LOCATIONS : owns
+  POS_LOCATIONS ||--o{ EVACUEES : registers
+  EVACUEES ||--o{ EVACUEE_NEEDS : requests
+  DISASTER_ITEMS ||--o{ EVACUEE_NEEDS : classifies
 ```
 
 ### Phase 4: Physical DDL & Constraints
@@ -124,8 +124,8 @@ erDiagram
   ```sql
   ALTER TABLE evacuees ENABLE ROW LEVEL SECURITY;
   CREATE POLICY evacuees_tenant_isolation ON evacuees
-    FOR ALL
-    USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
+  FOR ALL
+  USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
   ```
 
 ### Phase 7: ORM & Output Formatting
@@ -138,7 +138,7 @@ Format the final schema package using the [DDL & Delivery Template](./references
 
 ---
 
-## 📚 Reference Documentation & Examples
+##  Reference Documentation & Examples
 
 - **[Data Modeling Methodology](./references/modeling-methodology.md)**: Normalization, PK strategies (UUIDv7 vs BigSerial), soft-deletes, and RLS.
 - **[Indexing & Performance Guide](./references/indexing-and-performance.md)**: ESR rule, B-Tree, GIN, GiST, BRIN, and query path optimization.

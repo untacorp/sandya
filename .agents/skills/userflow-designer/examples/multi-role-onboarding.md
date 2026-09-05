@@ -24,10 +24,10 @@
 
 ```mermaid
 flowchart LR
-    A([1. Org Registration]) --> B([2. Define Incident & Pos])
-    B --> C([3. Provision Coordinator Invites])
-    C --> D([4. Field Device Onboarding])
-    D --> E([5. Access Active Dashboard])
+  A([1. Org Registration]) --> B([2. Define Incident & Pos])
+  B --> C([3. Provision Coordinator Invites])
+  C --> D([4. Field Device Onboarding])
+  D --> E([5. Access Active Dashboard])
 ```
 
 ---
@@ -36,39 +36,39 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start([Admin Lands on App]) --> AuthCheck{"Has Account?"}
-    
-    AuthCheck -->|No| Register["Register Admin (Email, Name, Password)"]
-    Register --> OrgSetup["Fill Organization Details (Name, Disaster Type, Base Location)"]
-    OrgSetup --> SaveOrg[(Save Organization to Central DB)]
-    
-    AuthCheck -->|Yes| Login["Sign In via Credentials / Magic Link"]
-    Login --> SaveOrg
-    
-    SaveOrg --> OrgDashboard["Open Organization Console"]
-    OrgDashboard --> AddPos["Click 'Create New Disaster Pos'"]
-    
-    AddPos --> PosForm["Enter Pos Name, GPS Coordinates, Target Capacity"]
-    PosForm --> SavePos[(Persist Pos Profile)]
-    
-    SavePos --> InviteStaff["Click 'Invite / Assign Responders'"]
-    InviteStaff --> SelectRole{"Select Role to Provision"}
-    
-    SelectRole -->|Pos Coordinator| GenLink["Generate Coordinator Email Invite Link"]
-    SelectRole -->|Field Volunteer / Offline Device| GenDeviceToken["Generate Offline Provisioning QR / Secret"]
-    
-    GenLink --> SendEmail[/Send Email / WhatsApp Invite/]
-    SendEmail --> CoordAccept[/Coordinator Clicks Link & Sets PIN/]
-    CoordAccept --> CoordActive([Coordinator Account Activated])
-    
-    GenDeviceToken --> ShowQR["Display Provisioning QR in Admin Console"]
-    ShowQR --> VolScan[/Field Volunteer Scans Provisioning QR with Mobile App/]
-    VolScan --> CheckToken{"Is Token Valid & Unexpired?"}
-    
-    CheckToken -->|Expired / Invalid| RejectProvision["Show 'Invalid Activation Code' Alert"]
-    CheckToken -->|Valid| StoreLocalKey[(Store Signed Pos Certificate in Device Keychain)]
-    
-    StoreLocalKey --> VolReady([Field Volunteer Ready for Offline Operations])
+  Start([Admin Lands on App]) --> AuthCheck{"Has Account?"}
+  
+  AuthCheck -->|No| Register["Register Admin (Email, Name, Password)"]
+  Register --> OrgSetup["Fill Organization Details (Name, Disaster Type, Base Location)"]
+  OrgSetup --> SaveOrg[(Save Organization to Central DB)]
+  
+  AuthCheck -->|Yes| Login["Sign In via Credentials / Magic Link"]
+  Login --> SaveOrg
+  
+  SaveOrg --> OrgDashboard["Open Organization Console"]
+  OrgDashboard --> AddPos["Click 'Create New Disaster Pos'"]
+  
+  AddPos --> PosForm["Enter Pos Name, GPS Coordinates, Target Capacity"]
+  PosForm --> SavePos[(Persist Pos Profile)]
+  
+  SavePos --> InviteStaff["Click 'Invite / Assign Responders'"]
+  InviteStaff --> SelectRole{"Select Role to Provision"}
+  
+  SelectRole -->|Pos Coordinator| GenLink["Generate Coordinator Email Invite Link"]
+  SelectRole -->|Field Volunteer / Offline Device| GenDeviceToken["Generate Offline Provisioning QR / Secret"]
+  
+  GenLink --> SendEmail[/Send Email / WhatsApp Invite/]
+  SendEmail --> CoordAccept[/Coordinator Clicks Link & Sets PIN/]
+  CoordAccept --> CoordActive([Coordinator Account Activated])
+  
+  GenDeviceToken --> ShowQR["Display Provisioning QR in Admin Console"]
+  ShowQR --> VolScan[/Field Volunteer Scans Provisioning QR with Mobile App/]
+  VolScan --> CheckToken{"Is Token Valid & Unexpired?"}
+  
+  CheckToken -->|Expired / Invalid| RejectProvision["Show 'Invalid Activation Code' Alert"]
+  CheckToken -->|Valid| StoreLocalKey[(Store Signed Pos Certificate in Device Keychain)]
+  
+  StoreLocalKey --> VolReady([Field Volunteer Ready for Offline Operations])
 ```
 
 ---

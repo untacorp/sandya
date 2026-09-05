@@ -1,23 +1,23 @@
-# Pedoman Standar Solar Icons: Sanidya v2
+# Pedoman Standar Solar Icons: Sandya
 
-Dokumen ini mendefinisikan aturan resmi penggunaan **Solar Icons** pada seluruh antarmuka aplikasi Sanidya.
+Dokumen ini mendefinisikan aturan resmi penggunaan **Solar Icons** pada seluruh antarmuka aplikasi Sandya.
 
 ---
 
-## 🚫 Aturan Pembatasan Varian (Strict Rules)
+##  Aturan Pembatasan Varian (Strict Rules)
 
 1. **HANYA 2 VARIAN YANG DIIZINKAN**:
-   - `linear`: Garis kontur stroke 1.5px (Default).
-   - `bold`: Isian solid penuh (Penekanan & Status Aktif).
+  - `linear`: Garis kontur stroke 1.5px (Default).
+  - `bold`: Isian solid penuh (Penekanan & Status Aktif).
 2. **DILARANG DIGUNAKAN (HARAM)**:
-   - ❌ `bold-duotone`
-   - ❌ `linear-duotone`
-   - ❌ `broken`
-   - ❌ `outline` (berbeda ketebalan)
+  - [FAIL] `bold-duotone`
+  - [FAIL] `linear-duotone`
+  - [FAIL] `broken`
+  - [FAIL] `outline` (berbeda ketebalan)
 
 ---
 
-## 🎯 Matriks Semantik Varian
+##  Matriks Semantik Varian
 
 ```text
 ┌──────────────────────────────┬────────────────────────────────────────────────────────┐
@@ -30,16 +30,16 @@ Dokumen ini mendefinisikan aturan resmi penggunaan **Solar Icons** pada seluruh 
 ├──────────────────────────────┼────────────────────────────────────────────────────────┤
 │ BOLD                         │ 1. Navigasi / Tab saat SEDANG AKTIF (Active state)     │
 │ (Solid Fill)                 │ 2. Tombol Utama Hero / Floating Action Button (FAB)    │
-│                              │ 3. Peringatan Bahaya / Kritis (🔴 Triase, 🚨 SOS)       │
+│                              │ 3. Peringatan Bahaya / Kritis ( Triase,  SOS)       │
 │                              │ 4. Badge Status Terverifikasi / Konfirmasi Sukses      │
 └──────────────────────────────┴────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 Katalog Pemetaan Ikon Resmi (Official Mapping)
+##  Katalog Pemetaan Ikon Resmi (Official Mapping)
 
-| Nama Semantik (`name`) | Solar Icon ID (`linear`) | Solar Icon ID (`bold`) | Peruntukan di Sanidya |
+| Nama Semantik (`name`) | Solar Icon ID (`linear`) | Solar Icon ID (`bold`) | Peruntukan di Sandya |
 | :--- | :--- | :--- | :--- |
 | `home` | `solar:home-2-linear` | `solar:home-2-bold` | Tab Beranda Telemetri Posko |
 | `users` | `solar:users-group-two-rounded-linear` | `solar:users-group-two-rounded-bold` | Tab Warga & Daftar Pengungsi |

@@ -36,132 +36,146 @@ export interface FamilyReunionMatchSummary {
   shelterLocation: string | null;
 }
 
+export const ANALYTICS_CONSTANTS = {
+  INFANT_MAX_AGE: 5,
+  ELDERLY_MIN_AGE: 60,
+  BURN_RATE_LOOKBACK_DAYS: 3,
+  DECIMAL_PRECISION_FACTOR: 10,
+  INFINITE_DAYS_REMAINING: 999,
+  CRITICAL_DAYS_THRESHOLD: 1,
+  WARNING_DAYS_THRESHOLD: 3,
+} as const;
+
 export class DisasterAnalyticsService {
   constructor(
-    private readonly refugeeRepo: IRefugeeRepository,
-    private readonly inventoryRepo: IInventoryRepository
+  private readonly refugeeRepo: IRefugeeRepository,
+  private readonly inventoryRepo: IInventoryRepository
   ) {}
 
   /**
-   * Menghitung ringkasan triase START & demografi kelompok rentan
-   */
+  * Menghitung ringkasan triase START & demografi kelompok rentan
+  */
   public async getTriageHeatmap(poskoId?: string): Promise<PoskoTriageSummary> {
-    const targetPoskoId = poskoId ? asPoskoId(poskoId) : asPoskoId('all');
-    const refugeesResult = await this.refugeeRepo.findByPoskoId(targetPoskoId);
-    const refugees = refugeesResult.ok ? refugeesResult.value : [];
+  const targetPoskoId = poskoId ? asPoskoId(poskoId) : asPoskoId('all');
+  const refugeesResult = await this.refugeeRepo.findByPoskoId(targetPoskoId);
+  const refugees = refugeesResult.ok ? refugeesResult.value : [];
 
-    let countRed = 0;
-    let countYellow = 0;
-    let countGreen = 0;
-    let countBlack = 0;
-    let countInfants = 0;
-    let countElderly = 0;
+  let countRed = 0;
+  let countYellow = 0;
+  let countGreen = 0;
+  let countBlack = 0;
+  let countInfants = 0;
+  let countElderly = 0;
 
-    for (const r of refugees) {
-      const snap = r.toSnapshot();
-      if (snap.currentTriage === 'RED') countRed += 1;
-      else if (snap.currentTriage === 'YELLOW') countYellow += 1;
-      else if (snap.currentTriage === 'BLACK') countBlack += 1;
-      else countGreen += 1;
+  for (const r of refugees) {
+  const snap = r.toSnapshot();
+  if (snap.currentTriage === 'RED') countRed += 1;
+  else if (snap.currentTriage === 'YELLOW') countYellow += 1;
+  else if (snap.currentTriage === 'BLACK') countBlack += 1;
+  else countGreen += 1;
 
-      if (snap.age < 5) countInfants += 1;
-      if (snap.age >= 60) countElderly += 1;
-    }
+  if (snap.age < ANALYTICS_CONSTANTS.INFANT_MAX_AGE) countInfants += 1;
+  if (snap.age >= ANALYTICS_CONSTANTS.ELDERLY_MIN_AGE) countElderly += 1;
+  }
 
-    return {
-      poskoId: targetPoskoId,
-      totalRefugees: refugees.length,
-      countRed,
-      countYellow,
-      countGreen,
-      countBlack,
-      countInfants,
-      countElderly,
-    };
+  return {
+  poskoId: targetPoskoId,
+  totalRefugees: refugees.length,
+  countRed,
+  countYellow,
+  countGreen,
+  countBlack,
+  countInfants,
+  countElderly,
+  };
   }
 
   /**
-   * Menghitung proyeksi burn-rate dan estimasi sisa hari stok logistik
-   */
+  * Menghitung proyeksi burn-rate dan estimasi sisa hari stok logistik
+  */
   public async getInventoryBurnRate(poskoId: string): Promise<ItemBurnRateSummary[]> {
-    const itemsResult = await this.inventoryRepo.findByPoskoId(asPoskoId(poskoId));
-    const items = itemsResult.ok ? itemsResult.value : [];
-    const summaries: ItemBurnRateSummary[] = [];
+  const itemsResult = await this.inventoryRepo.findByPoskoId(asPoskoId(poskoId));
+  const items = itemsResult.ok ? itemsResult.value : [];
+  const summaries: ItemBurnRateSummary[] = [];
 
-    for (const item of items) {
-      const snap = item.toSnapshot();
-      const txResult = await this.inventoryRepo.getTransactionsByItemId(snap.id);
-      const txs = txResult.ok ? txResult.value : [];
+  for (const item of items) {
+  const snap = item.toSnapshot();
+  const txResult = await this.inventoryRepo.getTransactionsByItemId(snap.id);
+  const txs = txResult.ok ? txResult.value : [];
 
-      // Hitung total pemakaian distribusi 3 hari terakhir
-      let totalDistributed = 0;
-      for (const tx of txs) {
-        if (tx.txType === 'DISTRIBUTION' && tx.quantityChange < 0) {
-          totalDistributed += Math.abs(tx.quantityChange);
-        }
-      }
+  // Hitung total pemakaian distribusi 3 hari terakhir
+  let totalDistributed = 0;
+  for (const tx of txs) {
+  if (tx.txType === 'DISTRIBUTION' && tx.quantityChange < 0) {
+  totalDistributed += Math.abs(tx.quantityChange);
+  }
+  }
 
-      const dailyBurnRate = totalDistributed > 0 ? Math.round((totalDistributed / 3) * 10) / 10 : 0;
-      const daysRemaining =
-        dailyBurnRate > 0 ? Math.round((snap.currentQuantity / dailyBurnRate) * 10) / 10 : 999;
+  const dailyBurnRate = totalDistributed > 0
+  ? Math.round((totalDistributed / ANALYTICS_CONSTANTS.BURN_RATE_LOOKBACK_DAYS) * ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR) / ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR
+  : 0;
+  const daysRemaining =
+  dailyBurnRate > 0
+  ? Math.round((snap.currentQuantity / dailyBurnRate) * ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR) / ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR
+  : ANALYTICS_CONSTANTS.INFINITE_DAYS_REMAINING;
 
-      let status: 'CRITICAL' | 'WARNING' | 'HEALTHY' = 'HEALTHY';
-      if (daysRemaining <= 1) status = 'CRITICAL';
-      else if (daysRemaining <= 3) status = 'WARNING';
+  let status: 'CRITICAL' | 'WARNING' | 'HEALTHY' = 'HEALTHY';
+  if (daysRemaining <= ANALYTICS_CONSTANTS.CRITICAL_DAYS_THRESHOLD) status = 'CRITICAL';
+  else if (daysRemaining <= ANALYTICS_CONSTANTS.WARNING_DAYS_THRESHOLD) status = 'WARNING';
 
-      summaries.push({
-        itemId: snap.id,
-        itemName: snap.itemName,
-        category: snap.category,
-        currentQuantity: snap.currentQuantity,
-        unit: snap.unit,
-        dailyBurnRate,
-        daysRemaining,
-        status,
-      });
-    }
+  summaries.push({
+  itemId: snap.id,
+  itemName: snap.itemName,
+  category: snap.category,
+  currentQuantity: snap.currentQuantity,
+  unit: snap.unit,
+  dailyBurnRate,
+  daysRemaining,
+  status,
+  });
+  }
 
-    summaries.sort((a, b) => a.daysRemaining - b.daysRemaining);
-    return summaries;
+  summaries.sort((a, b) => a.daysRemaining - b.daysRemaining);
+  return summaries;
   }
 
   /**
-   * Menemukan rekonsiliasi graf Temu Keluarga antar-pengungsi
-   */
+  * Menemukan rekonsiliasi graf Temu Keluarga antar-pengungsi
+  */
   public async getFamilyReunionMatches(poskoId: string): Promise<FamilyReunionMatchSummary[]> {
-    const refugeesResult = await this.refugeeRepo.findByPoskoId(asPoskoId(poskoId));
-    const refugees = refugeesResult.ok ? refugeesResult.value : [];
-    const matches: FamilyReunionMatchSummary[] = [];
+  const refugeesResult = await this.refugeeRepo.findByPoskoId(asPoskoId(poskoId));
+  const refugees = refugeesResult.ok ? refugeesResult.value : [];
+  const matches: FamilyReunionMatchSummary[] = [];
 
-    for (const seeker of refugees) {
-      const snapSeeker = seeker.toSnapshot();
-      if (!snapSeeker.missingKinName?.trim()) continue;
+  for (const seeker of refugees) {
+  const snapSeeker = seeker.toSnapshot();
+  if (!snapSeeker.missingKinName?.trim()) continue;
 
-      const candidatesResult = await this.refugeeRepo.findMissingKinMatches(
-        asPoskoId(poskoId),
-        snapSeeker.missingKinName
-      );
+  const candidatesResult = await this.refugeeRepo.findMissingKinMatches(
+  asPoskoId(poskoId),
+  snapSeeker.missingKinName
+  );
 
-      if (candidatesResult.ok) {
-        for (const candidate of candidatesResult.value) {
-          const snapCandidate = candidate.toSnapshot();
-          if (snapCandidate.id === snapSeeker.id) continue;
+  if (candidatesResult.ok) {
+  for (const candidate of candidatesResult.value) {
+  const snapCandidate = candidate.toSnapshot();
+  if (snapCandidate.id === snapSeeker.id) continue;
 
-          matches.push({
-            seekerRefugeeId: snapSeeker.id,
-            seekerName: snapSeeker.fullName,
-            lookingFor: snapSeeker.missingKinName,
-            seekerPoskoId: snapSeeker.poskoId,
-            foundRefugeeId: snapCandidate.id,
-            foundName: snapCandidate.fullName,
-            foundPoskoId: snapCandidate.poskoId,
-            domicileOrigin: snapCandidate.domicileOrigin,
-            shelterLocation: snapCandidate.shelterLocation,
-          });
-        }
-      }
-    }
+  matches.push({
+  seekerRefugeeId: snapSeeker.id,
+  seekerName: snapSeeker.fullName,
+  lookingFor: snapSeeker.missingKinName,
+  seekerPoskoId: snapSeeker.poskoId,
+  foundRefugeeId: snapCandidate.id,
+  foundName: snapCandidate.fullName,
+  foundPoskoId: snapCandidate.poskoId,
+  domicileOrigin: snapCandidate.domicileOrigin,
+  shelterLocation: snapCandidate.shelterLocation,
+  });
+  }
+  }
+  }
 
-    return matches;
+  return matches;
   }
 }

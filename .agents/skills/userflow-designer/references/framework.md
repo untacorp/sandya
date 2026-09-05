@@ -12,11 +12,11 @@ When analyzing an application idea, deconstruct it across four essential pillars
 ┌────────────────────────────────────────────────────────┐
 │                   APPLICATION IDEA                     │
 └───────────────────────────┬────────────────────────────┘
-                            │
-       ┌────────────────────┼───────────────────┐
-       ▼                    ▼                   ▼
+  │
+  ┌────────────────────┼───────────────────┐
+  ▼                    ▼                   ▼
  1. PERSONAS &        2. JOBS-TO-BE-DONE  3. ENTITIES &      4. ENVIRONMENT &
-    ROLES                (JTBD)              LIFECYCLES         CONSTRAINTS
+  ROLES                (JTBD)              LIFECYCLES         CONSTRAINTS
  • Field Operator     • Register intake   • Evacuee Profile  • Offline / P2P
  • Pos Coordinator    • Generate QR sync  • Relief Inventory • Low battery
  • Org Admin          • Merge records     • Sync Package     • No cloud link
@@ -74,9 +74,9 @@ Every step must evaluate potential failure modes:
 2. **Hardware / Sensor Issues**: Camera permission denied, unreadable QR code, damaged barcode.
 3. **Network & Sync Disruptions**: Cloud unreachable, timeout, partial sync failure, token expiration.
 4. **Data Conflicts**:
-   - Record modified on two disconnected devices simultaneously.
-   - Same evacuee registered in Pos A and Pos B.
-   - Pos inventory depleted while offline.
+  - Record modified on two disconnected devices simultaneously.
+  - Same evacuee registered in Pos A and Pos B.
+  - Pos inventory depleted while offline.
 5. **System & Storage Limits**: Local storage quota exceeded, database corruption, app crash recovery.
 
 ---
@@ -87,24 +87,24 @@ When designing flows for apps that must function without internet (like disaster
 
 ```mermaid
 flowchart TD
-    Start([User Initiates Action]) --> LocalWrite[Write to Local Database]
-    LocalWrite --> OptimisticUI[Update UI Immediately]
-    OptimisticUI --> SyncQueue[Append Event to Outbox Sync Queue]
-    
-    SyncQueue --> CheckNet{Sync Mechanism Triggered?}
-    CheckNet -->|Internet Available| CloudSync[Push to Central API]
-    CheckNet -->|P2P / QR Export| QRGen[Generate Scannable Data Package]
-    CheckNet -->|Offline & No Peer| Idle[Display 'Queued Offline' Badge]
-    
-    QRGen --> PeerScan[Peer Device Scans QR]
-    PeerScan --> VerifySig{Verify Signature & Schema?}
-    VerifySig -->|Invalid| ShowError[Display 'Corrupt Payload' Alert]
-    VerifySig -->|Valid| ConflictCheck{Conflict Detected?}
-    
-    ConflictCheck -->|No Conflict| AutoMerge[Auto-Merge into Peer DB]
-    ConflictCheck -->|Conflict Found| ConflictModal[Show Conflict Resolution Screen]
-    ConflictModal --> UserResolve[User Selects Winning Record]
-    UserResolve --> LocalWritePeer[Save Merged State]
+  Start([User Initiates Action]) --> LocalWrite[Write to Local Database]
+  LocalWrite --> OptimisticUI[Update UI Immediately]
+  OptimisticUI --> SyncQueue[Append Event to Outbox Sync Queue]
+  
+  SyncQueue --> CheckNet{Sync Mechanism Triggered?}
+  CheckNet -->|Internet Available| CloudSync[Push to Central API]
+  CheckNet -->|P2P / QR Export| QRGen[Generate Scannable Data Package]
+  CheckNet -->|Offline & No Peer| Idle[Display 'Queued Offline' Badge]
+  
+  QRGen --> PeerScan[Peer Device Scans QR]
+  PeerScan --> VerifySig{Verify Signature & Schema?}
+  VerifySig -->|Invalid| ShowError[Display 'Corrupt Payload' Alert]
+  VerifySig -->|Valid| ConflictCheck{Conflict Detected?}
+  
+  ConflictCheck -->|No Conflict| AutoMerge[Auto-Merge into Peer DB]
+  ConflictCheck -->|Conflict Found| ConflictModal[Show Conflict Resolution Screen]
+  ConflictModal --> UserResolve[User Selects Winning Record]
+  UserResolve --> LocalWritePeer[Save Merged State]
 ```
 
 ### Key Offline UX Principles:

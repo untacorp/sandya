@@ -18,10 +18,10 @@ WHERE pos_id = '...'              -- [E] Equality
   AND registered_at >= '...'      -- [R] Range
 ORDER BY urgency_level DESC;      -- [S] Sort
 
--- ❌ BAD INDEX: Range before Sort forces an in-memory Sort step (Top-N heap sort)
+-- [FAIL] BAD INDEX: Range before Sort forces an in-memory Sort step (Top-N heap sort)
 CREATE INDEX idx_bad ON evacuees (pos_id, registered_at, urgency_level);
 
--- ✅ PERFECT ESR INDEX: Allows index scan to satisfy Equality, Sort, and Range without sorting:
+-- [PASS] PERFECT ESR INDEX: Allows index scan to satisfy Equality, Sort, and Range without sorting:
 CREATE INDEX idx_optimal_esr ON evacuees (pos_id, urgency_level DESC, registered_at);
 ```
 
@@ -69,9 +69,9 @@ CREATE INDEX idx_pos_locations_geom ON pos_locations USING GiST (geom);
 For tables with tens of millions of rows sorted by insert timestamp (e.g. event sourcing store, telemetry logs), a **BRIN (Block Range Index)** uses $<1\%$ of the RAM of a B-Tree index:
 ```sql
 CREATE TABLE audit_events (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
-    event_timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
-    event_payload JSONB NOT NULL
+  id BIGINT GENERATED ALWAYS AS IDENTITY,
+  event_timestamp TIMESTAMPTZ NOT NULL DEFAULT now(),
+  event_payload JSONB NOT NULL
 );
 
 -- BRIN index stores min/max values per disk block range:
@@ -103,14 +103,14 @@ When tables exceed $100\text{M}$ rows, partition by date range to allow instant 
 
 ```sql
 CREATE TABLE sync_event_logs (
-    id UUID NOT NULL DEFAULT uuid_generate_v7(),
-    pos_id UUID NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    payload BYTEA NOT NULL,
-    PRIMARY KEY (id, created_at)
+  id UUID NOT NULL DEFAULT uuid_generate_v7(),
+  pos_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  payload BYTEA NOT NULL,
+  PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 -- Monthly partition tables:
 CREATE TABLE sync_event_logs_2026_09 PARTITION OF sync_event_logs
-    FOR VALUES FROM ('2026-09-01 00:00:00+00') TO ('2026-10-01 00:00:00+00');
+  FOR VALUES FROM ('2026-09-01 00:00:00+00') TO ('2026-10-01 00:00:00+00');
 ```

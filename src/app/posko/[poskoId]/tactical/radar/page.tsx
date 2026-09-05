@@ -5,95 +5,141 @@ import Link from "next/link";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
+
+export const RADAR_CONSTANTS = {
+  RSSI_VERY_CLOSE_THRESHOLD: -50,
+  RSSI_CLOSE_THRESHOLD: -70,
+  RSSI_MEDIUM_THRESHOLD: -85,
+  DIRECT_HOP_COUNT: 1,
+} as const;
 
 export default function MeshRadarPage() {
   const { session, peers } = usePoskoStore();
 
-  const getSignalQuality = (rssi: number) => {
-    if (rssi >= -50) return { label: "Sangat Kuat", color: "text-status-safe" };
-    if (rssi >= -70) return { label: "Kuat", color: "text-status-safe" };
-    if (rssi >= -85) return { label: "Sedang", color: "text-status-warning" };
-    return { label: "Lemah", color: "text-status-danger" };
+  const getProximityStatus = (rssi: number, hops: number) => {
+  if (rssi >= RADAR_CONSTANTS.RSSI_VERY_CLOSE_THRESHOLD) {
+  return {
+  label: "Sangat Dekat (< 15m)",
+  color: "text-status-safe",
+  bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
+  hopDesc: "Koneksi Langsung (1 Hop)",
+  };
+  }
+  if (rssi >= RADAR_CONSTANTS.RSSI_CLOSE_THRESHOLD) {
+  return {
+  label: "Dekat (15-50m)",
+  color: "text-status-safe",
+  bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
+  hopDesc: hops === RADAR_CONSTANTS.DIRECT_HOP_COUNT ? "Koneksi Langsung (1 Hop)" : `Relay Mesh (${hops} Hops)`,
+  };
+  }
+  if (rssi >= RADAR_CONSTANTS.RSSI_MEDIUM_THRESHOLD) {
+  return {
+  label: "Jarak Sedang",
+  color: "text-status-warning",
+  bgBadge: "bg-status-warning-bg text-status-warning border-status-warning-border",
+  hopDesc: `Relay Mesh (${hops} Hops)`,
+  };
+  }
+  return {
+  label: "Jarak Jauh / Sinyal Lemah",
+  color: "text-status-danger",
+  bgBadge: "bg-status-danger-bg text-status-danger border-status-danger-border",
+  hopDesc: `Relay Mesh (${hops} Hops)`,
+  };
   };
 
   return (
-    <div className="space-y-5">
-      {/* Top Header */}
-      <div className="flex items-center justify-between">
-        <Link href={`/posko/${session.poskoId}/tactical`}>
-          <Button variant="ghost" size="sm" icon="arrow-left" iconVariant="linear">
-            Kembali ke Radio HT
-          </Button>
-        </Link>
-        <span className="text-xs font-semibold text-text-muted">
-          {peers.length} Perangkat Terhubung
-        </span>
-      </div>
+  <div className="space-y-4">
+  {/* Top Header */}
+  <div className="flex items-center justify-between">
+  <Link href={`/posko/${session.poskoId}/tactical`}>
+  <Button variant="secondary" size="sm" className="font-bold">
+  <Icon name="arrow-left" variant="linear" size={14} className="mr-1" />
+  Kembali ke Radio HT Posko
+  </Button>
+  </Link>
+  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border shadow-2xs text-xs font-bold text-text-main">
+  <span className="w-2 h-2 rounded-full bg-status-safe animate-pulse" />
+  <span>{peers.length} Petugas Terhubung</span>
+  </div>
+  </div>
 
-      {/* Radar Map */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Jaringan Komunikasi Lokal</CardTitle>
-          <p className="text-xs text-text-muted mt-0.5">
-            Perangkat petugas posko yang terhubung secara nirkabel offline.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-5 rounded-xl bg-surface-subtle border border-border text-center flex flex-col items-center justify-center min-h-[140px]">
-            <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto shadow-xs">
-              <Icon name="radar" variant="bold" size={18} />
-            </div>
-            <h4 className="text-sm font-bold text-text-main mt-2">
-              Perangkat Anda: {session.userName}
-            </h4>
-            <p className="text-xs text-text-muted">
-              Mode Siaga Relai Lokal Aktif
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+  {/* Topologi Card */}
+  <Card className="shadow-2xs">
+  <CardHeader>
+  <CardTitle className="text-sm flex items-center justify-between">
+  <span className="flex items-center gap-1.5">
+  <Icon name="radar" variant="bold" size={16} className="text-primary" />
+  Status Jaring Komunikasi Nirkabel Lapangan (BLE Mesh)
+  </span>
+  </CardTitle>
+  <p className="text-xs text-text-muted mt-0.5">
+  Perangkat petugas yang saling terhubung secara otomatis di sekitar posko tanpa internet.
+  </p>
+  </CardHeader>
+  <CardContent className="space-y-3">
+  <div className="p-4 rounded-xl bg-surface-subtle border border-border flex items-center justify-between gap-3">
+  <div className="flex items-center gap-3">
+  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-xs shrink-0">
+  <Icon name="user" variant="bold" size={18} />
+  </div>
+  <div>
+  <h4 className="text-sm font-bold text-text-main">
+  {session.userName} (Perangkat Anda)
+  </h4>
+  <p className="text-xs text-text-muted">
+  Peran: {session.userRole.replace(/_/g, " ")} • Posko: {session.poskoName}
+  </p>
+  </div>
+  </div>
+  <Badge variant="primary" size="md">
+  Mode Siaga Aktif
+  </Badge>
+  </div>
+  </CardContent>
+  </Card>
 
-      {/* Peers List */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
-          Daftar Perangkat Petugas di Sekitar
-        </h3>
+  {/* Peers List */}
+  <div className="space-y-3">
+  <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+  <Icon name="users" variant="bold" size={14} className="text-primary" />
+  Daftar Petugas & Relawan di Sekitar
+  </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {peers.map((peer) => {
-            const signal = getSignalQuality(peer.rssi);
-            return (
-              <Card key={peer.peerId} className="p-3.5 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-surface-muted border border-border flex items-center justify-center text-xs text-text-main">
-                      <Icon name="user" variant="linear" size={15} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-text-main">
-                        {peer.aliasName}
-                      </h4>
-                      <p className="text-xs text-text-muted">{peer.role}</p>
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  {peers.map((peer) => {
+  const proximity = getProximityStatus(peer.rssi, peer.hops);
+  return (
+  <Card key={peer.peerId} className="p-3.5 space-y-2 border-border bg-surface shadow-2xs">
+  <div className="flex items-start justify-between gap-2">
+  <div>
+  <h4 className="text-sm font-bold text-text-main">
+  {peer.aliasName}
+  </h4>
+  <p className="text-xs text-text-muted font-semibold mt-0.5">
+  {peer.role.replace(/_/g, " ")}
+  </p>
+  </div>
 
-                  <span className="text-xs text-text-muted font-medium">
-                    {peer.hops} Lompatan
-                  </span>
-                </div>
+  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${proximity.bgBadge} shrink-0`}>
+  {proximity.label}
+  </span>
+  </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-border">
-                  <span className="text-text-muted">Kekuatan Sinyal:</span>
-                  <span className={`font-semibold ${signal.color}`}>
-                    {signal.label} ({peer.rssi} dBm)
-                  </span>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+  <div className="flex items-center justify-between text-xs pt-2 border-t border-border text-text-muted">
+  <span>Jalur Transmisi:</span>
+  <span className="font-semibold text-text-main">
+  {proximity.hopDesc}
+  </span>
+  </div>
+  </Card>
+  );
+  })}
+  </div>
+  </div>
+  </div>
   );
 }

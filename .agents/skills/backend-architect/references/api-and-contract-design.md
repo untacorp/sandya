@@ -4,13 +4,13 @@ This guide details standards for designing strictly typed, robust, and resilient
 
 ---
 
-## 🛡️ 1. Universal Error Taxonomy: RFC 7807 Problem Details
+##  1. Universal Error Taxonomy: RFC 7807 Problem Details
 
 All API delivery protocols must translate domain & application errors into standard **RFC 7807** Problem Details:
 
 ```json
 {
-  "type": "https://api.sanidya.id/errors/insufficient-stock",
+  "type": "https://api.sandya.id/errors/insufficient-stock",
   "title": "Insufficient Logistics Stock",
   "status": 422,
   "detail": "Requested 50 blankets, but POS-ALPHA only has 12 available.",
@@ -18,10 +18,10 @@ All API delivery protocols must translate domain & application errors into stand
   "code": "INSUFFICIENT_STOCK",
   "timestamp": "2026-09-03T23:30:00.000Z",
   "invalid_params": [
-    {
-      "name": "quantity",
-      "reason": "Must be less than or equal to available stock (12)"
-    }
+  {
+  "name": "quantity",
+  "reason": "Must be less than or equal to available stock (12)"
+  }
   ]
 }
 ```
@@ -42,7 +42,7 @@ export interface ProblemDetails {
 
 ---
 
-## ⚡ 2. GraphQL Schema & Resolver Architecture
+##  2. GraphQL Schema & Resolver Architecture
 
 When building or exposing GraphQL APIs:
 
@@ -94,16 +94,16 @@ import DataLoader from 'dataloader';
 
 export function createEvacueeDataLoader(db: DatabaseClient) {
   return new DataLoader<string, EvacueeRecord[]>(async (posIds) => {
-    const rows = await db.query.evacuees.findMany({
-      where: inArray(evacuees.posId, posIds as string[]),
-    });
-    
-    // Group rows by posId
-    const map = new Map<string, EvacueeRecord[]>();
-    for (const id of posIds) map.set(id, []);
-    for (const row of rows) map.get(row.posId)?.push(row);
-    
-    return posIds.map((id) => map.get(id) ?? []);
+  const rows = await db.query.evacuees.findMany({
+  where: inArray(evacuees.posId, posIds as string[]),
+  });
+  
+  // Group rows by posId
+  const map = new Map<string, EvacueeRecord[]>();
+  for (const id of posIds) map.set(id, []);
+  for (const row of rows) map.get(row.posId)?.push(row);
+  
+  return posIds.map((id) => map.get(id) ?? []);
   });
 }
 ```
@@ -115,7 +115,7 @@ Protect GraphQL endpoints against Denial-of-Service (DoS) and deeply nested mali
 
 ---
 
-## 🌐 3. REST API Contract & Zod Validation
+##  3. REST API Contract & Zod Validation
 
 Standard REST endpoints must be explicit in routing, HTTP verbs, status codes, and input/output contracts.
 
@@ -147,7 +147,7 @@ export type RegisterEvacueeRequest = z.infer<typeof RegisterEvacueeRequestSchema
 
 ---
 
-## 🔒 4. Idempotency Key Mechanics
+##  4. Idempotency Key Mechanics
 
 To prevent duplicate mutations during network timeouts or retry storms:
 1. Client generates a unique `Idempotency-Key` (UUIDv7) in request headers.
@@ -175,21 +175,21 @@ Client                      Backend API                    Redis Cache & DB
 
 ---
 
-## 🔄 5. Next.js Server Actions & tRPC Routers
+##  5. Next.js Server Actions & tRPC Routers
 
 ### tRPC Type-Safe Procedure
 ```typescript
 export const evacueeRouter = router({
   register: protectedProcedure
-    .input(RegisterEvacueeRequestSchema)
-    .mutation(async ({ ctx, input }) => {
-      const useCase = ctx.container.resolve(RegisterEvacueeUseCase);
-      const result = await useCase.execute({
-        ...input,
-        actorId: ctx.session.userId,
-      });
-      return result;
-    }),
+  .input(RegisterEvacueeRequestSchema)
+  .mutation(async ({ ctx, input }) => {
+  const useCase = ctx.container.resolve(RegisterEvacueeUseCase);
+  const result = await useCase.execute({
+  ...input,
+  actorId: ctx.session.userId,
+  });
+  return result;
+  }),
 });
 ```
 
@@ -203,10 +203,10 @@ import { RegisterEvacueeRequestSchema } from './evacuee.schema';
 export const registerEvacueeAction = actionClient
   .schema(RegisterEvacueeRequestSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const useCase = ctx.container.resolve(RegisterEvacueeUseCase);
-    return await useCase.execute({
-      ...parsedInput,
-      actorId: ctx.user.id,
-    });
+  const useCase = ctx.container.resolve(RegisterEvacueeUseCase);
+  return await useCase.execute({
+  ...parsedInput,
+  actorId: ctx.user.id,
+  });
   });
 ```

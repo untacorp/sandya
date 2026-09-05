@@ -3,10 +3,11 @@ import { PoskoShell } from "@/features/posko/components/posko-shell";
 
 export function generateStaticParams() {
   return [
-    { poskoId: "POS-01" },
-    { poskoId: "POS-02" },
-    { poskoId: "POS-03" },
-    { poskoId: "POS-04" },
+  { poskoId: "POS-01" },
+  { poskoId: "POS-02" },
+  { poskoId: "POS-03" },
+  { poskoId: "POS-04" },
+  { poskoId: "default" },
   ];
 }
 

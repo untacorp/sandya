@@ -12,7 +12,7 @@
 ### Cakupan (In Scope)
 - **Aktivasi Peran**: Memindai QR Tugas Komandan Misi dari Pemimpin Organisasi via `/activate`.
 - **Pusat Situasi & Komando Misi (`/(organization)/missions/[missionId]`)**:
-  - Telemetri Agregat Bencana: Total Jiwa di seluruh posko, Peringatan Pasien Kritis (🔴 Triase Merah), dan Barometer Kebutuhan Darurat (Susu, Beras, Selimut).
+  - Telemetri Agregat Bencana: Total Jiwa di seluruh posko, Peringatan Pasien Kritis ( Triase Merah), dan Barometer Kebutuhan Darurat (Susu, Beras, Selimut).
   - Peta & Grid Direktori Seluruh Posko di bawah misi ini (`/posko-grid`).
   - Pendirian Posko Taktis Baru (`/missions/[missionId]/posko/create`).
   - Penerbitan Kartu Tugas untuk **Koordinator Posko** (`POSKO_LEAD`).
@@ -37,11 +37,11 @@
 
 ```mermaid
 flowchart LR
-    A(["1. Scan QR Komandan Misi: /activate"]) --> B["2. Masuk Command Center Misi Bencana"]
-    B --> C["3. Dirikan Titik-Titik Posko Lapangan"]
-    C --> D["4. Terbitkan QR Tugas Koordinator Posko"]
-    D --> E["5. Kelola Gudang Sentral & Surat Jalan Makro"]
-    E --> F(["6. Pantau Telemetri Situasi Seluruh Posko"])
+  A(["1. Scan QR Komandan Misi: /activate"]) --> B["2. Masuk Command Center Misi Bencana"]
+  B --> C["3. Dirikan Titik-Titik Posko Lapangan"]
+  C --> D["4. Terbitkan QR Tugas Koordinator Posko"]
+  D --> E["5. Kelola Gudang Sentral & Surat Jalan Makro"]
+  E --> F(["6. Pantau Telemetri Situasi Seluruh Posko"])
 ```
 
 ---
@@ -50,44 +50,44 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Komandan Tiba di Posko Induk"]) --> OpenApp["Buka Aplikasi Sanidya -> Pilih '[1] Scan Kartu Tugas'"]
-    
-    OpenApp --> ScanRolePass["/Sorot Kamera ke QR Komandan dari Pemimpin Org/"]
-    ScanRolePass --> VerifyCommanderSig["Validasi Tanda Tangan Master Key Organisasi (Ed25519)"]
-    
-    VerifyCommanderSig --> SaveCommanderSession[("Simpan Sesi Komandan di SQLite Lokal")]
-    SaveCommanderSession --> OpenMissionHub["Masuk COMMAND CENTER MISI BENCANA<br/>Rute: /(organization)/missions/[missionId]"]
-    
-    %% KONSOL COMMAND CENTER MISI
-    OpenMissionHub --> ViewMissionTelemetry["Tampilan Situasi Makro Bencana:<br/>• Total Pengungsi Misi: 4.820 Jiwa (12 Posko)<br/>• Pasien Kritis: 🔴 14 Merah (Butuh RS Darurat)<br/>• Sinyal Krisis: ⚠️ Posko RW 02 Darurat Air Bersih"]
-    
-    ViewMissionTelemetry --> CommanderActions{"Pilih Tindakan Komando"}
-    
-    %% TINDAKAN A: MENDIRIKAN POSKO BARU
-    CommanderActions -->|"1. Dirikan Posko Lapangan"| CreatePoskoForm["Rute: /missions/[id]/posko/create<br/>Form Pendirian Posko Taktis Baru"]
-    CreatePoskoForm --> InputPoskoDetails["Input Data Posko:<br/>• Nama Posko: 'Posko Tenda RW 03 Kp. Cijedil'<br/>• Tipe: Posko Tenda / Pos Medis / Gudang<br/>• Kapasitas Maksimal: 500 Jiwa<br/>• Titik Koordinat GPS / Alamat"]
-    
-    InputPoskoDetails --> SignPoskoAction["User Ketuk: 'Resmikan Titik Posko'"]
-    SignPoskoAction --> SignWithMissionKey["Tandatangani Payload Posko dengan Mission Key (Ed25519)"]
-    SignWithMissionKey --> InsertPoskoDB[("INSERT INTO posts (Status: OPERATIONAL_NORMAL)")]
-    
-    InsertPoskoDB --> ModalDelegatePosLead["Tampilkan Modal Penugasan Koordinator Posko:<br/>Layar Menampilkan QR Kartu Tugas Koordinator Posko"]
-    ModalDelegatePosLead --> PosLeadScanAction["Koordinator Lapangan Memindai QR dari HP-nya"]
-    
-    %% TINDAKAN B: GUDANG SENTRAL & SUPLAI LOGISTIK MAKRO
-    CommanderActions -->|"2. Gudang Sentral Misi"| OpenLogisticsHub["Rute: /missions/[id]/logistics-hub<br/>Konsol Rantai Pasok Makro Misi"]
-    OpenLogisticsHub --> CheckIncomingNeeds["Tinjau Daftar Permintaan Bantuan dari Posko-Posko Lapangan"]
-    CheckIncomingNeeds --> ApproveWaybillDispatch["Komandan Setujui Pengiriman 200 Sak Beras ke Posko A<br/>-> Generate QR Surat Jalan Pengiriman (Waybill)"]
-    ApproveWaybillDispatch --> DriverScanWaybill["Sopir Truk Bantuan Pindai QR Surat Jalan"]
-    
-    %% TINDAKAN C: AUDIT & JELAJAH POSKO
-    CommanderActions -->|"3. Jelajah Detail Posko"| OpenPoskoGrid["Rute: /missions/[id]/posko-grid<br/>Grid Seluruh Posko di Misi Ini"]
-    OpenPoskoGrid --> ClickSpecificPosko["Pilih Posko B -> Buka Detail Telemetri Posko B (Read-Only)"]
-    
-    PosLeadScanAction --> ReturnToHub["Kembali ke Command Center Misi"]
-    DriverScanWaybill --> ReturnToHub
-    ClickSpecificPosko --> ReturnToHub
-    ReturnToHub --> EndState(["Selesai / Terus Memantau"])
+  Start(["Mulai: Komandan Tiba di Posko Induk"]) --> OpenApp["Buka Aplikasi Sandya -> Pilih '[1] Scan Kartu Tugas'"]
+  
+  OpenApp --> ScanRolePass["/Sorot Kamera ke QR Komandan dari Pemimpin Org/"]
+  ScanRolePass --> VerifyCommanderSig["Validasi Tanda Tangan Master Key Organisasi (Ed25519)"]
+  
+  VerifyCommanderSig --> SaveCommanderSession[("Simpan Sesi Komandan di SQLite Lokal")]
+  SaveCommanderSession --> OpenMissionHub["Masuk COMMAND CENTER MISI BENCANA<br/>Rute: /(organization)/missions/[missionId]"]
+  
+  %% KONSOL COMMAND CENTER MISI
+  OpenMissionHub --> ViewMissionTelemetry["Tampilan Situasi Makro Bencana:<br/>• Total Pengungsi Misi: 4.820 Jiwa (12 Posko)<br/>• Pasien Kritis:  14 Merah (Butuh RS Darurat)<br/>• Sinyal Krisis:  Posko RW 02 Darurat Air Bersih"]
+  
+  ViewMissionTelemetry --> CommanderActions{"Pilih Tindakan Komando"}
+  
+  %% TINDAKAN A: MENDIRIKAN POSKO BARU
+  CommanderActions -->|"1. Dirikan Posko Lapangan"| CreatePoskoForm["Rute: /missions/[id]/posko/create<br/>Form Pendirian Posko Taktis Baru"]
+  CreatePoskoForm --> InputPoskoDetails["Input Data Posko:<br/>• Nama Posko: 'Posko Tenda RW 03 Kp. Cijedil'<br/>• Tipe: Posko Tenda / Pos Medis / Gudang<br/>• Kapasitas Maksimal: 500 Jiwa<br/>• Titik Koordinat GPS / Alamat"]
+  
+  InputPoskoDetails --> SignPoskoAction["User Ketuk: 'Resmikan Titik Posko'"]
+  SignPoskoAction --> SignWithMissionKey["Tandatangani Payload Posko dengan Mission Key (Ed25519)"]
+  SignWithMissionKey --> InsertPoskoDB[("INSERT INTO posts (Status: OPERATIONAL_NORMAL)")]
+  
+  InsertPoskoDB --> ModalDelegatePosLead["Tampilkan Modal Penugasan Koordinator Posko:<br/>Layar Menampilkan QR Kartu Tugas Koordinator Posko"]
+  ModalDelegatePosLead --> PosLeadScanAction["Koordinator Lapangan Memindai QR dari HP-nya"]
+  
+  %% TINDAKAN B: GUDANG SENTRAL & SUPLAI LOGISTIK MAKRO
+  CommanderActions -->|"2. Gudang Sentral Misi"| OpenLogisticsHub["Rute: /missions/[id]/logistics-hub<br/>Konsol Rantai Pasok Makro Misi"]
+  OpenLogisticsHub --> CheckIncomingNeeds["Tinjau Daftar Permintaan Bantuan dari Posko-Posko Lapangan"]
+  CheckIncomingNeeds --> ApproveWaybillDispatch["Komandan Setujui Pengiriman 200 Sak Beras ke Posko A<br/>-> Generate QR Surat Jalan Pengiriman (Waybill)"]
+  ApproveWaybillDispatch --> DriverScanWaybill["Sopir Truk Bantuan Pindai QR Surat Jalan"]
+  
+  %% TINDAKAN C: AUDIT & JELAJAH POSKO
+  CommanderActions -->|"3. Jelajah Detail Posko"| OpenPoskoGrid["Rute: /missions/[id]/posko-grid<br/>Grid Seluruh Posko di Misi Ini"]
+  OpenPoskoGrid --> ClickSpecificPosko["Pilih Posko B -> Buka Detail Telemetri Posko B (Read-Only)"]
+  
+  PosLeadScanAction --> ReturnToHub["Kembali ke Command Center Misi"]
+  DriverScanWaybill --> ReturnToHub
+  ClickSpecificPosko --> ReturnToHub
+  ReturnToHub --> EndState(["Selesai / Terus Memantau"])
 ```
 
 ---
@@ -110,7 +110,7 @@ flowchart TD
 
 | Pemicu / Kondisi | Mode Kegagalan | Perilaku UX & Jalur Pemulihan |
 |---|---|---|
-| **Posko Lapangan Terancam Bencana Susulan (Longsor/Banjir)** | Posko fisik harus segera dievakuasi | Komandan mengubah status posko di grid menjadi `🚨 HAZARD_EVACUATION` $\rightarrow$ seluruh posko sekitar menerima peringatan darurat untuk membantu relokasi pengungsi. |
+| **Posko Lapangan Terancam Bencana Susulan (Longsor/Banjir)** | Posko fisik harus segera dievakuasi | Komandan mengubah status posko di grid menjadi ` HAZARD_EVACUATION` $\rightarrow$ seluruh posko sekitar menerima peringatan darurat untuk membantu relokasi pengungsi. |
 | **Gudang Pusat Kehabisan Stok Logistik Kritis** | Kebutuhan beras seluruh posko melebihi kapasitas gudang sentral | Sistem menandai indikator krisis merah pada Barometer Misi $\rightarrow$ Komandan menerbitkan *Laporan Ringkasan Kebutuhan BNPB/Donatur* untuk suplai eksternal. |
 | **Koordinator Posko Berhalangan / Sakit** | Posko lapangan kehilangan pimpinan | Komandan membuka menu posko tersebut $\rightarrow$ klik *"Ganti Koordinator"* $\rightarrow$ terbitkan QR Koordinator baru untuk relawan pengganti di posko tersebut. |
 

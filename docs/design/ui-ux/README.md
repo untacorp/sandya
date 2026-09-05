@@ -4,7 +4,7 @@ Folder ini berisi spesifikasi desain antarmuka pengguna, rancangan layout Next.j
 
 ---
 
-## 📑 Dokumen dalam Folder Ini
+##  Dokumen dalam Folder Ini
 *(Dokumen rancangan UI/UX akan ditambahkan di sini)*
 
 - Template / Standar:

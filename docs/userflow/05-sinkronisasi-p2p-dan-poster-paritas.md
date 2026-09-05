@@ -38,13 +38,13 @@
 
 ```mermaid
 flowchart LR
-    A["1. Berada di Area Posko"] --> B{"Kondisi Koneksi"}
-    B -->|Bluetooth Aktif| C["⚡ 2. Zero-Touch BLE Mesh Gossip (Otomatis)"]
-    B -->|Radio Silence / Baterai Sekarat| D["📷 3. Animated QR Layar-ke-Layar (Fallback)"]
-    B -->|Serah Terima Posko Ditinggalkan| E["📄 4. Poster Paritas Kertas A4 (Fallback)"]
-    
-    C & D & E --> F["5. Verifikasi Signature Ed25519 & Merge SQLite"]
-    F --> G(["6. Data Tergabung & Notifikasi Temu Keluarga"])
+  A["1. Berada di Area Posko"] --> B{"Kondisi Koneksi"}
+  B -->|Bluetooth Aktif| C[" 2. Zero-Touch BLE Mesh Gossip (Otomatis)"]
+  B -->|Radio Silence / Baterai Sekarat| D[" 3. Animated QR Layar-ke-Layar (Fallback)"]
+  B -->|Serah Terima Posko Ditinggalkan| E[" 4. Poster Paritas Kertas A4 (Fallback)"]
+  
+  C & D & E --> F["5. Verifikasi Signature Ed25519 & Merge SQLite"]
+  F --> G(["6. Data Tergabung & Notifikasi Temu Keluarga"])
 ```
 
 ---
@@ -53,86 +53,86 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Di Area Posko / Buka Tab /sync"]) --> SelectSyncMode{"Pilih Moda Sinkronisasi"}
+  Start(["Mulai: Di Area Posko / Buka Tab /sync"]) --> SelectSyncMode{"Pilih Moda Sinkronisasi"}
 
-    %% ==========================================
-    %% MODA 0: ZERO-TOUCH BLE MESH GOSSIP (PRIMARY HIGHWAY)
-    %% ==========================================
-    SelectSyncMode -->|"Moda 1 (Utama): Zero-Touch BLE Mesh"| BLEProximity["Relawan Masuk Jangkauan BLE Radio (~50m)"]
-    BLEProximity --> ExchangeVectorClock["Kirim SYNC_VECTOR_PROBE (~8B):<br/>Node A klaim {Posko: seq 45}"]
-    ExchangeVectorClock --> ComputeDelta["Node B Cek SQLite:<br/>Clock lokal seq 40 -> Minta seq 41..45 (Hanya 5 Event Baru!)"]
-    ComputeDelta --> DispatchDeltaBatch["Node A Kirim SYNC_DELTA_BATCH (~30B dalam 1 Packet)"]
-    DispatchDeltaBatch --> IngestDeltaDB[("Merge Delta ke SQLite Lokal + Update Clock = 45")]
-    IngestDeltaDB --> TriggerReunionCheck["🎉 Auto-Trigger Match Temu Keluarga + Update UI!"]
+  %% ==========================================
+  %% MODA 0: ZERO-TOUCH BLE MESH GOSSIP (PRIMARY HIGHWAY)
+  %% ==========================================
+  SelectSyncMode -->|"Moda 1 (Utama): Zero-Touch BLE Mesh"| BLEProximity["Relawan Masuk Jangkauan BLE Radio (~50m)"]
+  BLEProximity --> ExchangeVectorClock["Kirim SYNC_VECTOR_PROBE (~8B):<br/>Node A klaim {Posko: seq 45}"]
+  ExchangeVectorClock --> ComputeDelta["Node B Cek SQLite:<br/>Clock lokal seq 40 -> Minta seq 41..45 (Hanya 5 Event Baru!)"]
+  ComputeDelta --> DispatchDeltaBatch["Node A Kirim SYNC_DELTA_BATCH (~30B dalam 1 Packet)"]
+  DispatchDeltaBatch --> IngestDeltaDB[("Merge Delta ke SQLite Lokal + Update Clock = 45")]
+  IngestDeltaDB --> TriggerReunionCheck[" Auto-Trigger Match Temu Keluarga + Update UI!"]
 
-    %% ==========================================
-    %% MODA 1: ANIMATED MULTIPART QR (LAYAR-KE-LAYAR FALLBACK)
-    %% ==========================================
-    SelectSyncMode -->|"Moda 2 (Fallback Layar): Animated QR"| AnimatedChoice{"Kirim atau Terima?"}
-    
-    %% PENGIRIM (TRANSMITTER)
-    AnimatedChoice -->|Kirim Data / Transmit| PrepPayloadScreen["Query Delta Event Baru dari SQLite<br/>-> Bit-Packing Ultra-Dense v4<br/>-> Kompresi Zstd / Deflate"]
-    PrepPayloadScreen --> ChunkPayload["Bagi Payload ke N Chunks (@1.200 Bytes)<br/>N = Ceil(TotalBytes / 1.200)"]
-    ChunkPayload --> PlayAnimation["Rute: /sync/animated-qr (Mode Kirim)<br/>Putar Animasi Loop 6 FPS di Layar HP"]
-    
-    %% PENERIMA (RECEIVER)
-    AnimatedChoice -->|Terima Data / Receive| OpenCamReceiver["Rute: /sync/animated-qr (Mode Terima)<br/>Buka Kamera Scanner"]
-    OpenCamReceiver --> PointCamera["Arahkan Kamera ke Layar HP Pengirim"]
-    
-    PointCamera --> CaptureFirstFrame["Tangkap Frame Pertama Mana Saja<br/>(Baca TotalParts: N -> Alokasi N Slot Buffer)"]
-    
-    CaptureFirstFrame --> LoopScanFrames["Loop Asinkron: Tangkap Frame yang Lewat"]
-    LoopScanFrames --> DeduplicateFrame{"Frame Sudah Pernah Disimpan?"}
-    DeduplicateFrame -->|Sudah| IgnoreFrame["Abaikan Frame Duplikat"]
-    DeduplicateFrame -->|Belum| SaveSlotBuffer["Simpan ke Slot Buffer #Index"]
-    
-    IgnoreFrame --> CheckAllSlotsFilled{"Apakah Seluruh N Slot Terisi?"}
-    SaveSlotBuffer --> CheckAllSlotsFilled
-    
-    CheckAllSlotsFilled -->|Belum| UpdateProgressBar["Update Progress Bar: (e.g. 7/10 Frame)"]
-    UpdateProgressBar --> LoopScanFrames
-    
-    CheckAllSlotsFilled -->|Ya: Lengkap 100%!| StopScanInstan["💥 STOP SCAN INSTAN!<br/>Getar Haptic (BZZT) + Beep"]
-    StopScanInstan --> DecompressPayload["Gabung Chunks -> Dekompresi Zstd<br/>-> Unpack Biner Ultra-Dense v4"]
-    
-    DecompressPayload --> MergeToLocalDB[("Merge Delta Records ke SQLite Lokal<br/>(Append-Only Events & Deduplikasi UUID)")]
-    
-    %% ==========================================
-    %% MODA 2: POSTER PARITAS XOR (CETAK KERTAS)
-    %% ==========================================
-    SelectSyncMode -->|"Moda Cetak: Poster Paritas"| PosterChoice{"Cetak atau Scan Poster?"}
-    
-    %% CETAK POSTER
-    PosterChoice -->|Cetak Poster Posko| PrepPosterData["Query Seluruh Data Posko Ini<br/>-> Tokenisasi & Ultra-Dense Bit-Packing"]
-    PrepPosterData --> GenParityXOR["Bagi Menjadi 3 Chunks Data (A, B, C)<br/>+ Hitung 1 Chunk Paritas: D = A ⊕ B ⊕ C"]
-    GenParityXOR --> SignCoordinator["Bubuhkan Tanda Tangan Ed25519 Koordinator"]
-    SignCoordinator --> RenderPosterGrid["Rute: /sync/poster (Preview Grid 4 QR)<br/>[ QR A ] [ QR B ]<br/>[ QR C ] [ QR Paritas D ]"]
-    RenderPosterGrid --> PrintPosterAction["User Ketuk: 'Cetak ke Printer Bluetooth' / Unduh PDF"]
-    
-    %% SCAN POSTER (RELIEVER TEAM)
-    PosterChoice -->|Pindai Poster Fisik| OpenPosterCam["Buka Scanner Poster Paritas"]
-    OpenPosterCam --> ScanGridBoxes["Pindai Kotak-Kotak QR di Poster Fisik"]
-    
-    ScanGridBoxes --> CountScannedBoxes{"Jumlah Kotak Terbaca?"}
-    CountScannedBoxes -->|Kurang dari 3| PromptKeepScanning["Tampilkan Indikator: 'Pindai Minimal 3 dari 4 QR'"]
-    PromptKeepScanning --> ScanGridBoxes
-    
-    CountScannedBoxes -->|Lengkap 4 Kotak| DirectAssemble["Gabungkan Data Utuh (A + B + C)"]
-    CountScannedBoxes -->|3 Kotak (1 QR Sobek/Rusak)| XORReconstruction["🔥 REKONSTRUKSI PARITAS XOR:<br/>Contoh: Kotak B Hilang<br/>B = A ⊕ C ⊕ D (100% Sempurna Pulih!)"]
-    
-    DirectAssemble --> VerifyPosterSig["Verifikasi Signature Ed25519 Koordinator"]
-    XORReconstruction --> VerifyPosterSig
-    
-    VerifyPosterSig --> MergeToLocalDB
-    
-    %% REKONSILIASI AKHIR & TEMU KELUARGA
-    MergeToLocalDB --> AutoReconciliation["Jalankan Rekonsiliasi Graf Temu Keluarga"]
-    AutoReconciliation --> KinMatchFound{"Ada Nama Kerabat yang Cocok?"}
-    KinMatchFound -->|Ya| ShowReunionAlert["🎉 Munculkan Notifikasi Pop-up Temu Keluarga!"]
-    KinMatchFound -->|Tidak| ShowSyncDoneToast["Toast: 'Sinkronisasi Selesai (Data Tergabung)'"]
-    
-    ShowReunionAlert --> EndSyncState(["Selesai"])
-    ShowSyncDoneToast --> EndSyncState
+  %% ==========================================
+  %% MODA 1: ANIMATED MULTIPART QR (LAYAR-KE-LAYAR FALLBACK)
+  %% ==========================================
+  SelectSyncMode -->|"Moda 2 (Fallback Layar): Animated QR"| AnimatedChoice{"Kirim atau Terima?"}
+  
+  %% PENGIRIM (TRANSMITTER)
+  AnimatedChoice -->|Kirim Data / Transmit| PrepPayloadScreen["Query Delta Event Baru dari SQLite<br/>-> Bit-Packing Ultra-Dense v4<br/>-> Kompresi Zstd / Deflate"]
+  PrepPayloadScreen --> ChunkPayload["Bagi Payload ke N Chunks (@1.200 Bytes)<br/>N = Ceil(TotalBytes / 1.200)"]
+  ChunkPayload --> PlayAnimation["Rute: /sync/animated-qr (Mode Kirim)<br/>Putar Animasi Loop 6 FPS di Layar HP"]
+  
+  %% PENERIMA (RECEIVER)
+  AnimatedChoice -->|Terima Data / Receive| OpenCamReceiver["Rute: /sync/animated-qr (Mode Terima)<br/>Buka Kamera Scanner"]
+  OpenCamReceiver --> PointCamera["Arahkan Kamera ke Layar HP Pengirim"]
+  
+  PointCamera --> CaptureFirstFrame["Tangkap Frame Pertama Mana Saja<br/>(Baca TotalParts: N -> Alokasi N Slot Buffer)"]
+  
+  CaptureFirstFrame --> LoopScanFrames["Loop Asinkron: Tangkap Frame yang Lewat"]
+  LoopScanFrames --> DeduplicateFrame{"Frame Sudah Pernah Disimpan?"}
+  DeduplicateFrame -->|Sudah| IgnoreFrame["Abaikan Frame Duplikat"]
+  DeduplicateFrame -->|Belum| SaveSlotBuffer["Simpan ke Slot Buffer #Index"]
+  
+  IgnoreFrame --> CheckAllSlotsFilled{"Apakah Seluruh N Slot Terisi?"}
+  SaveSlotBuffer --> CheckAllSlotsFilled
+  
+  CheckAllSlotsFilled -->|Belum| UpdateProgressBar["Update Progress Bar: (e.g. 7/10 Frame)"]
+  UpdateProgressBar --> LoopScanFrames
+  
+  CheckAllSlotsFilled -->|Ya: Lengkap 100%!| StopScanInstan[" STOP SCAN INSTAN!<br/>Getar Haptic (BZZT) + Beep"]
+  StopScanInstan --> DecompressPayload["Gabung Chunks -> Dekompresi Zstd<br/>-> Unpack Biner Ultra-Dense v4"]
+  
+  DecompressPayload --> MergeToLocalDB[("Merge Delta Records ke SQLite Lokal<br/>(Append-Only Events & Deduplikasi UUID)")]
+  
+  %% ==========================================
+  %% MODA 2: POSTER PARITAS XOR (CETAK KERTAS)
+  %% ==========================================
+  SelectSyncMode -->|"Moda Cetak: Poster Paritas"| PosterChoice{"Cetak atau Scan Poster?"}
+  
+  %% CETAK POSTER
+  PosterChoice -->|Cetak Poster Posko| PrepPosterData["Query Seluruh Data Posko Ini<br/>-> Tokenisasi & Ultra-Dense Bit-Packing"]
+  PrepPosterData --> GenParityXOR["Bagi Menjadi 3 Chunks Data (A, B, C)<br/>+ Hitung 1 Chunk Paritas: D = A ⊕ B ⊕ C"]
+  GenParityXOR --> SignCoordinator["Bubuhkan Tanda Tangan Ed25519 Koordinator"]
+  SignCoordinator --> RenderPosterGrid["Rute: /sync/poster (Preview Grid 4 QR)<br/>[ QR A ] [ QR B ]<br/>[ QR C ] [ QR Paritas D ]"]
+  RenderPosterGrid --> PrintPosterAction["User Ketuk: 'Cetak ke Printer Bluetooth' / Unduh PDF"]
+  
+  %% SCAN POSTER (RELIEVER TEAM)
+  PosterChoice -->|Pindai Poster Fisik| OpenPosterCam["Buka Scanner Poster Paritas"]
+  OpenPosterCam --> ScanGridBoxes["Pindai Kotak-Kotak QR di Poster Fisik"]
+  
+  ScanGridBoxes --> CountScannedBoxes{"Jumlah Kotak Terbaca?"}
+  CountScannedBoxes -->|Kurang dari 3| PromptKeepScanning["Tampilkan Indikator: 'Pindai Minimal 3 dari 4 QR'"]
+  PromptKeepScanning --> ScanGridBoxes
+  
+  CountScannedBoxes -->|Lengkap 4 Kotak| DirectAssemble["Gabungkan Data Utuh (A + B + C)"]
+  CountScannedBoxes -->|3 Kotak (1 QR Sobek/Rusak)| XORReconstruction[" REKONSTRUKSI PARITAS XOR:<br/>Contoh: Kotak B Hilang<br/>B = A ⊕ C ⊕ D (100% Sempurna Pulih!)"]
+  
+  DirectAssemble --> VerifyPosterSig["Verifikasi Signature Ed25519 Koordinator"]
+  XORReconstruction --> VerifyPosterSig
+  
+  VerifyPosterSig --> MergeToLocalDB
+  
+  %% REKONSILIASI AKHIR & TEMU KELUARGA
+  MergeToLocalDB --> AutoReconciliation["Jalankan Rekonsiliasi Graf Temu Keluarga"]
+  AutoReconciliation --> KinMatchFound{"Ada Nama Kerabat yang Cocok?"}
+  KinMatchFound -->|Ya| ShowReunionAlert[" Munculkan Notifikasi Pop-up Temu Keluarga!"]
+  KinMatchFound -->|Tidak| ShowSyncDoneToast["Toast: 'Sinkronisasi Selesai (Data Tergabung)'"]
+  
+  ShowReunionAlert --> EndSyncState(["Selesai"])
+  ShowSyncDoneToast --> EndSyncState
 ```
 
 ---
@@ -147,7 +147,7 @@ flowchart TD
 | **5.1c** | `/sync/animated-qr` | Seluruh slot terisi penuh | Kamera langsung berhenti seketika (*BZZT!*), mendekompresi payload dan merge ke SQLite | Waktu transfer 1.000 jiwa hanya 2–3 detik |
 | **5.2a** | `/sync/poster` | Koordinator memilih *"Cetak Poster"* | Men-generate Grid 4 QR (3 Data + 1 Paritas XOR) bertandatangan Ed25519 | Cetak ke printer kasir termal saku |
 | **5.2b** | `/sync/poster` | Tim relawan baru memindai poster yang sobek sudutnya | Membaca 3 kotak yang utuh, menghitung formula XOR $B = A \oplus C \oplus D$, dan memulihkan 100% data posko | *Zero-data-loss guarantee* |
-| **5.3** | Background Task | Terhubung WiFi Starlink posko induk | Otomatis mem-push antrean event lokal ke Sanidya Cloud / BYOC Server | Berjalan di latar belakang (*silent sync*) |
+| **5.3** | Background Task | Terhubung WiFi Starlink posko induk | Otomatis mem-push antrean event lokal ke Sandya Cloud / BYOC Server | Berjalan di latar belakang (*silent sync*) |
 
 ---
 

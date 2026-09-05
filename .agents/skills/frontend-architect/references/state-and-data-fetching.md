@@ -36,7 +36,7 @@ export const evacueeKeys = {
   all: ['evacuees'] as const,
   lists: () => [...evacueeKeys.all, 'list'] as const,
   list: (posId: string, filters?: Record<string, unknown>) =>
-    [...evacueeKeys.lists(), posId, filters ?? {}] as const,
+  [...evacueeKeys.lists(), posId, filters ?? {}] as const,
   details: () => [...evacueeKeys.all, 'detail'] as const,
   detail: (id: string) => [...evacueeKeys.details(), id] as const,
 };
@@ -53,50 +53,50 @@ export function useCreateEvacueeMutation(posId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newRecord: CreateEvacueeInput) => {
-      // Calls local SQLite IPC via Tauri or Next.js Server Action
-      const res = await fetch(`/api/pos/${posId}/evacuees`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newRecord),
-      });
-      if (!res.ok) throw new Error('Gagal menyimpan data pengungsi');
-      return res.json() as Promise<Evacuee>;
-    },
-    // 1. When mutation starts: Cancel outgoing queries & snapshot previous data
-    onMutate: async (newRecord) => {
-      await queryClient.cancelQueries({ queryKey: evacueeKeys.list(posId) });
-      const previousData = queryClient.getQueryData<Evacuee[]>(evacueeKeys.list(posId));
+  mutationFn: async (newRecord: CreateEvacueeInput) => {
+  // Calls local SQLite IPC via Tauri or Next.js Server Action
+  const res = await fetch(`/api/pos/${posId}/evacuees`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(newRecord),
+  });
+  if (!res.ok) throw new Error('Gagal menyimpan data pengungsi');
+  return res.json() as Promise<Evacuee>;
+  },
+  // 1. When mutation starts: Cancel outgoing queries & snapshot previous data
+  onMutate: async (newRecord) => {
+  await queryClient.cancelQueries({ queryKey: evacueeKeys.list(posId) });
+  const previousData = queryClient.getQueryData<Evacuee[]>(evacueeKeys.list(posId));
 
-      // Optimistically update cache with temporary UUID
-      const optimisticEvacuee: Evacuee = {
-        id: `temp-${Date.now()}`,
-        posId,
-        nik: newRecord.nik,
-        fullName: newRecord.fullName,
-        age: newRecord.age,
-        gender: newRecord.gender,
-        syncStatus: 'PENDING',
-        createdAt: new Date().toISOString(),
-      };
+  // Optimistically update cache with temporary UUID
+  const optimisticEvacuee: Evacuee = {
+  id: `temp-${Date.now()}`,
+  posId,
+  nik: newRecord.nik,
+  fullName: newRecord.fullName,
+  age: newRecord.age,
+  gender: newRecord.gender,
+  syncStatus: 'PENDING',
+  createdAt: new Date().toISOString(),
+  };
 
-      queryClient.setQueryData<Evacuee[]>(evacueeKeys.list(posId), (old = []) => [
-        optimisticEvacuee,
-        ...old,
-      ]);
+  queryClient.setQueryData<Evacuee[]>(evacueeKeys.list(posId), (old = []) => [
+  optimisticEvacuee,
+  ...old,
+  ]);
 
-      return { previousData };
-    },
-    // 2. On error: Roll back to previous snapshot
-    onError: (_err, _newRecord, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(evacueeKeys.list(posId), context.previousData);
-      }
-    },
-    // 3. Always refetch after error or success to synchronize with true database state
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: evacueeKeys.list(posId) });
-    },
+  return { previousData };
+  },
+  // 2. On error: Roll back to previous snapshot
+  onError: (_err, _newRecord, context) => {
+  if (context?.previousData) {
+  queryClient.setQueryData(evacueeKeys.list(posId), context.previousData);
+  }
+  },
+  // 3. Always refetch after error or success to synchronize with true database state
+  onSettled: () => {
+  queryClient.invalidateQueries({ queryKey: evacueeKeys.list(posId) });
+  },
   });
 }
 ```
@@ -119,16 +119,16 @@ interface ActivePosState {
 
 export const useActivePosStore = create<ActivePosState>()(
   persist(
-    (set) => ({
-      activePosId: null,
-      activePosName: null,
-      setActivePos: (id, name) => set({ activePosId: id, activePosName: name }),
-      clearActivePos: () => set({ activePosId: null, activePosName: null }),
-    }),
-    {
-      name: 'sanidya_active_pos',
-      storage: createJSONStorage(() => localStorage),
-    }
+  (set) => ({
+  activePosId: null,
+  activePosName: null,
+  setActivePos: (id, name) => set({ activePosId: id, activePosName: name }),
+  clearActivePos: () => set({ activePosId: null, activePosName: null }),
+  }),
+  {
+  name: 'sandya_active_pos',
+  storage: createJSONStorage(() => localStorage),
+  }
   )
 );
 ```
@@ -147,8 +147,8 @@ export const isTauriEnvironment = (): boolean => {
 
 export async function scanBarcodeNative(): Promise<string | null> {
   if (!isTauriEnvironment()) {
-    console.warn('Native scanner not available in pure browser; falling back to web camera');
-    return null;
+  console.warn('Native scanner not available in pure browser; falling back to web camera');
+  return null;
   }
 
   const { scan } = await import('@tauri-apps/plugin-barcode-scanner');

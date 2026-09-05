@@ -13,9 +13,9 @@ This guide details best practices for structuring React 19 / Next.js 16 applicat
 │ • Direct access to server databases / filesystem            │
 │ • Secure: Secrets, DB queries, private API keys             │
 └──────────────────────────────┬──────────────────────────────┘
-                               │
-                       Pass Props / Children
-                               │
+  │
+  Pass Props / Children
+  │
 ┌──────────────────────────────▼──────────────────────────────┐
 │            CLIENT COMPONENT LEAF NODES ('use client')       │
 │ • Interactive forms, stateful buttons, modal triggers       │
@@ -27,13 +27,13 @@ This guide details best practices for structuring React 19 / Next.js 16 applicat
 ### The Golden Rule: "Push `'use client'` to the Leaves"
 
 ```tsx
-// ❌ ANTI-PATTERN: Marking the entire page as client component pulls huge bundles to client
+// [FAIL] ANTI-PATTERN: Marking the entire page as client component pulls huge bundles to client
 'use client';
 export default function PosPage({ params }: { params: { posId: string } }) {
   // DB queries done via client fetch ...
 }
 
-// ✅ INDUSTRIAL PATTERN: Server Page fetches data; Client Island handles interactivity
+// [PASS] INDUSTRIAL PATTERN: Server Page fetches data; Client Island handles interactivity
 // src/app/(pos)/[posId]/page.tsx (Server Component)
 import { Suspense } from 'react';
 import { PosHeader } from '@/features/pos/components/pos-header';
@@ -45,16 +45,16 @@ export default async function PosPage({ params }: { params: Promise<{ posId: str
   const { posId } = await params;
 
   return (
-    <div className="space-y-6 p-6">
-      <PosHeader posId={posId} />
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Daftar Pengungsi</h2>
-        <QuickIntakeModalTrigger posId={posId} />
-      </div>
-      <Suspense fallback={<EvacueeListSkeleton />}>
-        <EvacueeListServer posId={posId} />
-      </Suspense>
-    </div>
+  <div className="space-y-6 p-6">
+  <PosHeader posId={posId} />
+  <div className="flex justify-between items-center">
+  <h2 className="text-xl font-bold">Daftar Pengungsi</h2>
+  <QuickIntakeModalTrigger posId={posId} />
+  </div>
+  <Suspense fallback={<EvacueeListSkeleton />}>
+  <EvacueeListServer posId={posId} />
+  </Suspense>
+  </div>
   );
 }
 ```
@@ -84,9 +84,9 @@ src/
 │   ├── qr-sync/
 │   └── scanner/
 └── shared/                           # Reusable / Non-domain-specific code
-    ├── ui/                           # Primitives (Button, Modal, Input, Badge, Table)
-    ├── lib/                          # Utilities (cn, formatters, crypto)
-    └── hooks/                        # Generic hooks (useDebounce, useOnlineStatus)
+  ├── ui/                           # Primitives (Button, Modal, Input, Badge, Table)
+  ├── lib/                          # Utilities (cn, formatters, crypto)
+  └── hooks/                        # Generic hooks (useDebounce, useOnlineStatus)
 ```
 
 ---
@@ -104,39 +104,39 @@ import { cn } from '@/shared/lib/utils';
 export const badgeVariants = cva(
   'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground',
-        success: 'border-transparent bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-        warning: 'border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400',
-        destructive: 'border-transparent bg-destructive/15 text-destructive',
-        outline: 'text-foreground border border-border',
-      },
-      size: {
-        sm: 'text-[10px] px-2 py-0.25',
-        md: 'text-xs px-2.5 py-0.5',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-    },
+  variants: {
+  variant: {
+  default: 'border-transparent bg-primary text-primary-foreground',
+  secondary: 'border-transparent bg-secondary text-secondary-foreground',
+  success: 'border-transparent bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  warning: 'border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  destructive: 'border-transparent bg-destructive/15 text-destructive',
+  outline: 'text-foreground border border-border',
+  },
+  size: {
+  sm: 'text-[10px] px-2 py-0.25',
+  md: 'text-xs px-2.5 py-0.5',
+  },
+  },
+  defaultVariants: {
+  variant: 'default',
+  size: 'md',
+  },
   }
 );
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {
+  VariantProps<typeof badgeVariants> {
   icon?: React.ReactNode;
 }
 
 export function Badge({ className, variant, size, icon, children, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
-      {icon && <span className="mr-1 -ml-0.5">{icon}</span>}
-      {children}
-    </div>
+  <div className={cn(badgeVariants({ variant, size }), className)} {...props}>
+  {icon && <span className="mr-1 -ml-0.5">{icon}</span>}
+  {children}
+  </div>
   );
 }
 ```

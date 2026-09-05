@@ -23,8 +23,8 @@ Conversely, legacy **UUIDv4 (Random)** causes severe **B-Tree Page Fragmentation
 ```sql
 -- PostgreSQL 16+ / pg_uuidv7
 CREATE TABLE evacuees (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
-    ...
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+  ...
 );
 ```
 
@@ -39,12 +39,12 @@ CREATE TABLE evacuees (
 
 ### When to Strategically Denormalize (With Guardrails):
 1. **Immutable Snapshots / Audit Records**:
-   - Order line items must duplicate product name and price at time of purchase (`unit_price_at_purchase NUMERIC(12,2) NOT NULL`), because catalog prices will change later.
-   - Evacuee relief delivery must snapshot the person's status at the moment of distribution.
+  - Order line items must duplicate product name and price at time of purchase (`unit_price_at_purchase NUMERIC(12,2) NOT NULL`), because catalog prices will change later.
+  - Evacuee relief delivery must snapshot the person's status at the moment of distribution.
 2. **High-Frequency Read Counters**:
-   - Storing `active_evacuee_count INT NOT NULL DEFAULT 0` on `pos_locations` table is acceptable **only if maintained by database triggers** or strict transactional increments to prevent race condition drift.
+  - Storing `active_evacuee_count INT NOT NULL DEFAULT 0` on `pos_locations` table is acceptable **only if maintained by database triggers** or strict transactional increments to prevent race condition drift.
 3. **JSONB for Semi-Structured / Dynamic Extensible Metadata**:
-   - Use `metadata JSONB NOT NULL DEFAULT '{}'::jsonb` for dynamic sensor data or custom org attributes, while keeping core queryable attributes in typed columns.
+  - Use `metadata JSONB NOT NULL DEFAULT '{}'::jsonb` for dynamic sensor data or custom org attributes, while keeping core queryable attributes in typed columns.
 
 ---
 
@@ -55,9 +55,9 @@ Naive soft-delete (`deleted_at TIMESTAMP`) frequently introduces catastrophic da
 ```sql
 -- BUG: If a user soft-deletes their account, they cannot re-register with the same email!
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL, -- ❌ BREAKS SOFT DELETE
-    deleted_at TIMESTAMPTZ
+  id UUID PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL, -- [FAIL] BREAKS SOFT DELETE
+  deleted_at TIMESTAMPTZ
 );
 ```
 
@@ -65,14 +65,14 @@ CREATE TABLE users (
 
 ```sql
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
-    email VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
+  email VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ
 );
 
--- ✅ Enforces uniqueness ONLY among active (non-deleted) records:
+-- [PASS] Enforces uniqueness ONLY among active (non-deleted) records:
 CREATE UNIQUE INDEX uq_users_email_active 
 ON users (LOWER(email)) 
 WHERE deleted_at IS NULL;
@@ -95,13 +95,13 @@ ALTER TABLE evacuees FORCE ROW LEVEL SECURITY; -- Also applies to table owners
 
 -- 2. Create Isolation Policy using session variable
 CREATE POLICY evacuee_tenant_isolation_policy ON evacuees
-    FOR ALL
-    USING (
-        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-    )
-    WITH CHECK (
-        tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-    );
+  FOR ALL
+  USING (
+  tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+  tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
 
 -- 3. Application Connection Setup (Executed on connection checkout)
 SET LOCAL app.current_tenant_id = '018dc339-4456-789a-bcde-f0123456789a';
@@ -122,6 +122,6 @@ Always specify explicit foreign key delete and update behaviors:
 ### Database-Level Check Constraints:
 ```sql
 ALTER TABLE evacuees
-    ADD CONSTRAINT chk_evacuee_age CHECK (age >= 0 AND age <= 130),
-    ADD CONSTRAINT chk_nik_format CHECK (nik ~ '^[0-9]{16}$');
+  ADD CONSTRAINT chk_evacuee_age CHECK (age >= 0 AND age <= 130),
+  ADD CONSTRAINT chk_nik_format CHECK (nik ~ '^[0-9]{16}$');
 ```

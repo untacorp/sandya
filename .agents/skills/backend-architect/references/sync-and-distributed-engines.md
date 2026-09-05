@@ -4,7 +4,7 @@ This guide details synchronization protocols, Event-Sourcing reconciliation, con
 
 ---
 
-## 🔄 1. Local-First Event Sourcing & Ingestion Pipeline
+##  1. Local-First Event Sourcing & Ingestion Pipeline
 
 In resilient, field-deployed, or disaster-response systems, client nodes operate completely disconnected from the internet, generating state changes into a local SQLite outbox. When connectivity is available (via internet, mesh bridge, or physical QR scan), mutation events are shipped and ingested centrally.
 
@@ -20,7 +20,7 @@ In resilient, field-deployed, or disaster-response systems, client nodes operate
 
 ---
 
-## ⚔️ 2. Conflict Resolution Strategies
+##  2. Conflict Resolution Strategies
 
 When multiple nodes update the same entity while partitioned:
 
@@ -39,7 +39,7 @@ When multiple nodes update the same entity while partitioned:
 
 ---
 
-## 📦 3. Transport-Agnostic Packet Structure & Chunking
+##  3. Transport-Agnostic Packet Structure & Chunking
 
 For data transfer across low-bandwidth, intermittent, or physical air-gapped channels (Animated QR, Bluetooth Low Energy, LoRa, Wi-Fi Direct Mesh):
 
@@ -72,41 +72,41 @@ export class PacketReassemblyEngine {
   private buffer = new Map<string, Map<number, IngestionChunk>>();
 
   pushChunk(chunk: IngestionChunk): Uint8Array | null {
-    if (!this.buffer.has(chunk.packetId)) {
-      this.buffer.set(chunk.packetId, new Map());
-    }
+  if (!this.buffer.has(chunk.packetId)) {
+  this.buffer.set(chunk.packetId, new Map());
+  }
 
-    const chunks = this.buffer.get(chunk.packetId)!;
-    chunks.set(chunk.chunkIndex, chunk);
+  const chunks = this.buffer.get(chunk.packetId)!;
+  chunks.set(chunk.chunkIndex, chunk);
 
-    // Check if all chunks received
-    if (chunks.size === chunk.totalChunks) {
-      const fullPayload = this.reassemble(chunk.packetId, chunk.totalChunks);
-      this.buffer.delete(chunk.packetId);
-      return fullPayload;
-    }
+  // Check if all chunks received
+  if (chunks.size === chunk.totalChunks) {
+  const fullPayload = this.reassemble(chunk.packetId, chunk.totalChunks);
+  this.buffer.delete(chunk.packetId);
+  return fullPayload;
+  }
 
-    return null; // Awaiting remaining chunks
+  return null; // Awaiting remaining chunks
   }
 
   private reassemble(packetId: string, total: number): Uint8Array {
-    const chunks = this.buffer.get(packetId)!;
-    const parts: Uint8Array[] = [];
-    let totalLength = 0;
+  const chunks = this.buffer.get(packetId)!;
+  const parts: Uint8Array[] = [];
+  let totalLength = 0;
 
-    for (let i = 0; i < total; i++) {
-      const part = chunks.get(i)!.data;
-      parts.push(part);
-      totalLength += part.length;
-    }
+  for (let i = 0; i < total; i++) {
+  const part = chunks.get(i)!.data;
+  parts.push(part);
+  totalLength += part.length;
+  }
 
-    const merged = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const part of parts) {
-      merged.set(part, offset);
-      offset += part.length;
-    }
-    return merged;
+  const merged = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const part of parts) {
+  merged.set(part, offset);
+  offset += part.length;
+  }
+  return merged;
   }
 }
 ```

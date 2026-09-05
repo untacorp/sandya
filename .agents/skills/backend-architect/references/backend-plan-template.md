@@ -22,15 +22,15 @@ Briefly describe the business goals, system context, and high-level architectura
 ### System Boundary & Architecture Diagram
 ```mermaid
 graph TD
-    Client[Client / Web / Mobile / Scanner] -->|HTTPS / WSS / P2P| API[API Gateway / Route Handlers]
-    API --> Auth[Auth & RBAC Middleware]
-    Auth --> UseCase[Application Use Case Pipeline]
-    UseCase --> Domain[Domain Entities & FSM Invariants]
-    UseCase --> DB[(PostgreSQL / SQLite Database)]
-    UseCase --> Outbox[(Transactional Outbox)]
-    Outbox --> Relay[Outbox Relay Worker]
-    Relay --> Queue[(BullMQ / Redis Queue)]
-    Queue --> Worker[Background Worker Processor]
+  Client[Client / Web / Mobile / Scanner] -->|HTTPS / WSS / P2P| API[API Gateway / Route Handlers]
+  API --> Auth[Auth & RBAC Middleware]
+  Auth --> UseCase[Application Use Case Pipeline]
+  UseCase --> Domain[Domain Entities & FSM Invariants]
+  UseCase --> DB[(PostgreSQL / SQLite Database)]
+  UseCase --> Outbox[(Transactional Outbox)]
+  Outbox --> Relay[Outbox Relay Worker]
+  Relay --> Queue[(BullMQ / Redis Queue)]
+  Queue --> Worker[Background Worker Processor]
 ```
 
 ---
@@ -57,11 +57,11 @@ Define pure domain entities, value objects, and non-negotiable business rules.
 ### Visual State Transition Diagram
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT
-    DRAFT --> PENDING : Submit()
-    PENDING --> APPROVED : Approve() [IsAuthorized]
-    PENDING --> REJECTED : Reject(reason)
-    APPROVED --> COMPLETED : Execute()
+  [*] --> DRAFT
+  DRAFT --> PENDING : Submit()
+  PENDING --> APPROVED : Approve() [IsAuthorized]
+  PENDING --> REJECTED : Reject(reason)
+  APPROVED --> COMPLETED : Execute()
 ```
 
 ### Transition & Guard Table

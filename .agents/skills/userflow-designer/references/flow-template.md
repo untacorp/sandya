@@ -35,9 +35,9 @@ Use this template when producing user flow documents in `docs/userflows/<flow-na
 
 ```mermaid
 flowchart LR
-    A([1. Entry Point]) --> B([2. Core Action])
-    B --> C([3. Processing / Verification])
-    C --> D([4. Final Outcome])
+  A([1. Entry Point]) --> B([2. Core Action])
+  B --> C([3. Processing / Verification])
+  C --> D([4. Final Outcome])
 ```
 
 ---
@@ -46,7 +46,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    %% Insert detailed flowchart with decision branches, UI screens, and DB writes
+  %% Insert detailed flowchart with decision branches, UI screens, and DB writes
 ```
 
 ---

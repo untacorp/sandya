@@ -4,7 +4,7 @@ This guide provides architectural blueprints and structural patterns for constru
 
 ---
 
-## 🏛️ Clean / Hexagonal Architecture (Ports and Adapters)
+##  Clean / Hexagonal Architecture (Ports and Adapters)
 
 To prevent business logic from being polluted by framework-specific code, database drivers, or third-party APIs, the codebase is structured into concentric layers with a strict **Dependency Rule**: *Inner layers know nothing about outer layers.*
 
@@ -44,29 +44,29 @@ export class Evacuee {
   private constructor(private props: EvacueeProps) {}
 
   static create(props: Omit<EvacueeProps, 'id' | 'status' | 'registeredAt' | 'version'>): Evacuee {
-    return new Evacuee({
-      ...props,
-      id: crypto.randomUUID(),
-      status: 'REGISTERED',
-      registeredAt: new Date(),
-      version: 1,
-    });
+  return new Evacuee({
+  ...props,
+  id: crypto.randomUUID(),
+  status: 'REGISTERED',
+  registeredAt: new Date(),
+  version: 1,
+  });
   }
 
   static rehydrate(props: EvacueeProps): Evacuee {
-    return new Evacuee(props);
+  return new Evacuee(props);
   }
 
   transferToHospital(reason: string): void {
-    if (this.props.status === 'REUNITED') {
-      throw new DomainError('Cannot hospitalize an evacuee already marked reunited.');
-    }
-    this.props.status = 'HOSPITALIZED';
-    this.props.version += 1;
+  if (this.props.status === 'REUNITED') {
+  throw new DomainError('Cannot hospitalize an evacuee already marked reunited.');
+  }
+  this.props.status = 'HOSPITALIZED';
+  this.props.version += 1;
   }
 
   get state(): Readonly<EvacueeProps> {
-    return Object.freeze({ ...this.props });
+  return Object.freeze({ ...this.props });
   }
 }
 ```
@@ -85,25 +85,25 @@ export interface TransferEvacueeCommand {
 
 export class TransferEvacueeUseCase {
   constructor(
-    private readonly evacueeRepo: EvacueeRepositoryPort,
-    private readonly unitOfWork: UnitOfWorkPort,
-    private readonly outboxRepo: OutboxRepositoryPort
+  private readonly evacueeRepo: EvacueeRepositoryPort,
+  private readonly unitOfWork: UnitOfWorkPort,
+  private readonly outboxRepo: OutboxRepositoryPort
   ) {}
 
   async execute(command: TransferEvacueeCommand): Promise<void> {
-    await this.unitOfWork.transaction(async (tx) => {
-      const evacuee = await this.evacueeRepo.findByIdWithLock(command.evacueeId, tx);
-      if (!evacuee) throw new NotFoundError('Evacuee not found');
+  await this.unitOfWork.transaction(async (tx) => {
+  const evacuee = await this.evacueeRepo.findByIdWithLock(command.evacueeId, tx);
+  if (!evacuee) throw new NotFoundError('Evacuee not found');
 
-      evacuee.transferToHospital(command.reason);
+  evacuee.transferToHospital(command.reason);
 
-      await this.evacueeRepo.save(evacuee, tx);
-      await this.outboxRepo.append({
-        eventType: 'EVACUEE_HOSPITALIZED',
-        aggregateId: evacuee.state.id,
-        payload: { evacueeId: evacuee.state.id, reason: command.reason, actorId: command.actorId },
-      }, tx);
-    });
+  await this.evacueeRepo.save(evacuee, tx);
+  await this.outboxRepo.append({
+  eventType: 'EVACUEE_HOSPITALIZED',
+  aggregateId: evacuee.state.id,
+  payload: { evacueeId: evacuee.state.id, reason: command.reason, actorId: command.actorId },
+  }, tx);
+  });
   }
 }
 ```
@@ -118,7 +118,7 @@ export class TransferEvacueeUseCase {
 
 ---
 
-## 📁 Standard Modular Monolith File Structure
+##  Standard Modular Monolith File Structure
 
 ```
 src/
@@ -150,15 +150,15 @@ src/
 │   ├── security/                # Argon2id hasher, Ed25519 signer, JWT provider
 │   └── sync/                    # Local-first event replays, animated QR packet builder
 └── interfaces/                  # Entry Points & Controllers
-    ├── http/                    # Express/Fastify/Next.js Route Handlers
-    ├── trpc/                    # tRPC Routers & procedures
-    ├── graphql/                 # GraphQL SDL schemas, resolvers & DataLoader
-    └── ws/                      # WebSocket / SSE connection handlers
+  ├── http/                    # Express/Fastify/Next.js Route Handlers
+  ├── trpc/                    # tRPC Routers & procedures
+  ├── graphql/                 # GraphQL SDL schemas, resolvers & DataLoader
+  └── ws/                      # WebSocket / SSE connection handlers
 ```
 
 ---
 
-## ⚖️ Monolith vs Modular Monolith vs Microservices Matrix
+##  Monolith vs Modular Monolith vs Microservices Matrix
 
 | Criterion | Single Monolith | Modular Monolith (Recommended) | Distributed Microservices |
 | :--- | :--- | :--- | :--- |

@@ -11,7 +11,7 @@ Skill ini menyediakan panduan arsitektur visual dan aturan eksekusi resmi khas *
 
 ---
 
-## 🧭 Penentuan Cakupan Kerja (Scope Router)
+##  Penentuan Cakupan Kerja (Scope Router)
 
 Sebelum memulai eksekusi kode, tentukan apakah permintaan pengguna berlingkup **Halaman Penuh (Page-Scope)** atau **Komponen Tunggal (Component-Scope)**.
 
@@ -22,7 +22,7 @@ Sebelum memulai eksekusi kode, tentukan apakah permintaan pengguna berlingkup **
 
 ---
 
-## ⚡ Alur Kerja Eksekusi Desain (Design Workflow)
+##  Alur Kerja Eksekusi Desain (Design Workflow)
 
 ### Langkah 0: Scanning & Pra-Kondisi (Pre-flight Scan)
 
@@ -60,22 +60,22 @@ Sebelum memulai eksekusi kode, tentukan apakah permintaan pengguna berlingkup **
 
 ---
 
-## 📚 Peta Dokumen Referensi (Progressive Disclosure)
+##  Peta Dokumen Referensi (Progressive Disclosure)
 
 | Topik Referensi                | File Dokumen                                                                | Ringkasan Isi Utama                                                                                                           |
 | ------------------------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 🚫**Anti-Patterns**      | [`references/anti-patterns.md`](references/anti-patterns.md)               | Bedah tuntas 14 elemen*Hall of Shame* (termasuk larangan Emoji, larangan Badge di atas Headline, dan larangan Warna Kusam). |
-| ✍️**Tipografi**        | [`references/typography.md`](references/typography.md)                     | Matriks pasangan font, hirarki ukuran teks, aturan kapitalisasi natural, dan tokenisasi tipografi.                            |
-| 📐**Layout & Spacing**   | [`references/layout-and-spacing.md`](references/layout-and-spacing.md)     | Grid asimetris, ruang kosong, batas border 1.5px presisi, dan uji responsivitas mobile (320px–1440px).                       |
-| 🎨**Sistem Warna**       | [`references/color-system.md`](references/color-system.md)                 | Aturan pewarnaan 60-30-10, 5 palet warna bersih & segar khas Var-UI Base, serta panduan Crisp Light Mode.                     |
-| 🔄**State Komponen**     | [`references/component-states.md`](references/component-states.md)         | Implementasi 8 state interaktif (Default, Hover, Focus, Active, Disabled, Loading, Error, Success) dan format demo wrapper.   |
-| 🎬**Mikro-Interaksi**    | [`references/microinteractions.md`](references/microinteractions.md)       | Easing curves CSS (`cubic-bezier`), durasi transisi (150ms-250ms), dan motion alami.                                        |
-| 🖼️**Integrasi Aset**   | [`references/asset-integration.md`](references/asset-integration.md)       | Parameter URL CDN Unsplash realistis, rasio foto, dan ikonografi SVG bersih tanpa emoji.                                      |
-| ✅**Checklist Validasi** | [`references/validation-checklist.md`](references/validation-checklist.md) | Checklist 15 poin validasi UI dan scoring mandiri 6 aksis sebelum rilis kode.                                                 |
+| **Anti-Patterns**      | [`references/anti-patterns.md`](references/anti-patterns.md)               | Bedah tuntas 14 elemen*Hall of Shame* (termasuk larangan Emoji, larangan Badge di atas Headline, dan larangan Warna Kusam). |
+| **Tipografi**        | [`references/typography.md`](references/typography.md)                     | Matriks pasangan font, hirarki ukuran teks, aturan kapitalisasi natural, dan tokenisasi tipografi.                            |
+| **Layout & Spacing**   | [`references/layout-and-spacing.md`](references/layout-and-spacing.md)     | Grid asimetris, ruang kosong, batas border 1.5px presisi, dan uji responsivitas mobile (320px–1440px).                       |
+| **Sistem Warna**       | [`references/color-system.md`](references/color-system.md)                 | Aturan pewarnaan 60-30-10, 5 palet warna bersih & segar khas Var-UI Base, serta panduan Crisp Light Mode.                     |
+| **State Komponen**     | [`references/component-states.md`](references/component-states.md)         | Implementasi 8 state interaktif (Default, Hover, Focus, Active, Disabled, Loading, Error, Success) dan format demo wrapper.   |
+| **Mikro-Interaksi**    | [`references/microinteractions.md`](references/microinteractions.md)       | Easing curves CSS (`cubic-bezier`), durasi transisi (150ms-250ms), dan motion alami.                                        |
+| **Integrasi Aset**   | [`references/asset-integration.md`](references/asset-integration.md)       | Parameter URL CDN Unsplash realistis, rasio foto, dan ikonografi SVG bersih tanpa emoji.                                      |
+| [PASS]**Checklist Validasi** | [`references/validation-checklist.md`](references/validation-checklist.md) | Checklist 15 poin validasi UI dan scoring mandiri 6 aksis sebelum rilis kode.                                                 |
 
 ---
 
-## 🛡️ Stempel Evaluasi Kode (Pre-Emit Stamp Format)
+##  Stempel Evaluasi Kode (Pre-Emit Stamp Format)
 
 ```css
 /* Pre-emit score: [P:5 H:5 E:5 S:5 R:5 V:5]

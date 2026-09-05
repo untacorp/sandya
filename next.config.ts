@@ -1,16 +1,15 @@
 import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
-const internalHost = process.env.TAURI_DEV_HOST || "localhost";
+const isStaticExport = isProd && (process.env.NEXT_EXPORT === "true" || process.env.TAURI_BUILD === "true");
 
 const nextConfig: NextConfig = {
-  // Static HTML export is conditional for Tauri build or standalone server
-  output: process.env.TAURI_ENV_PLATFORM || process.env.NEXT_EXPORT === "true" ? "export" : undefined,
+  // Static HTML export is used only when explicitly requested in production build
+  output: isStaticExport ? "export" : undefined,
   // Next.js Image Optimization requires a server, so we disable it for static export
   images: {
-    unoptimized: true,
+  unoptimized: true,
   },
-  // Optional: assetPrefix if needed when loading local files in dev/prod
 };
 
 export default nextConfig;

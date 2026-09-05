@@ -7,9 +7,9 @@ export function generateStaticParams() {
 
   const params: { poskoId: string; refugeeId: string }[] = [];
   for (const poskoId of poskos) {
-    for (const refugeeId of refugees) {
-      params.push({ poskoId, refugeeId });
-    }
+  for (const refugeeId of refugees) {
+  params.push({ poskoId, refugeeId });
+  }
   }
   return params;
 }

@@ -14,32 +14,32 @@ export interface TokenizedNameResult {
 
 export class NameTokenizer {
   public static tokenize(fullName: string): TokenizedNameResult {
-    const tokens = tokenizeFullName(fullName);
-    let tokenizedWordsCount = 0;
-    let literalWordsCount = 0;
+  const tokens = tokenizeFullName(fullName);
+  let tokenizedWordsCount = 0;
+  let literalWordsCount = 0;
 
-    for (const t of tokens) {
-      if (t.type === 'TOKEN') {
-        tokenizedWordsCount += 1;
-      } else {
-        literalWordsCount += 1;
-      }
-    }
+  for (const t of tokens) {
+  if (t.type === 'TOKEN') {
+  tokenizedWordsCount += 1;
+  } else {
+  literalWordsCount += 1;
+  }
+  }
 
-    return {
-      tokens,
-      totalWords: tokens.length,
-      tokenizedWordsCount,
-      literalWordsCount,
-    };
+  return {
+  tokens,
+  totalWords: tokens.length,
+  tokenizedWordsCount,
+  literalWordsCount,
+  };
   }
 
   public static detokenize(tokens: NameWordToken[]): string {
-    return detokenizeFullName(tokens);
+  return detokenizeFullName(tokens);
   }
 
   public static getDictionarySize(): number {
-    return INDONESIAN_NAME_WORDS.length;
+  return INDONESIAN_NAME_WORDS.length;
   }
 }
 

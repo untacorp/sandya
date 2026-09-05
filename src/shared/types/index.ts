@@ -38,6 +38,7 @@ export interface Organization {
   category: "BPBD_PEMERINTAH" | "PMI_LEMBAGA" | "NGO_YAYASAN" | "KOMUNITAS_MANDIRI";
   masterPubkey: string;
   contactNumber?: string;
+  headquartersAddress?: string;
   createdAt: number;
 }
 

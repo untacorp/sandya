@@ -21,7 +21,7 @@
   - Memindai kartu warga di tenda $\to$ serahkan barang $\to$ konfirmasi tiket `COMPLETED`.
 - **Zero-Touch Background Sync & Radio Taktis (`/tactical`)**:
   - Berjalan di antara tenda: HP otomatis menyinkronkan data pengungsi baru via **Zero-Touch BLE Mesh** (BitChat) tanpa perlu membuka layar.
-  - Menggunakan tombol Push-to-Talk (PTT) suara 5 detik untuk melapor ke `#posko-all` atau memicu alarm bahaya di `🚨 #sos`.
+  - Menggunakan tombol Push-to-Talk (PTT) suara 5 detik untuk melapor ke `#posko-all` atau memicu alarm bahaya di ` #sos`.
 - **Cadangan Sinkronisasi Visual (*Fallback Optical Data Mule*) (`/sync/animated-qr`)**:
   - Jika berada di luar jangkauan radio BLE: Saling sorot layar HP (Animated QR 6 FPS) selama 2–3 detik atau memindai lembaran Poster Paritas XOR di dinding posko.
 - **Jelajah Posko Misi (*Mission Directory & Family Search*)**:
@@ -45,11 +45,11 @@
 
 ```mermaid
 flowchart LR
-    A(["1. Scan QR Relawan: /activate"]) --> B["2. Fast Mobile Intake 30s di Tenda"]
-    B --> C["3. Ajukan Tiket Kebutuhan Warga"]
-    C --> D["4. Serahkan Bantuan Fisik & Konfirmasi Selesai"]
-    D --> E["5. Tukar Data P2P via Animated QR (Data Mule)"]
-    E --> F(["6. Jelajah Posko Lain & Temu Keluarga"])
+  A(["1. Scan QR Relawan: /activate"]) --> B["2. Fast Mobile Intake 30s di Tenda"]
+  B --> C["3. Ajukan Tiket Kebutuhan Warga"]
+  C --> D["4. Serahkan Bantuan Fisik & Konfirmasi Selesai"]
+  D --> E["5. Tukar Data P2P via Animated QR (Data Mule)"]
+  E --> F(["6. Jelajah Posko Lain & Temu Keluarga"])
 ```
 
 ---
@@ -58,49 +58,49 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Relawan Tiba di Posko"]) --> OpenApp["Buka Aplikasi Sanidya -> Pilih '[1] Scan Kartu Tugas'"]
-    
-    OpenApp --> ScanVolunteerPass["/Sorot Kamera ke QR Relawan dari Koordinator Posko/"]
-    ScanVolunteerPass --> VerifyVolunteerSig["Validasi Tanda Tangan Koordinator (Ed25519)"]
-    
-    VerifyVolunteerSig --> SaveVolSession[("Simpan Sesi Relawan di SQLite Lokal")]
-    SaveVolSession --> OpenPoskoDashboard["Masuk DASBOR POSKO AKTIF<br/>Rute: /(posko)/[poskoId]"]
-    
-    %% TIGA AKTIVITAS UTAMA RELAWAN LAPANGAN
-    OpenPoskoDashboard --> VolunteerChoice{"Pilih Aktivitas Lapangan"}
-    
-    %% AKTIVITAS A: FAST MOBILE INTAKE 30s
-    VolunteerChoice -->|"1. Daftarkan Warga Baru"| TapFAB["Ketuk Tombol FAB [+] di Layar Mana Saja"]
-    TapFAB --> OpenFastIntakeForm["Buka Form Fast Mobile Intake: /refugees/intake"]
-    OpenFastIntakeForm --> FillIntakeData["Input Data 30 Detik:<br/>• Nama: 'Muhammad Budi Santoso' (2 Kata Kamus)<br/>• Usia: 34 Tahun, Gender: Laki-laki<br/>• KTP: [Toggle Lupa/Hilang -> 0 Byte]<br/>• Rentan: [Chip Balita] & [Chip Lansia]<br/>• Kebutuhan: [Beras] & [Susu Formula uint8]<br/>• Cari Kerabat: 'Siti Rahmawati' (Dusun Cijedil)"]
-    FillIntakeData --> TapSaveIntake["Relawan Ketuk: 'Simpan Warga'"]
-    TapSaveIntake --> SaveRefugeeDB[("INSERT INTO refugees & refugee_events (SQLite Lokal)")]
-    SaveRefugeeDB --> CheckLocalReunion{"Apakah Nama Ini Dicari Posko Lain?"}
-    CheckLocalReunion -->|Ya: Cocok!| AlertReunionPopup["🎉 Popup Alert: Keluarga Ditemukan!"]
-    CheckLocalReunion -->|Tidak| ToastIntakeSuccess["Toast: 'Warga Berhasil Didaftarkan'"]
-    
-    %% AKTIVITAS B: SERAHKAN BANTUAN DI TENDA (RUNNER)
-    VolunteerChoice -->|"2. Antar Bantuan ke Tenda"| OpenDistributeTab["Buka Tab 'Logistik' -> Sub-Tab 'Distribusi'"]
-    OpenDistributeTab --> TakeAllocatedAid["Ambil Barang 'ALLOCATED' dari Gudang Posko<br/>(e.g., 2 Kotak Susu untuk Siti Rahmawati)"]
-    TakeAllocatedAid --> GoToTent["Relawan Berjalan ke Tenda Warga"]
-    GoToTent --> ScanRefugeeCard["/Pindai Kartu Warga Penerima di Tenda/"]
-    ScanRefugeeCard --> HandoverPhysical["Serahkan Fisik 2 Kotak Susu ke Warga"]
-    HandoverPhysical --> TapConfirmDelivery["Relawan Ketuk: 'Konfirmasi Penyerahan Selesai'"]
-    TapConfirmDelivery --> CompleteTicketDB[("UPDATE needs_requests SET status = 'COMPLETED'")]
-    CompleteTicketDB --> AppendAidEvent[("INSERT INTO refugee_events (AID_RECEIVED)")]
-    
-    %% AKTIVITAS C: DATA MULE SINKRONISASI P2P
-    VolunteerChoice -->|"3. Bertukar Data dengan Relawan Lain"| OpenSyncLayar["Buka Tab 'Sinkronisasi' -> Sub-Tab 'Animated QR'"]
-    OpenSyncLayar --> MeetOtherVolunteer["Berpapasan dengan Relawan Posko B di Lapangan"]
-    MeetOtherVolunteer --> SalingScanHP["/Saling Sorot Kamera ke Layar Animasi 6 FPS (3 Detik)/"]
-    SalingScanHP --> ReceiveDeltaPoskoB["💥 BZZT! HP Relawan Menerima Data Posko B"]
-    ReceiveDeltaPoskoB --> MergeDB[("Merge Data Posko B ke SQLite (Read-Only)")]
-    
-    ToastIntakeSuccess --> ReturnToDashboard["Kembali ke Dasbor Posko"]
-    AlertReunionPopup --> ReturnToDashboard
-    AppendAidEvent --> ReturnToDashboard
-    MergeDB --> ReturnToDashboard
-    ReturnToDashboard --> EndState(["Selesai / Terus Bertugas"])
+  Start(["Mulai: Relawan Tiba di Posko"]) --> OpenApp["Buka Aplikasi Sandya -> Pilih '[1] Scan Kartu Tugas'"]
+  
+  OpenApp --> ScanVolunteerPass["/Sorot Kamera ke QR Relawan dari Koordinator Posko/"]
+  ScanVolunteerPass --> VerifyVolunteerSig["Validasi Tanda Tangan Koordinator (Ed25519)"]
+  
+  VerifyVolunteerSig --> SaveVolSession[("Simpan Sesi Relawan di SQLite Lokal")]
+  SaveVolSession --> OpenPoskoDashboard["Masuk DASBOR POSKO AKTIF<br/>Rute: /(posko)/[poskoId]"]
+  
+  %% TIGA AKTIVITAS UTAMA RELAWAN LAPANGAN
+  OpenPoskoDashboard --> VolunteerChoice{"Pilih Aktivitas Lapangan"}
+  
+  %% AKTIVITAS A: FAST MOBILE INTAKE 30s
+  VolunteerChoice -->|"1. Daftarkan Warga Baru"| TapFAB["Ketuk Tombol FAB [+] di Layar Mana Saja"]
+  TapFAB --> OpenFastIntakeForm["Buka Form Fast Mobile Intake: /refugees/intake"]
+  OpenFastIntakeForm --> FillIntakeData["Input Data 30 Detik:<br/>• Nama: 'Muhammad Budi Santoso' (2 Kata Kamus)<br/>• Usia: 34 Tahun, Gender: Laki-laki<br/>• KTP: [Toggle Lupa/Hilang -> 0 Byte]<br/>• Rentan: [Chip Balita] & [Chip Lansia]<br/>• Kebutuhan: [Beras] & [Susu Formula uint8]<br/>• Cari Kerabat: 'Siti Rahmawati' (Dusun Cijedil)"]
+  FillIntakeData --> TapSaveIntake["Relawan Ketuk: 'Simpan Warga'"]
+  TapSaveIntake --> SaveRefugeeDB[("INSERT INTO refugees & refugee_events (SQLite Lokal)")]
+  SaveRefugeeDB --> CheckLocalReunion{"Apakah Nama Ini Dicari Posko Lain?"}
+  CheckLocalReunion -->|Ya: Cocok!| AlertReunionPopup[" Popup Alert: Keluarga Ditemukan!"]
+  CheckLocalReunion -->|Tidak| ToastIntakeSuccess["Toast: 'Warga Berhasil Didaftarkan'"]
+  
+  %% AKTIVITAS B: SERAHKAN BANTUAN DI TENDA (RUNNER)
+  VolunteerChoice -->|"2. Antar Bantuan ke Tenda"| OpenDistributeTab["Buka Tab 'Logistik' -> Sub-Tab 'Distribusi'"]
+  OpenDistributeTab --> TakeAllocatedAid["Ambil Barang 'ALLOCATED' dari Gudang Posko<br/>(e.g., 2 Kotak Susu untuk Siti Rahmawati)"]
+  TakeAllocatedAid --> GoToTent["Relawan Berjalan ke Tenda Warga"]
+  GoToTent --> ScanRefugeeCard["/Pindai Kartu Warga Penerima di Tenda/"]
+  ScanRefugeeCard --> HandoverPhysical["Serahkan Fisik 2 Kotak Susu ke Warga"]
+  HandoverPhysical --> TapConfirmDelivery["Relawan Ketuk: 'Konfirmasi Penyerahan Selesai'"]
+  TapConfirmDelivery --> CompleteTicketDB[("UPDATE needs_requests SET status = 'COMPLETED'")]
+  CompleteTicketDB --> AppendAidEvent[("INSERT INTO refugee_events (AID_RECEIVED)")]
+  
+  %% AKTIVITAS C: DATA MULE SINKRONISASI P2P
+  VolunteerChoice -->|"3. Bertukar Data dengan Relawan Lain"| OpenSyncLayar["Buka Tab 'Sinkronisasi' -> Sub-Tab 'Animated QR'"]
+  OpenSyncLayar --> MeetOtherVolunteer["Berpapasan dengan Relawan Posko B di Lapangan"]
+  MeetOtherVolunteer --> SalingScanHP["/Saling Sorot Kamera ke Layar Animasi 6 FPS (3 Detik)/"]
+  SalingScanHP --> ReceiveDeltaPoskoB[" BZZT! HP Relawan Menerima Data Posko B"]
+  ReceiveDeltaPoskoB --> MergeDB[("Merge Data Posko B ke SQLite (Read-Only)")]
+  
+  ToastIntakeSuccess --> ReturnToDashboard["Kembali ke Dasbor Posko"]
+  AlertReunionPopup --> ReturnToDashboard
+  AppendAidEvent --> ReturnToDashboard
+  MergeDB --> ReturnToDashboard
+  ReturnToDashboard --> EndState(["Selesai / Terus Bertugas"])
 ```
 
 ---

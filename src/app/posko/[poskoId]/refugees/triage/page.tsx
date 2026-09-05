@@ -2,299 +2,802 @@
 
 import * as React from "react";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
+import { AlertBanner } from "@/shared/ui/alert-banner";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { type TriageCategory, type DisasterPerson } from "@/shared/types";
+
+interface PrescriptionFormItem {
+  needTokenId: number;
+  quantity: number;
+  unit: string;
+  dosage: string;
+}
 
 export default function TriagePage() {
   const { session, refugees, updateRefugeeTriage, createNeedsTicket } = usePoskoStore();
 
   const [selectedPatient, setSelectedPatient] = React.useState<DisasterPerson | null>(null);
   const [examOpen, setExamOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [successToast, setSuccessToast] = React.useState<string | null>(null);
+
+  // RBAC Permission Check
+  const authorizedRoles = ["PETUGAS_MEDIS", "KOORDINATOR_POSKO", "KOMANDAN_MISI", "PEMIMPIN_ORGANISASI"];
+  const isAuthorized = authorizedRoles.includes(session.userRole);
 
   // Form State
-  const [temp, setTemp] = React.useState("38.5");
-  const [bp, setBp] = React.useState("120/80");
-  const [pulse, setPulse] = React.useState("88");
-  const [complaint, setComplaint] = React.useState("Demam dan pusing");
-  const [triageColor, setTriageColor] = React.useState<TriageCategory>("YELLOW");
-  const [prescribeMedicine, setPrescribeMedicine] = React.useState(true);
-  const [medicineName, setMedicineName] = React.useState("Paracetamol 500mg");
-  const [medicineQty, setMedicineQty] = React.useState(2);
+  const [temp, setTemp] = React.useState("37.0");
+  const [systolic, setSystolic] = React.useState("120");
+  const [diastolic, setDiastolic] = React.useState("80");
+  const [pulse, setPulse] = React.useState("80");
+  const [spo2, setSpo2] = React.useState("98");
+  const [complaint, setComplaint] = React.useState("");
+  const [diagnosis, setDiagnosis] = React.useState("");
+  const [triageColor, setTriageColor] = React.useState<TriageCategory>("GREEN");
+
+  // Pharmacy Prescriptions State (uint8 DISASTER_NEEDS_CATALOG)
+  const [prescribeMedicine, setPrescribeMedicine] = React.useState(false);
+  const [prescriptions, setPrescriptions] = React.useState<PrescriptionFormItem[]>([
+  {
+  needTokenId: 0x27, // Paracetamol default
+  quantity: 1,
+  unit: "STRIP",
+  dosage: "3x1 tablet sesudah makan",
+  },
+  ]);
+
+  const medicalCatalog = React.useMemo(() => {
+  return Object.values(DISASTER_NEEDS_CATALOG).filter((item) => item.cluster === "MEDICAL");
+  }, []);
 
   const openExam = (patient: DisasterPerson) => {
-    setSelectedPatient(patient);
-    setTriageColor(patient.triageStatus || "GREEN");
-    setExamOpen(true);
+  setSelectedPatient(patient);
+  setTriageColor(patient.triageStatus || "GREEN");
+  setComplaint("");
+  setDiagnosis("");
+  setTemp("36.8");
+  setSystolic("120");
+  setDiastolic("80");
+  setPulse("80");
+  setSpo2("98");
+  setPrescribeMedicine(false);
+  setPrescriptions([
+  {
+  needTokenId: 0x27,
+  quantity: 1,
+  unit: "STRIP",
+  dosage: "3x1 tablet sesudah makan",
+  },
+  ]);
+  setErrorMessage(null);
+  setExamOpen(true);
   };
 
-  const handleSaveExam = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPatient) return;
-
-    updateRefugeeTriage(selectedPatient.id, triageColor);
-
-    if (prescribeMedicine) {
-      createNeedsTicket({
-        refugeeId: selectedPatient.id,
-        refugeeName: selectedPatient.fullName,
-        shelterLocation: selectedPatient.shelterLocation,
-        postId: session.poskoId,
-        itemName: medicineName,
-        quantity: medicineQty,
-        unit: "STRIP",
-        urgency: triageColor === "RED" ? "HIGH" : "MEDIUM",
-        createdByUserId: session.userId,
-        createdByUserName: session.userName,
-      });
-    }
-
-    setExamOpen(false);
+  const handleAddPrescriptionItem = () => {
+  setPrescriptions((prev) => [
+  ...prev,
+  {
+  needTokenId: 0x27,
+  quantity: 1,
+  unit: "STRIP",
+  dosage: "3x1 tablet sesudah makan",
+  },
+  ]);
   };
+
+  const handleRemovePrescriptionItem = (index: number) => {
+  setPrescriptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdatePrescription = (
+  index: number,
+  field: keyof PrescriptionFormItem,
+  val: any
+  ) => {
+  setPrescriptions((prev) =>
+  prev.map((item, i) => (i === index ? { ...item, [field]: val } : item))
+  );
+  };
+
+  const handleSaveExam = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!selectedPatient) return;
+
+  if (!isAuthorized) {
+  setErrorMessage("Akses ditolak: Hanya Petugas Medis Berlisensi atau Pimpinan Posko yang berwenang menetapkan triase medis.");
+  return;
+  }
+
+  setIsSubmitting(true);
+  setErrorMessage(null);
+
+  try {
+  const container = ServiceContainer.getInstance();
+  const validPrescriptions = prescribeMedicine
+  ? prescriptions.map((rx) => ({
+  needTokenId: rx.needTokenId,
+  medicineName: DISASTER_NEEDS_CATALOG[rx.needTokenId]?.nameId || "Obat Medis",
+  quantity: Math.max(1, rx.quantity),
+  unit: rx.unit,
+  dosage: rx.dosage,
+  }))
+  : [];
+
+  const result = await container.recordTriageExamUseCase.execute({
+  refugeeId: selectedPatient.id,
+  poskoId: session.poskoId,
+  authorId: session.userId,
+  authorName: session.userName,
+  authorRole: session.userRole,
+  triageCategory: triageColor,
+  vitalSigns: {
+  systolic: systolic ? parseInt(systolic) : undefined,
+  diastolic: diastolic ? parseInt(diastolic) : undefined,
+  temperature: temp ? parseFloat(temp) : undefined,
+  pulse: pulse ? parseInt(pulse) : undefined,
+  spo2: spo2 ? parseInt(spo2) : undefined,
+  complaint: complaint.trim() || undefined,
+  diagnosis: diagnosis.trim() || undefined,
+  },
+  prescriptions: validPrescriptions.length > 0 ? validPrescriptions : undefined,
+  });
+
+  if (!result.ok) {
+  setErrorMessage(result.error.message);
+  setIsSubmitting(false);
+  return;
+  }
+
+  // 1. Update Posko Store Triage
+  updateRefugeeTriage(selectedPatient.id, triageColor);
+
+  // 2. Dispatch Tickets to Local Store for immediate warehouse fulfillment visibility
+  if (prescribeMedicine && validPrescriptions.length > 0) {
+  validPrescriptions.forEach((rx) => {
+  createNeedsTicket({
+  refugeeId: selectedPatient.id,
+  refugeeName: selectedPatient.fullName,
+  shelterLocation: selectedPatient.shelterLocation,
+  postId: session.poskoId,
+  itemName: rx.medicineName,
+  quantity: rx.quantity,
+  unit: rx.unit,
+  urgency: triageColor === "RED" ? "HIGH" : triageColor === "YELLOW" ? "MEDIUM" : "LOW",
+  createdByUserId: session.userId,
+  createdByUserName: session.userName,
+  });
+  });
+  }
+
+  setSuccessToast(
+  `Triase ${selectedPatient.fullName} berhasil diperbarui ke ${triageColor}${
+  validPrescriptions.length > 0 ? ` (+${validPrescriptions.length} tiket obat diterbitkan)` : ""
+  }`
+  );
+  setTimeout(() => setSuccessToast(null), 4000);
+
+  setExamOpen(false);
+  } catch (err: any) {
+  setErrorMessage(err?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
+  } finally {
+  setIsSubmitting(false);
+  }
+  };
+
+  const handleQuickTriageChange = async (
+  patient: DisasterPerson,
+  newTriage: TriageCategory,
+  e: React.MouseEvent
+  ) => {
+  e.stopPropagation();
+  if (!isAuthorized) {
+  alert("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang mengubah klasifikasi triase.");
+  return;
+  }
+
+  try {
+  const container = ServiceContainer.getInstance();
+  const res = await container.recordTriageExamUseCase.execute({
+  refugeeId: patient.id,
+  poskoId: session.poskoId,
+  authorId: session.userId,
+  authorName: session.userName,
+  authorRole: session.userRole,
+  triageCategory: newTriage,
+  vitalSigns: {
+  complaint: `Penyesuaian cepat status triase lapangan ke ${newTriage}`,
+  },
+  });
+
+  if (res.ok) {
+  updateRefugeeTriage(patient.id, newTriage);
+  }
+  } catch (err) {
+  console.error("Failed quick triage change", err);
+  }
+  };
+
+  const filteredRefugees = React.useMemo(() => {
+  if (!searchQuery.trim()) return refugees;
+  const q = searchQuery.toLowerCase();
+  return refugees.filter(
+  (r) =>
+  r.fullName.toLowerCase().includes(q) ||
+  r.shelterLocation?.toLowerCase().includes(q) ||
+  r.domicileOrigin?.toLowerCase().includes(q) ||
+  (r.nik && r.nik.includes(q))
+  );
+  }, [refugees, searchQuery]);
 
   const getPatientsByTriage = (color: TriageCategory) => {
-    return refugees.filter((r) => r.triageStatus === color);
+  return filteredRefugees.filter((r) => (r.triageStatus || "GREEN") === color);
   };
 
   const categories: {
-    color: TriageCategory;
-    title: string;
-    desc: string;
-    badgeVariant: any;
+  color: TriageCategory;
+  priorityLabel: string;
+  title: string;
+  desc: string;
+  headerCls: string;
+  dotCls: string;
+  badgeVariant: "triage-red" | "triage-yellow" | "triage-green" | "triage-black";
   }[] = [
-    {
-      color: "RED",
-      title: "Perlu Tindakan Segera",
-      desc: "Gawat darurat / butuh rujukan RS",
-      badgeVariant: "triage-red",
-    },
-    {
-      color: "YELLOW",
-      title: "Perlu Perawatan Posko",
-      desc: "Kondisi mendesak namun stabil",
-      badgeVariant: "triage-yellow",
-    },
-    {
-      color: "GREEN",
-      title: "Kondisi Ringan",
-      desc: "Rawat jalan atau pemulihan",
-      badgeVariant: "triage-green",
-    },
-    {
-      color: "BLACK",
-      title: "Meninggal Dunia",
-      desc: "Korban jiwa yang terdata",
-      badgeVariant: "triage-black",
-    },
+  {
+  color: "RED",
+  priorityLabel: "P1 - KRITIS",
+  title: "Tindakan Segera",
+  desc: "Gawat darurat, syok, henti nafas tertolong, rujukan RS",
+  headerCls: "bg-status-danger-bg text-status-danger border-status-danger-border",
+  dotCls: "bg-status-danger ring-2 ring-status-danger/30",
+  badgeVariant: "triage-red",
+  },
+  {
+  color: "YELLOW",
+  priorityLabel: "P2 - MENDESAK",
+  title: "Perawatan Posko",
+  desc: "Kondisi mendesak, hemodinamik stabil, observasi medis",
+  headerCls: "bg-status-warning-bg text-status-warning border-status-warning-border",
+  dotCls: "bg-status-warning ring-2 ring-status-warning/30",
+  badgeVariant: "triage-yellow",
+  },
+  {
+  color: "GREEN",
+  priorityLabel: "P3 - RINGAN",
+  title: "Kondisi Ringan",
+  desc: "Rawat jalan, luka minor, stabil dan mandiri",
+  headerCls: "bg-status-safe-bg text-status-safe border-status-safe-border",
+  dotCls: "bg-status-safe ring-2 ring-status-safe/30",
+  badgeVariant: "triage-green",
+  },
+  {
+  color: "BLACK",
+  priorityLabel: "P0 - EKSPEKTAN",
+  title: "Meninggal Dunia",
+  desc: "Korban jiwa terdata / tidak tertolong",
+  headerCls: "bg-surface-muted text-text-muted border-border",
+  dotCls: "bg-triage-black ring-2 ring-border",
+  badgeVariant: "triage-black",
+  },
   ];
 
   return (
-    <div className="space-y-4">
-      {/* 1. Sub-Navigasi */}
-      <Tabs
-        items={[
-          { id: "list", label: "Daftar Warga", icon: "users", href: `/posko/${session.poskoId}/refugees` },
-          { id: "triage", label: "Pemeriksaan Medis", icon: "health", badgeCount: refugees.length, href: `/posko/${session.poskoId}/refugees/triage` },
-          { id: "reunion", label: "Pencarian Keluarga", icon: "search", href: `/posko/${session.poskoId}/refugees/reunion` },
-        ]}
-        activeId="triage"
-        variant="segmented"
-        className="w-full sm:w-auto"
-      />
+  <div className="space-y-4">
+  {/* 1. Sub-Navigasi */}
+  <Tabs
+  items={[
+  { id: "list", label: "Daftar Warga", icon: "users", href: `/posko/${session.poskoId}/refugees` },
+  { id: "triage", label: "Pemeriksaan Medis (START)", icon: "health", badgeCount: refugees.length, href: `/posko/${session.poskoId}/refugees/triage` },
+  { id: "reunion", label: "Pencarian Keluarga", icon: "search", href: `/posko/${session.poskoId}/refugees/reunion` },
+  ]}
+  activeId="triage"
+  variant="segmented"
+  className="w-full sm:w-auto"
+  />
 
-      {/* 2. Grid 4 Kolom Kategori Medis (Spasi Rasional) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        {categories.map((cat) => {
-          const patientList = getPatientsByTriage(cat.color);
-          return (
-            <div
-              key={cat.color}
-              className="rounded-xl border border-border bg-surface flex flex-col min-h-[420px] shadow-2xs"
-            >
-              {/* Header Kolom */}
-              <div className="p-3 border-b border-border flex items-center justify-between bg-surface-subtle">
-                <div>
-                  <h2 className="text-xs font-bold text-text-main flex items-center gap-1.5">
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        cat.color === "RED"
-                          ? "bg-status-danger"
-                          : cat.color === "YELLOW"
-                          ? "bg-status-warning"
-                          : cat.color === "GREEN"
-                          ? "bg-status-safe"
-                          : "bg-triage-black"
-                      }`}
-                    />
-                    {cat.title}
-                  </h2>
-                  <p className="text-[11px] text-text-muted mt-0.5">{cat.desc}</p>
-                </div>
-                <span className="text-xs font-bold text-text-muted px-2 py-0.5 rounded bg-surface border border-border">
-                  {patientList.length}
-                </span>
-              </div>
+  {/* 2. Banner Notifikasi RBAC & Sukses */}
+  {!isAuthorized && (
+  <AlertBanner
+  variant="warning"
+  title="Mode Peninjauan (Read-Only)"
+  description="Akses wewenang penetapan triase klinis dan peresepan obat dibatasi khusus untuk Petugas Medis Berlisensi, Koordinator Posko, atau Komandan Misi."
+  icon="shield"
+  />
+  )}
 
-              {/* Daftar Pasien */}
-              <div className="p-2.5 flex-1 space-y-2 overflow-y-auto">
-                {patientList.length === 0 ? (
-                  <p className="text-xs text-text-subtle text-center py-8">
-                    Tidak ada pasien
-                  </p>
-                ) : (
-                  patientList.map((patient) => (
-                    <div
-                      key={patient.id}
-                      onClick={() => openExam(patient)}
-                      className="p-3 rounded-lg border border-border hover:border-primary/50 transition-colors bg-surface cursor-pointer shadow-2xs space-y-1.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-xs text-text-main">
-                          {patient.fullName}
-                        </span>
-                        <span className="text-[11px] text-text-muted">
-                          {patient.age} th
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-text-muted">
-                        {patient.shelterLocation} • Asal {patient.domicileOrigin}
-                      </p>
-                      <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px] text-primary font-semibold">
-                        <span>Periksa Pasien</span>
-                        <Icon name="arrow-right" variant="linear" size={12} />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+  {successToast && (
+  <AlertBanner
+  variant="safe"
+  title="Rekam Medis Tersimpan"
+  description={successToast}
+  icon="check"
+  />
+  )}
 
-      {/* 3. Modal Form Pemeriksaan Kesehatan */}
-      <Dialog
-        open={examOpen}
-        onOpenChange={setExamOpen}
-        title={`Pemeriksaan: ${selectedPatient?.fullName || ""}`}
-        description="Catat hasil pemeriksaan tanda vital, keluhan, dan resep obat yang dibutuhkan pasien."
-      >
-        {selectedPatient && (
-          <form onSubmit={handleSaveExam} className="space-y-4 pt-1 text-xs">
-            {/* Tanda Vital */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <label className="font-semibold text-text-main block">Suhu Tubuh (°C)</label>
-                <Input value={temp} onChange={(e) => setTemp(e.target.value)} placeholder="36.5" />
-              </div>
-              <div className="space-y-1">
-                <label className="font-semibold text-text-main block">Tekanan Darah</label>
-                <Input value={bp} onChange={(e) => setBp(e.target.value)} placeholder="120/80" />
-              </div>
-              <div className="space-y-1">
-                <label className="font-semibold text-text-main block">Denyut Nadi</label>
-                <Input value={pulse} onChange={(e) => setPulse(e.target.value)} placeholder="80" />
-              </div>
-            </div>
+  {/* 3. Bar Kontrol & Pencarian */}
+  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-border shadow-2xs">
+  <div className="relative flex-1">
+  <Icon
+  name="search"
+  variant="linear"
+  size={16}
+  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+  />
+  <Input
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  placeholder="Cari pasien berdasarkan nama, NIK, atau lokasi tenda..."
+  className="pl-9 text-xs h-10"
+  />
+  </div>
+  <div className="flex items-center gap-2">
+  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-subtle border border-border text-xs font-semibold text-text-main">
+  <Icon name="heart-pulse" variant="bold" size={14} className="text-primary" />
+  <span>Total Pasien: {refugees.length}</span>
+  </div>
+  <div className="flex items-center gap-1">
+  <span className="w-2.5 h-2.5 rounded-full bg-status-danger" title="Merah" />
+  <span className="text-xs font-bold text-status-danger mr-1.5">{getPatientsByTriage("RED").length}</span>
+  <span className="w-2.5 h-2.5 rounded-full bg-status-warning" title="Kuning" />
+  <span className="text-xs font-bold text-status-warning mr-1.5">{getPatientsByTriage("YELLOW").length}</span>
+  <span className="w-2.5 h-2.5 rounded-full bg-status-safe" title="Hijau" />
+  <span className="text-xs font-bold text-status-safe mr-1.5">{getPatientsByTriage("GREEN").length}</span>
+  <span className="w-2.5 h-2.5 rounded-full bg-triage-black" title="Hitam" />
+  <span className="text-xs font-bold text-text-muted">{getPatientsByTriage("BLACK").length}</span>
+  </div>
+  </div>
+  </div>
 
-            {/* Keluhan Pasien */}
-            <div className="space-y-1">
-              <label className="font-semibold text-text-main block">Keluhan & Diagnosa Singkat</label>
-              <Input
-                value={complaint}
-                onChange={(e) => setComplaint(e.target.value)}
-                placeholder="misal: Demam tinggi, pusing, batuk pilek"
-              />
-            </div>
+  {/* 4. Grid 4 Kolom Kategori Medis START (High-Contrast Outdoor Board) */}
+  {refugees.length === 0 ? (
+  <EmptyState
+  icon="health"
+  title="Belum Ada Pasien Terdaftar"
+  description="Belum ada data warga terdaftar di posko ini untuk diperiksa secara medis (START Triage). Silakan lakukan intake warga terlebih dahulu."
+  actionLabel="+ Intake Warga Baru"
+  actionHref={`/posko/${session.poskoId}/refugees`}
+  />
+  ) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+  {categories.map((cat) => {
+  const patientList = getPatientsByTriage(cat.color);
+  return (
+  <div
+  key={cat.color}
+  className="rounded-xl border border-border bg-surface flex flex-col min-h-[480px] shadow-2xs overflow-hidden"
+  >
+  {/* Header Kolom */}
+  <div className={`p-3 border-b flex items-center justify-between ${cat.headerCls}`}>
+  <div className="min-w-0">
+  <div className="flex items-center gap-1.5">
+  <span className={`w-2.5 h-2.5 rounded-full ${cat.dotCls}`} />
+  <span className="text-[10px] font-black uppercase tracking-wider">
+  {cat.priorityLabel}
+  </span>
+  </div>
+  <h2 className="text-xs font-bold text-text-main mt-0.5 truncate">
+  {cat.title}
+  </h2>
+  <p className="text-[11px] text-text-muted line-clamp-1 mt-0.5">
+  {cat.desc}
+  </p>
+  </div>
+  <span className="text-xs font-black px-2 py-0.5 rounded-md bg-surface border border-border shadow-2xs text-text-main shrink-0">
+  {patientList.length}
+  </span>
+  </div>
 
-            {/* Pilihan Kategori Kondisi */}
-            <div className="space-y-1">
-              <label className="font-semibold text-text-main block">Tingkat Penanganan</label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[
-                  { id: "RED", label: "Perlu Segera", cls: "text-status-danger border-status-danger-border" },
-                  { id: "YELLOW", label: "Rawat Jalan", cls: "text-status-warning border-status-warning-border" },
-                  { id: "GREEN", label: "Kondisi Ringan", cls: "text-status-safe border-status-safe-border" },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setTriageColor(item.id as TriageCategory)}
-                    className={`py-2 px-2 rounded-lg font-bold border transition-colors cursor-pointer text-center ${
-                      triageColor === item.id
-                        ? "bg-surface-muted " + item.cls + " ring-1 ring-primary/20"
-                        : "bg-surface text-text-muted border-border hover:bg-surface-subtle"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+  {/* Daftar Pasien */}
+  <div className="p-2.5 flex-1 space-y-2 overflow-y-auto max-h-[640px]">
+  {patientList.length === 0 ? (
+  <div className="flex flex-col items-center justify-center py-12 text-center text-text-subtle space-y-1">
+  <Icon name="health" variant="linear" size={24} className="text-border" />
+  <p className="text-xs">Tidak ada pasien dalam status ini</p>
+  </div>
+  ) : (
+  patientList.map((patient) => (
+  <div
+  key={patient.id}
+  onClick={() => openExam(patient)}
+  className="p-3 rounded-lg border border-border hover:border-primary/60 transition-all bg-surface hover:shadow-xs cursor-pointer space-y-2 group"
+  >
+  {/* Header Pasien */}
+  <div className="flex items-start justify-between gap-2">
+  <div className="min-w-0">
+  <span className="font-bold text-xs text-text-main block truncate group-hover:text-primary transition-colors">
+  {patient.fullName}
+  </span>
+  <span className="text-[11px] text-text-muted">
+  {patient.gender === "M" ? "Laki-laki" : "Perempuan"} • {patient.age} th
+  </span>
+  </div>
+  <Badge variant={cat.badgeVariant} size="sm">
+  {cat.color}
+  </Badge>
+  </div>
 
-            {/* Resep Obat */}
-            <div className="p-3 rounded-lg bg-surface-subtle border border-border space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="prescribe"
-                  checked={prescribeMedicine}
-                  onChange={(e) => setPrescribeMedicine(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="prescribe" className="font-semibold text-text-main cursor-pointer">
-                  Ajukan Resep Obat ke Bagian Logistik
-                </label>
-              </div>
+  {/* Lokasi & Asal */}
+  <p className="text-[11px] text-text-muted truncate">
+  <span className="font-semibold text-text-main">{patient.shelterLocation}</span> • Asal {patient.domicileOrigin}
+  </p>
 
-              {prescribeMedicine && (
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <div className="col-span-2">
-                    <Input
-                      value={medicineName}
-                      onChange={(e) => setMedicineName(e.target.value)}
-                      placeholder="Nama obat (misal: Paracetamol)"
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      type="number"
-                      value={medicineQty}
-                      onChange={(e) => setMedicineQty(parseInt(e.target.value) || 1)}
-                      placeholder="Jumlah"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+  {/* Vulnerability Badges */}
+  {patient.vulnerabilities && patient.vulnerabilities.length > 0 && (
+  <div className="flex flex-wrap gap-1">
+  {patient.vulnerabilities.map((v) => (
+  <span
+  key={v}
+  className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface-subtle border border-border text-text-muted"
+  >
+  {v}
+  </span>
+  ))}
+  </div>
+  )}
 
-            {/* Tombol Simpan */}
-            <div className="pt-2 flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                className="flex-1"
-                onClick={() => setExamOpen(false)}
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                className="flex-1 justify-center"
-              >
-                Simpan Pemeriksaan
-              </Button>
-            </div>
-          </form>
-        )}
-      </Dialog>
-    </div>
+  {/* Baris Tombol Aksi Cepat */}
+  <div className="pt-2 border-t border-border/70 flex items-center justify-between gap-1">
+  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+  {(["RED", "YELLOW", "GREEN", "BLACK"] as TriageCategory[]).map((c) => {
+  if (c === cat.color) return null;
+  const dotColor =
+  c === "RED"
+  ? "hover:bg-status-danger hover:text-white"
+  : c === "YELLOW"
+  ? "hover:bg-status-warning hover:text-white"
+  : c === "GREEN"
+  ? "hover:bg-status-safe hover:text-white"
+  : "hover:bg-triage-black hover:text-white";
+  return (
+  <button
+  key={c}
+  type="button"
+  disabled={!isAuthorized}
+  onClick={(e) => handleQuickTriageChange(patient, c, e)}
+  title={`Pindahkan ke status ${c}`}
+  className={`w-5 h-5 rounded text-[10px] font-black flex items-center justify-center transition-colors border border-border cursor-pointer bg-surface ${dotColor}`}
+  >
+  {c[0]}
+  </button>
+  );
+  })}
+  </div>
+
+  <div className="flex items-center gap-1 text-[11px] text-primary font-bold">
+  <span>Periksa</span>
+  <Icon name="arrow-right" variant="linear" size={12} />
+  </div>
+  </div>
+  </div>
+  ))
+  )}
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  )}
+
+  {/* 5. Modal Form Pemeriksaan Kesehatan & Rekam Medis START */}
+  <Dialog
+  open={examOpen}
+  onOpenChange={setExamOpen}
+  title={`Pemeriksaan Klinis & Triase: ${selectedPatient?.fullName || ""}`}
+  description="Catat tanda vital, keluhan klinis, penyesuaian triase START 4-warna, dan penerbitan resep obat ke gudang logistik."
+  >
+  {selectedPatient && (
+  <form onSubmit={handleSaveExam} className="space-y-4 pt-1 text-xs">
+  {/* Header Profil Pasien */}
+  <div className="p-3 rounded-lg bg-surface-subtle border border-border flex items-center justify-between gap-2">
+  <div>
+  <span className="font-bold text-xs text-text-main block">
+  {selectedPatient.fullName} ({selectedPatient.gender === "M" ? "Laki-laki" : "Perempuan"}, {selectedPatient.age} th)
+  </span>
+  <span className="text-[11px] text-text-muted">
+  Lokasi: {selectedPatient.shelterLocation} • NIK: {selectedPatient.nik || "Tidak ada (Bypass 0-byte)"}
+  </span>
+  </div>
+  <Badge
+  variant={
+  triageColor === "RED"
+  ? "triage-red"
+  : triageColor === "YELLOW"
+  ? "triage-yellow"
+  : triageColor === "GREEN"
+  ? "triage-green"
+  : "triage-black"
+  }
+  size="md"
+  >
+  {triageColor}
+  </Badge>
+  </div>
+
+  {errorMessage && (
+  <div className="p-2.5 rounded-lg bg-status-danger-bg border border-status-danger-border text-status-danger text-xs font-semibold">
+  {errorMessage}
+  </div>
+  )}
+
+  {/* Skrining Tanda Vital */}
+  <div className="space-y-2">
+  <label className="font-bold text-text-main block">
+  Skrining Tanda Vital (Vital Signs)
+  </label>
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+  <div className="space-y-1">
+  <label className="text-[11px] font-semibold text-text-muted block">Suhu Tubuh (°C)</label>
+  <Input
+  type="number"
+  step="0.1"
+  value={temp}
+  onChange={(e) => setTemp(e.target.value)}
+  placeholder="36.5"
+  className="h-9"
+  />
+  </div>
+  <div className="space-y-1">
+  <label className="text-[11px] font-semibold text-text-muted block">Tekanan Darah (TD)</label>
+  <div className="flex items-center gap-1">
+  <Input
+  type="number"
+  value={systolic}
+  onChange={(e) => setSystolic(e.target.value)}
+  placeholder="120"
+  className="h-9 text-center"
+  />
+  <span className="text-text-muted font-bold">/</span>
+  <Input
+  type="number"
+  value={diastolic}
+  onChange={(e) => setDiastolic(e.target.value)}
+  placeholder="80"
+  className="h-9 text-center"
+  />
+  </div>
+  </div>
+  <div className="space-y-1">
+  <label className="text-[11px] font-semibold text-text-muted block">Nadi (bpm)</label>
+  <Input
+  type="number"
+  value={pulse}
+  onChange={(e) => setPulse(e.target.value)}
+  placeholder="80"
+  className="h-9 text-center"
+  />
+  </div>
+  <div className="space-y-1">
+  <label className="text-[11px] font-semibold text-text-muted block">SpO2 (%)</label>
+  <Input
+  type="number"
+  value={spo2}
+  onChange={(e) => setSpo2(e.target.value)}
+  placeholder="98"
+  className="h-9 text-center"
+  />
+  </div>
+  </div>
+  </div>
+
+  {/* Keluhan Utama & Diagnosa Klinis */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Keluhan Utama (Chief Complaint)</label>
+  <Input
+  value={complaint}
+  onChange={(e) => setComplaint(e.target.value)}
+  placeholder="Contoh: Demam tinggi 3 hari, batuk, pusing"
+  className="h-9"
+  />
+  </div>
+  <div className="space-y-1">
+  <label className="font-semibold text-text-main block">Diagnosa Medis Singkat</label>
+  <Input
+  value={diagnosis}
+  onChange={(e) => setDiagnosis(e.target.value)}
+  placeholder="Contoh: ISPA Akut / Hipertensi Primer"
+  className="h-9"
+  />
+  </div>
+  </div>
+
+  {/* Pilihan Klasifikasi Triase START 4-Warna */}
+  <div className="space-y-1.5">
+  <label className="font-bold text-text-main block">Klasifikasi Triase Medis (START)</label>
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+  {[
+  { id: "RED", label: "Merah (P1 - Kritis)", cls: "text-status-danger border-status-danger-border bg-status-danger-bg" },
+  { id: "YELLOW", label: "Kuning (P2 - Mendesak)", cls: "text-status-warning border-status-warning-border bg-status-warning-bg" },
+  { id: "GREEN", label: "Hijau (P3 - Ringan)", cls: "text-status-safe border-status-safe-border bg-status-safe-bg" },
+  { id: "BLACK", label: "Hitam (P0 - Ekspektan)", cls: "text-text-main border-border bg-surface-muted" },
+  ].map((item) => (
+  <button
+  key={item.id}
+  type="button"
+  onClick={() => setTriageColor(item.id as TriageCategory)}
+  className={`py-2 px-2 rounded-lg font-bold border-[1.5px] transition-all cursor-pointer text-center text-xs ${
+  triageColor === item.id
+  ? `${item.cls} ring-2 ring-primary/40 font-black shadow-2xs`
+  : "bg-surface text-text-muted border-border hover:bg-surface-subtle"
+  }`}
+  >
+  {item.label}
+  </button>
+  ))}
+  </div>
+  </div>
+
+  {/* Peresepan Obat uint8 Kamus Bencana (Auto-Ticket Farmasi) */}
+  <div className="p-3.5 rounded-xl bg-surface-subtle border border-border space-y-3">
+  <div className="flex items-center justify-between">
+  <label className="flex items-center gap-2 cursor-pointer select-none">
+  <input
+  type="checkbox"
+  id="prescribe"
+  checked={prescribeMedicine}
+  onChange={(e) => setPrescribeMedicine(e.target.checked)}
+  className="w-4 h-4 rounded text-primary focus:ring-primary border-border"
+  />
+  <span className="font-bold text-xs text-text-main">
+  Terbitkan Resep Obat ke Gudang Farmasi (Auto-Ticket)
+  </span>
+  </label>
+
+  {prescribeMedicine && (
+  <Button
+  type="button"
+  variant="outline"
+  size="sm"
+  onClick={handleAddPrescriptionItem}
+  className="text-xs h-7 px-2"
+  >
+  <Icon name="add-circle" variant="bold" size={12} className="mr-1" />
+  Tambah Obat
+  </Button>
+  )}
+  </div>
+
+  {prescribeMedicine && (
+  <div className="space-y-2.5 pt-1">
+  {prescriptions.map((rx, idx) => (
+  <div
+  key={idx}
+  className="p-2.5 rounded-lg bg-surface border border-border space-y-2 shadow-2xs"
+  >
+  <div className="flex items-center justify-between gap-2">
+  <span className="text-[11px] font-bold text-text-muted">
+  Obat #{idx + 1}
+  </span>
+  {prescriptions.length > 1 && (
+  <button
+  type="button"
+  onClick={() => handleRemovePrescriptionItem(idx)}
+  className="text-status-danger hover:underline text-[11px] font-bold"
+  >
+  Hapus
+  </button>
+  )}
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+  {/* Selector Item Medis */}
+  <div className="sm:col-span-2 space-y-1">
+  <label className="text-[10px] font-semibold text-text-muted block">
+  Nama Obat (uint8 Token)
+  </label>
+  <select
+  value={rx.needTokenId}
+  onChange={(e) =>
+  handleUpdatePrescription(idx, "needTokenId", parseInt(e.target.value))
+  }
+  className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  >
+  {medicalCatalog.map((item) => (
+  <option key={item.id} value={item.id}>
+  [0x{item.id.toString(16).padStart(2, "0")}] {item.nameId}
+  </option>
+  ))}
+  </select>
+  </div>
+
+  {/* Jumlah & Satuan */}
+  <div className="grid grid-cols-2 gap-1.5 space-y-1">
+  <div>
+  <label className="text-[10px] font-semibold text-text-muted block">
+  Jumlah
+  </label>
+  <Input
+  type="number"
+  min="1"
+  value={rx.quantity}
+  onChange={(e) =>
+  handleUpdatePrescription(
+  idx,
+  "quantity",
+  parseInt(e.target.value) || 1
+  )
+  }
+  className="h-9 text-center"
+  />
+  </div>
+  <div>
+  <label className="text-[10px] font-semibold text-text-muted block">
+  Satuan
+  </label>
+  <select
+  value={rx.unit}
+  onChange={(e) =>
+  handleUpdatePrescription(idx, "unit", e.target.value)
+  }
+  className="w-full h-9 rounded-lg border border-border bg-surface px-1.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  >
+  <option value="STRIP">STRIP</option>
+  <option value="BOTOL">BOTOL</option>
+  <option value="TUBE">TUBE</option>
+  <option value="SACHET">SACHET</option>
+  <option value="TABUNG">TABUNG</option>
+  <option value="KOTAK">KOTAK</option>
+  <option value="PCS">PCS</option>
+  </select>
+  </div>
+  </div>
+  </div>
+
+  {/* Dosis */}
+  <div className="space-y-1">
+  <label className="text-[10px] font-semibold text-text-muted block">
+  Aturan Pakai / Dosis Medis
+  </label>
+  <Input
+  value={rx.dosage}
+  onChange={(e) => handleUpdatePrescription(idx, "dosage", e.target.value)}
+  placeholder="Contoh: 3x1 tablet sesudah makan"
+  className="h-8 text-xs"
+  />
+  </div>
+  </div>
+  ))}
+  </div>
+  )}
+  </div>
+
+  {/* Tombol Simpan */}
+  <div className="pt-2 flex items-center gap-2">
+  <Button
+  type="button"
+  variant="secondary"
+  size="md"
+  className="flex-1"
+  onClick={() => setExamOpen(false)}
+  >
+  Batal
+  </Button>
+  <Button
+  type="submit"
+  variant="primary"
+  size="md"
+  disabled={!isAuthorized || isSubmitting}
+  className="flex-1 justify-center"
+  >
+  {isSubmitting
+  ? "Menyimpan Rekam..."
+  : isAuthorized
+  ? "Simpan & Terbitkan Rekam Medis"
+  : "Akses Khusus Petugas Medis"}
+  </Button>
+  </div>
+  </form>
+  )}
+  </Dialog>
+  </div>
   );
 }

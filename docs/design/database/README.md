@@ -4,7 +4,7 @@ Folder ini berisi dokumen spesifikasi skema data, diagram relasi entitas (ERD), 
 
 ---
 
-## 📑 Dokumen dalam Folder Ini
+##  Dokumen dalam Folder Ini
 *(Dokumen rancangan database akan ditambahkan di sini)*
 
 - Template / Standar:

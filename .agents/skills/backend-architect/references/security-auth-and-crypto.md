@@ -4,7 +4,7 @@ This guide establishes defense-in-depth security standards, authentication/autho
 
 ---
 
-## 🔑 1. Authentication Architecture
+##  1. Authentication Architecture
 
 ### A. Web / Dashboard Sessions (HTTP-Only Secure Cookies)
 - Store session identifiers in encrypted, `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
@@ -20,7 +20,7 @@ This guide establishes defense-in-depth security standards, authentication/autho
 
 ---
 
-## 🛡️ 2. Authorization: RBAC & ABAC Permission Matrix
+##  2. Authorization: RBAC & ABAC Permission Matrix
 
 Never perform authorization by checking loose role strings directly in controller routes (e.g. `if (user.role === 'admin')`). Instead, evaluate explicit **Permissions & Resource Scopes**.
 
@@ -52,7 +52,7 @@ export function canAccessPos(ctx: AuthContext, targetPosId: string): boolean {
 
 ---
 
-## 🔐 3. Cryptography & Digital Signatures
+##  3. Cryptography & Digital Signatures
 
 Modern backend systems (especially those handling offline data packets, audit trails, or disaster field sync) require strong cryptographic primitives:
 
@@ -86,7 +86,7 @@ export async function verifyPayloadSignature(
 
 ---
 
-## ⏱️ 4. Sliding Window Rate Limiting
+##  4. Sliding Window Rate Limiting
 
 Protect endpoints from credential stuffing and DoS attacks using Redis Sliding Window logs:
 
@@ -113,8 +113,8 @@ export async function checkRateLimit(
   const count = results?.[2]?.[1] as number;
 
   return {
-    allowed: count <= limit,
-    remaining: Math.max(0, limit - count),
+  allowed: count <= limit,
+  remaining: Math.max(0, limit - count),
   };
 }
 ```

@@ -33,10 +33,10 @@
 
 ```mermaid
 flowchart LR
-    A["1. Masuk Tiket PENDING (Warga/Medis)"] --> B["2. Logistik Verifikasi Stok Gudang"]
-    B --> C["3. Logistik Setujui & Potong Stok (ALLOCATED)"]
-    C --> D["4. Runner Bawa Barang & Serahkan ke Warga"]
-    D --> E(["5. Konfirmasi Selesai (COMPLETED)"])
+  A["1. Masuk Tiket PENDING (Warga/Medis)"] --> B["2. Logistik Verifikasi Stok Gudang"]
+  B --> C["3. Logistik Setujui & Potong Stok (ALLOCATED)"]
+  C --> D["4. Runner Bawa Barang & Serahkan ke Warga"]
+  D --> E(["5. Konfirmasi Selesai (COMPLETED)"])
 ```
 
 ---
@@ -45,49 +45,49 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Di Dasbor Logistik Posko"]) --> NavLog["Buka Tab 'Logistik' -> /logistics"]
-    
-    NavLog --> SelectAction{"Pilih Tindakan Logistik"}
-    
-    %% SUB-FLOW 1: RESTOCK BARANG MASUK
-    SelectAction -->|"1. Restock Barang Masuk"| RestockForm["Buka Form Penerimaan Barang Gudang"]
-    RestockForm --> InputItem["Pilih Komoditas (Beras/Selimut/Susu)<br/>+ Jumlah Masuk (e.g. +100 Kotak)"]
-    InputItem --> ConfirmRestock["User Ketuk: 'Simpan Restock Masuk'"]
-    ConfirmRestock --> UpdateStockPlus[("UPDATE inventory_items<br/>SET current_quantity = current_quantity + 100")]
-    UpdateStockPlus --> InsertTxRestock[("INSERT INTO inventory_transactions<br/>(tx_type: 'RESTOCK', qty: +100)")]
-    InsertTxRestock --> RefreshStockList["Daftar Stok Gudang Terupdate"]
+  Start(["Mulai: Di Dasbor Logistik Posko"]) --> NavLog["Buka Tab 'Logistik' -> /logistics"]
+  
+  NavLog --> SelectAction{"Pilih Tindakan Logistik"}
+  
+  %% SUB-FLOW 1: RESTOCK BARANG MASUK
+  SelectAction -->|"1. Restock Barang Masuk"| RestockForm["Buka Form Penerimaan Barang Gudang"]
+  RestockForm --> InputItem["Pilih Komoditas (Beras/Selimut/Susu)<br/>+ Jumlah Masuk (e.g. +100 Kotak)"]
+  InputItem --> ConfirmRestock["User Ketuk: 'Simpan Restock Masuk'"]
+  ConfirmRestock --> UpdateStockPlus[("UPDATE inventory_items<br/>SET current_quantity = current_quantity + 100")]
+  UpdateStockPlus --> InsertTxRestock[("INSERT INTO inventory_transactions<br/>(tx_type: 'RESTOCK', qty: +100)")]
+  InsertTxRestock --> RefreshStockList["Daftar Stok Gudang Terupdate"]
 
-    %% SUB-FLOW 2: PEMROSESAN TIKET KEBUTUHAN (SINGLE-WRITER APPROVAL)
-    SelectAction -->|"2. Antrean Tiket Warga"| ViewTicketQueue["Lihat Antrean Tiket: /logistics/distribute<br/>(Daftar Tiket Berstatus PENDING)"]
-    ViewTicketQueue --> SelectTicket["Pilih Tiket Kebutuhan Warga<br/>(e.g., Tiket #TK-102: 2 Kotak Susu Bayi)"]
-    
-    SelectTicket --> CheckPhysicalStock{"Apakah Stok Fisik di Gudang Tersedia?"}
-    
-    CheckPhysicalStock -->|Tidak Cukup / Habis| RejectOrWaybill{"Tindakan Penolakan"}
-    RejectOrWaybill -->|Tolak Tiket| RejectTicket["Ubah Status -> REJECTED (Stok Kosong)"]
-    RejectOrWaybill -->|Minta ke Posko Lain| CreateWaybill["Buat Permintaan Antar-Posko (Waybill)"]
-    
-    CheckPhysicalStock -->|Tersedia Cukup| ApproveTicketTap["Petugas Logistik Ketuk: 'Setujui & Alokasikan'"]
-    ApproveTicketTap --> DeductStockDB[("UPDATE inventory_items<br/>SET current_quantity = current_quantity - 2")]
-    DeductStockDB --> InsertTxDeduct[("INSERT INTO inventory_transactions<br/>(tx_type: 'DISTRIBUTION', qty: -2, ref: TK-102)")]
-    InsertTxDeduct --> SetTicketAllocated[("UPDATE needs_requests<br/>SET status = 'ALLOCATED', allocated_by = user_id")]
-    
-    SetTicketAllocated --> HandoverToRunner["Barang Fisik Diserahkan ke Petugas Runner"]
+  %% SUB-FLOW 2: PEMROSESAN TIKET KEBUTUHAN (SINGLE-WRITER APPROVAL)
+  SelectAction -->|"2. Antrean Tiket Warga"| ViewTicketQueue["Lihat Antrean Tiket: /logistics/distribute<br/>(Daftar Tiket Berstatus PENDING)"]
+  ViewTicketQueue --> SelectTicket["Pilih Tiket Kebutuhan Warga<br/>(e.g., Tiket #TK-102: 2 Kotak Susu Bayi)"]
+  
+  SelectTicket --> CheckPhysicalStock{"Apakah Stok Fisik di Gudang Tersedia?"}
+  
+  CheckPhysicalStock -->|Tidak Cukup / Habis| RejectOrWaybill{"Tindakan Penolakan"}
+  RejectOrWaybill -->|Tolak Tiket| RejectTicket["Ubah Status -> REJECTED (Stok Kosong)"]
+  RejectOrWaybill -->|Minta ke Posko Lain| CreateWaybill["Buat Permintaan Antar-Posko (Waybill)"]
+  
+  CheckPhysicalStock -->|Tersedia Cukup| ApproveTicketTap["Petugas Logistik Ketuk: 'Setujui & Alokasikan'"]
+  ApproveTicketTap --> DeductStockDB[("UPDATE inventory_items<br/>SET current_quantity = current_quantity - 2")]
+  DeductStockDB --> InsertTxDeduct[("INSERT INTO inventory_transactions<br/>(tx_type: 'DISTRIBUTION', qty: -2, ref: TK-102)")]
+  InsertTxDeduct --> SetTicketAllocated[("UPDATE needs_requests<br/>SET status = 'ALLOCATED', allocated_by = user_id")]
+  
+  SetTicketAllocated --> HandoverToRunner["Barang Fisik Diserahkan ke Petugas Runner"]
 
-    %% SUB-FLOW 3: PENYERAHAN KE TANGAN PENGUNGSI (RUNNER HANDOVER)
-    HandoverToRunner --> RunnerAtTent["Runner Mendatangi Tenda Pengungsi"]
-    RunnerAtTent --> ScanRefugee["/Runner Pindai Kartu Warga Penerima/"]
-    ScanRefugee --> VerifyRecipient{"Apakah Identitas Warga Sesuai Tiket?"}
-    
-    VerifyRecipient -->|Tidak Cocok| ShowMismatchAlert["Alert: Warga Tidak Sesuai Pemilik Tiket"]
-    VerifyRecipient -->|Cocok 100%| GivePhysicalAid["Serahkan Barang Fisik ke Tangan Warga"]
-    
-    GivePhysicalAid --> TapComplete["Runner Ketuk: 'Konfirmasi Penyerahan Selesai'"]
-    TapComplete --> SetTicketCompleted[("UPDATE needs_requests<br/>SET status = 'COMPLETED', completed_at = now")]
-    SetTicketCompleted --> AppendRefugeeAidEvent[("INSERT INTO refugee_events<br/>(event_type: 'AID_RECEIVED', payload: '2 Kotak Susu')")]
-    
-    AppendRefugeeAidEvent --> ShowCompletedToast["Toast: 'Bantuan Berhasil Diserahkan'"]
-    ShowCompletedToast --> EndState(["Selesai"])
+  %% SUB-FLOW 3: PENYERAHAN KE TANGAN PENGUNGSI (RUNNER HANDOVER)
+  HandoverToRunner --> RunnerAtTent["Runner Mendatangi Tenda Pengungsi"]
+  RunnerAtTent --> ScanRefugee["/Runner Pindai Kartu Warga Penerima/"]
+  ScanRefugee --> VerifyRecipient{"Apakah Identitas Warga Sesuai Tiket?"}
+  
+  VerifyRecipient -->|Tidak Cocok| ShowMismatchAlert["Alert: Warga Tidak Sesuai Pemilik Tiket"]
+  VerifyRecipient -->|Cocok 100%| GivePhysicalAid["Serahkan Barang Fisik ke Tangan Warga"]
+  
+  GivePhysicalAid --> TapComplete["Runner Ketuk: 'Konfirmasi Penyerahan Selesai'"]
+  TapComplete --> SetTicketCompleted[("UPDATE needs_requests<br/>SET status = 'COMPLETED', completed_at = now")]
+  SetTicketCompleted --> AppendRefugeeAidEvent[("INSERT INTO refugee_events<br/>(event_type: 'AID_RECEIVED', payload: '2 Kotak Susu')")]
+  
+  AppendRefugeeAidEvent --> ShowCompletedToast["Toast: 'Bantuan Berhasil Diserahkan'"]
+  ShowCompletedToast --> EndState(["Selesai"])
 ```
 
 ---

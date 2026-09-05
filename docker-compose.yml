@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sandya_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: sandya_db
+      POSTGRES_USER: sandya_admin
+      POSTGRES_PASSWORD: sandya_secret_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/infrastructure/db/supabase-postgres-schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sandya_admin -d sandya_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgrest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: sandya_postgrest
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgres://sandya_admin:sandya_secret_password@postgres:5432/sandya_db
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: sandya_admin
+      PGRST_SERVER_PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local

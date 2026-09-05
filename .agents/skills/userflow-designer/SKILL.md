@@ -10,20 +10,20 @@ This skill guides the agent in transforming high-level, unstructured, or domain-
 
 ---
 
-## 🎯 Core Objectives
+##  Core Objectives
 
 When designing a user flow from an app idea:
 1. **Deconstruct the Concept**: Extract actors, core value props, jobs-to-be-done (JTBD), and environmental constraints (e.g., offline-first, latency, role permissions).
 2. **Clarify Ambiguities & Edge Cases**: Identify hidden assumptions (e.g., data conflict resolution, auth timeouts, empty states) before finalizing the flow.
 3. **Map Macro & Micro Journeys**:
-   - **Macro Flow**: High-level end-to-end journey spanning milestones from onboarding to goal completion.
-   - **Micro Flow**: Granular step-by-step paths with branching logic (Happy Path, Alternative Paths, Failure/Error Paths).
+  - **Macro Flow**: High-level end-to-end journey spanning milestones from onboarding to goal completion.
+  - **Micro Flow**: Granular step-by-step paths with branching logic (Happy Path, Alternative Paths, Failure/Error Paths).
 4. **Render Visual Mermaid Diagrams**: Produce compliant, syntax-clean Mermaid charts (`flowchart TD`, `sequenceDiagram`, `stateDiagram-v2`).
 5. **Deliver Standardized Documentation**: Generate a clean, reproducible Markdown artifact or project documentation file based on the [Flow Template](./references/flow-template.md).
 
 ---
 
-## 🧭 Step-by-Step Workflow
+##  Step-by-Step Workflow
 
 ### Step 1: Concept Deconstruction & Entity Identification
 Read the provided application idea carefully and extract the following foundational elements:
@@ -44,10 +44,10 @@ If critical architectural or UX decisions are missing from the raw idea, briefly
 Draft the high-level roadmap showing the lifecycle of the user interaction:
 ```mermaid
 flowchart LR
-    A([1. Discovery & Onboarding]) --> B([2. Workspace / Pos Setup])
-    B --> C([3. Core Operation / Data Entry])
-    C --> D([4. Sync / Transfer / Share])
-    D --> E([5. Central Review & Resolution])
+  A([1. Discovery & Onboarding]) --> B([2. Workspace / Pos Setup])
+  B --> C([3. Core Operation / Data Entry])
+  C --> D([4. Sync / Transfer / Share])
+  D --> E([5. Central Review & Resolution])
 ```
 
 ### Step 4: Micro Flow Formulation & Logic Branching
@@ -75,7 +75,7 @@ Format the final user flow specification using [Flow Template](./references/flow
 
 ---
 
-## 📚 Reference Documentation & Examples
+##  Reference Documentation & Examples
 
 - **[User Flow Analysis Framework](./references/framework.md)**: Deep dive on JTBD, Actor-Action-System matrix, error handling taxonomy, and offline-first UX.
 - **[Mermaid Modeling Guide](./references/mermaid-guide.md)**: Syntax rules, node naming conventions, and diagram templates.
@@ -85,7 +85,7 @@ Format the final user flow specification using [Flow Template](./references/flow
 
 ---
 
-## 💡 Quality Checklist
+##  Quality Checklist
 
 Before finalizing any user flow:
 - [ ] Are all user roles clearly delineated with distinct entry and exit points?

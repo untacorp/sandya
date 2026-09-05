@@ -1,7 +1,7 @@
-# Backend Architecture Plan: Disaster Response Local-First Engine (Sanidya Architecture)
+# Backend Architecture Plan: Disaster Response Local-First Engine (Sandya Architecture)
 
 **Document Metadata**:
-- **System**: Sanidya Disaster Command & Local POS Engine
+- **System**: Sandya Disaster Command & Local POS Engine
 - **Target Stack**: TypeScript, Node.js, Next.js App Router, SQLite (Field Edge), PostgreSQL (Central HQ), Redis, BullMQ
 - **Architectural Style**: Hexagonal Architecture + Local-First Event Sourcing
 
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & System Topology
 
-Sanidya operates across two operational environments:
+Sandya operates across two operational environments:
 1. **Disconnected Field POS Nodes (Edge)**: Local desktop/mobile apps running embedded SQLite in zero-internet disaster zones. Operations (evacuee registration, triage, aid distribution) are recorded locally, digitally signed via **Ed25519**, and queued into an event outbox.
 2. **Central Emergency HQ (Cloud)**: Central PostgreSQL cluster consolidating multi-POS logistics, evacuee registries, and analytics.
 
@@ -18,24 +18,24 @@ Ingestion from Field to Central supports multiple transport modes: Standard HTTP
 ### System Architecture Diagram
 ```mermaid
 graph TD
-    subgraph "Field POS Node (Local-First Edge)"
-        App[Tauri / Next.js POS UI] --> AppUseCase[Intake Use Case]
-        AppUseCase --> SQLite[(Embedded SQLite DB)]
-        AppUseCase --> LocalOutbox[(Local Event Outbox)]
-        LocalOutbox --> Signer[Ed25519 Node Signer]
-        Signer --> TransportEncoder[QR / Mesh / HTTPS Encoder]
-    end
+  subgraph "Field POS Node (Local-First Edge)"
+  App[Tauri / Next.js POS UI] --> AppUseCase[Intake Use Case]
+  AppUseCase --> SQLite[(Embedded SQLite DB)]
+  AppUseCase --> LocalOutbox[(Local Event Outbox)]
+  LocalOutbox --> Signer[Ed25519 Node Signer]
+  Signer --> TransportEncoder[QR / Mesh / HTTPS Encoder]
+  end
 
-    TransportEncoder -->|HTTPS / Mesh / QR Scan| IngestionGateway[Central Ingestion API]
+  TransportEncoder -->|HTTPS / Mesh / QR Scan| IngestionGateway[Central Ingestion API]
 
-    subgraph "Central Emergency HQ"
-        IngestionGateway --> SigVerifier[Ed25519 Crypto Verifier]
-        SigVerifier --> Reassembly[Packet Reassembly Engine]
-        Reassembly --> ReplayPipeline[Event Sourcing Replay Worker]
-        ReplayPipeline --> CentralPostgres[(Central PostgreSQL DB)]
-        ReplayPipeline --> BullMQ[(BullMQ Reconciliation Queue)]
-        BullMQ --> AnalyticsWorker[Logistics & Heatmap Aggregator]
-    end
+  subgraph "Central Emergency HQ"
+  IngestionGateway --> SigVerifier[Ed25519 Crypto Verifier]
+  SigVerifier --> Reassembly[Packet Reassembly Engine]
+  Reassembly --> ReplayPipeline[Event Sourcing Replay Worker]
+  ReplayPipeline --> CentralPostgres[(Central PostgreSQL DB)]
+  ReplayPipeline --> BullMQ[(BullMQ Reconciliation Queue)]
+  BullMQ --> AnalyticsWorker[Logistics & Heatmap Aggregator]
+  end
 ```
 
 ---
@@ -59,20 +59,20 @@ export class EvacueeAggregate {
   private constructor(private props: EvacueeProps) {}
 
   static register(params: Omit<EvacueeProps, 'state' | 'registeredAt' | 'version'>): EvacueeAggregate {
-    return new EvacueeAggregate({
-      ...params,
-      state: 'INTAKE',
-      registeredAt: new Date(),
-      version: 1,
-    });
+  return new EvacueeAggregate({
+  ...params,
+  state: 'INTAKE',
+  registeredAt: new Date(),
+  version: 1,
+  });
   }
 
   updateTriage(newStatus: EvacueeProps['triageStatus'], reason: string): void {
-    if (this.props.state === 'DECEASED' || this.props.state === 'REUNITED') {
-      throw new DomainInvariantViolationError(`Cannot alter triage for evacuee in state ${this.props.state}`);
-    }
-    this.props.triageStatus = newStatus;
-    this.props.version += 1;
+  if (this.props.state === 'DECEASED' || this.props.state === 'REUNITED') {
+  throw new DomainInvariantViolationError(`Cannot alter triage for evacuee in state ${this.props.state}`);
+  }
+  this.props.triageStatus = newStatus;
+  this.props.version += 1;
   }
 }
 ```
@@ -90,16 +90,16 @@ export class EvacueeAggregate {
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT
-    DRAFT --> REQUESTED : SubmitRequest() [ItemsCount > 0]
-    REQUESTED --> APPROVED : CentralApprove() [StockAllocated]
-    REQUESTED --> REJECTED : CentralReject(reason)
-    APPROVED --> DISPATCHED : DispatchTruck(convoyId)
-    DISPATCHED --> RECEIVED_PARTIAL : PosConfirmReceipt(partialItems)
-    DISPATCHED --> RECEIVED_FULL : PosConfirmReceipt(allItems)
-    RECEIVED_FULL --> [*]
-    RECEIVED_PARTIAL --> [*]
-    REJECTED --> [*]
+  [*] --> DRAFT
+  DRAFT --> REQUESTED : SubmitRequest() [ItemsCount > 0]
+  REQUESTED --> APPROVED : CentralApprove() [StockAllocated]
+  REQUESTED --> REJECTED : CentralReject(reason)
+  APPROVED --> DISPATCHED : DispatchTruck(convoyId)
+  DISPATCHED --> RECEIVED_PARTIAL : PosConfirmReceipt(partialItems)
+  DISPATCHED --> RECEIVED_FULL : PosConfirmReceipt(allItems)
+  RECEIVED_FULL --> [*]
+  RECEIVED_PARTIAL --> [*]
+  REJECTED --> [*]
 ```
 
 ---

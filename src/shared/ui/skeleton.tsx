@@ -6,12 +6,12 @@ export function Skeleton({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn(
-        "animate-pulse rounded-lg bg-surface-muted border border-border/50",
-        className
-      )}
-      {...props}
-    />
+  <div
+  className={cn(
+  "animate-pulse rounded-lg bg-surface-muted border border-border/50",
+  className
+  )}
+  {...props}
+  />
   );
 }

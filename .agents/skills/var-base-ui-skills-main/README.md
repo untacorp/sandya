@@ -15,14 +15,14 @@ skills/var-ui-base/
 ├── SKILL.md                          # Main skill entrypoint & scope router
 ├── README.md                         # Repository documentation
 └── references/                       # Modular reference guides
-    ├── anti-patterns.md              # 14 UI Slop anti-patterns & solutions
-    ├── typography.md                 # Typography pairing matrices & scales
-    ├── layout-and-spacing.md         # Asymmetric grids & mobile responsiveness
-    ├── color-system.md               # 60-30-10 color rule & crisp palettes
-    ├── component-states.md           # 8 interactive component states & previews
-    ├── microinteractions.md          # Transition tokens & motion easing
-    ├── asset-integration.md          # Unsplash CDN parameters & SVG icon standards
-    └── validation-checklist.md       # 15-point audit checklist & pre-emit scoring
+  ├── anti-patterns.md              # 14 UI Slop anti-patterns & solutions
+  ├── typography.md                 # Typography pairing matrices & scales
+  ├── layout-and-spacing.md         # Asymmetric grids & mobile responsiveness
+  ├── color-system.md               # 60-30-10 color rule & crisp palettes
+  ├── component-states.md           # 8 interactive component states & previews
+  ├── microinteractions.md          # Transition tokens & motion easing
+  ├── asset-integration.md          # Unsplash CDN parameters & SVG icon standards
+  └── validation-checklist.md       # 15-point audit checklist & pre-emit scoring
 ```
 
 ---
@@ -86,9 +86,9 @@ AI Agents stamp this self-critique comment at the top of generated style blocks 
 ```bash
 .agents/
 └── skills/
-    └── var-ui-base/
-        ├── SKILL.md
-        └── references/
+  └── var-ui-base/
+  ├── SKILL.md
+  └── references/
 ```
 
 To invoke during turn-based prompts:

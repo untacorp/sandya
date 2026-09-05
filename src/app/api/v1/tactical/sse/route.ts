@@ -15,25 +15,25 @@ export async function GET(req: NextRequest) {
 
   // Subscribe ke tactical stream
   const unsubscribe = container.tacticalStreamService.subscribe(async (msg) => {
-    try {
-      const payload = `data: ${JSON.stringify({ type: 'MESSAGE', data: msg })}\n\n`;
-      await writer.write(encoder.encode(payload));
-    } catch {
-      // Stream ditutup oleh klien
-    }
+  try {
+  const payload = `data: ${JSON.stringify({ type: 'MESSAGE', data: msg })}\n\n`;
+  await writer.write(encoder.encode(payload));
+  } catch {
+  // Stream ditutup oleh klien
+  }
   });
 
   // Handle connection close
   req.signal.addEventListener('abort', () => {
-    unsubscribe();
-    writer.close().catch(() => {});
+  unsubscribe();
+  writer.close().catch(() => {});
   });
 
   return new Response(responseStream.readable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
-    },
+  headers: {
+  'Content-Type': 'text/event-stream',
+  'Cache-Control': 'no-cache, no-transform',
+  Connection: 'keep-alive',
+  },
   });
 }

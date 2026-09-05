@@ -19,7 +19,7 @@ import { SqliteOutboxRepository } from '@/infrastructure/db/sqlite/repositories/
 import { asRefugeeId, asPoskoId, asItemId, asPeerId } from '@/core/shared/branded-types';
 
 async function runCoreDomainTests() {
-  console.log('🧪 RUNNING SANIDYA V2 CORE DOMAIN & ARCHITECTURE TEST SUITE...\n');
+  console.log('RUNNING Sandya CORE DOMAIN & ARCHITECTURE TEST SUITE...\n');
 
   // 1. Canonical Roles & Hierarchy Test
   console.log('Test 1: Canonical Roles & Staff Hierarchy');
@@ -27,7 +27,7 @@ async function runCoreDomainTests() {
   assert.strictEqual(STAFF_ROLES.length, 6, 'Must have 6 staff roles (excluding WARGA_TAMU)');
   assert.strictEqual(ALL_USER_ROLES.includes('WARGA_TAMU'), true);
   assert.strictEqual((STAFF_ROLES as readonly string[]).includes('WARGA_TAMU'), false, 'WARGA_TAMU must not be in STAFF_ROLES');
-  console.log('  ✅ Canonical Roles & Hierarchy Passed');
+  console.log('  [PASS] Canonical Roles & Hierarchy Passed');
 
   // 2. Pre-Shared Name Dictionary & JSON Loader Test
   console.log('Test 2: Name Dictionary JSON & Deterministic Tokenizer');
@@ -46,33 +46,33 @@ async function runCoreDomainTests() {
   assert.strictEqual(tokenizedRare.literalWordsCount >= 1, true, 'Unmapped words must fallback to literal');
   const restoredRare = NameTokenizer.detokenize(tokenizedRare.tokens);
   assert.strictEqual(restoredRare.toLowerCase(), rareName.toLowerCase(), 'Rare name fallback lossless');
-  console.log('  ✅ Name Dictionary JSON & Tokenizer Passed');
+  console.log('  [PASS] Name Dictionary JSON & Tokenizer Passed');
 
   // 3. Invariant Test: Refugee Creation & Validation
   console.log('Test 3: RefugeeAggregate Invariant Guards');
   const validRefugeeResult = RefugeeAggregate.create({
-    id: asRefugeeId(crypto.randomUUID()),
-    poskoId: asPoskoId(crypto.randomUUID()),
-    fullName: 'Muhammad Budi Santoso',
-    gender: 'M',
-    age: 34,
-    registeredByUserId: 'user-001',
-    missingKinName: 'Siti Rahmawati',
+  id: asRefugeeId(crypto.randomUUID()),
+  poskoId: asPoskoId(crypto.randomUUID()),
+  fullName: 'Muhammad Budi Santoso',
+  gender: 'M',
+  age: 34,
+  registeredByUserId: 'user-001',
+  missingKinName: 'Siti Rahmawati',
   });
   assert.strictEqual(validRefugeeResult.ok, true, 'Valid refugee creation should succeed');
   assert.strictEqual(validRefugeeResult.value.toSnapshot().fullName, 'Muhammad Budi Santoso');
 
   // Invalid age invariant (>127)
   const invalidAgeResult = RefugeeAggregate.create({
-    id: asRefugeeId(crypto.randomUUID()),
-    poskoId: asPoskoId(crypto.randomUUID()),
-    fullName: 'Agus',
-    gender: 'M',
-    age: 150,
-    registeredByUserId: 'user-001',
+  id: asRefugeeId(crypto.randomUUID()),
+  poskoId: asPoskoId(crypto.randomUUID()),
+  fullName: 'Agus',
+  gender: 'M',
+  age: 150,
+  registeredByUserId: 'user-001',
   });
   assert.strictEqual(invalidAgeResult.ok, false, 'Invalid age (>127) must fail invariant');
-  console.log('  ✅ RefugeeAggregate Invariants Passed');
+  console.log('  [PASS] RefugeeAggregate Invariants Passed');
 
   // 4. Logistics Inventory Single-Writer & Balance Protection
   console.log('Test 4: Inventory Single-Writer & Non-Negative Balance Guards');
@@ -80,12 +80,12 @@ async function runCoreDomainTests() {
   assert.ok(MUTATION_TYPES.length >= 4, 'Must define stock mutation types');
 
   const inventoryResult = InventoryAggregate.create({
-    id: asItemId(crypto.randomUUID()),
-    poskoId: asPoskoId(crypto.randomUUID()),
-    itemName: 'Beras Ramos 5kg',
-    category: 'FOOD',
-    initialQuantity: 100,
-    unit: 'KARUNG',
+  id: asItemId(crypto.randomUUID()),
+  poskoId: asPoskoId(crypto.randomUUID()),
+  itemName: 'Beras Ramos 5kg',
+  category: 'FOOD',
+  initialQuantity: 100,
+  unit: 'KARUNG',
   });
   assert.strictEqual(inventoryResult.ok, true);
   const inventory = inventoryResult.value;
@@ -102,34 +102,34 @@ async function runCoreDomainTests() {
   // Negative balance attempt (trying to deduct 80 from remaining 70)
   const mutateNegative = inventory.mutateStock('officer-1', 'PETUGAS_LOGISTIK', 'DISTRIBUTION', -80, 3);
   assert.strictEqual(mutateNegative.ok, false, 'Deduction exceeding available balance must fail');
-  console.log('  ✅ Inventory Single-Writer Invariants Passed');
+  console.log('  [PASS] Inventory Single-Writer Invariants Passed');
 
   // 5. Tactical Channel Access Control
   console.log('Test 5: Tactical Channels & Guest Isolation');
   const guestAttempt = TacticalMessageEntity.create(
-    asPeerId('peer-001'),
-    'Guest User',
-    'WARGA_TAMU',
-    'POSKO_ALL',
-    'TEXT',
-    { textContent: 'Halo dari pengungsi' }
+  asPeerId('peer-001'),
+  'Guest User',
+  'WARGA_TAMU',
+  'POSKO_ALL',
+  'TEXT',
+  { textContent: 'Halo dari pengungsi' }
   );
   assert.strictEqual(guestAttempt.ok, false, 'Guest must be muted from broadcasting to tactical channels');
 
   const validMedicalMessage = TacticalMessageEntity.create(
-    asPeerId('peer-002'),
-    'dr. Siti',
-    'PETUGAS_MEDIS',
-    'MEDIS',
-    'TEXT',
-    { textContent: 'Butuh tambahan tabung oksigen di Tenda Medis' }
+  asPeerId('peer-002'),
+  'dr. Siti',
+  'PETUGAS_MEDIS',
+  'MEDIS',
+  'TEXT',
+  { textContent: 'Butuh tambahan tabung oksigen di Tenda Medis' }
   );
   assert.strictEqual(validMedicalMessage.ok, true, 'Medical officer can broadcast to #medis channel');
-  console.log('  ✅ Tactical Message Guards Passed');
+  console.log('  [PASS] Tactical Message Guards Passed');
 
   // 6. XOR Parity Erasure Coding Test
   console.log('Test 6: XOR Parity Erasure Coding (Recovering Lost Chunk)');
-  const samplePayload = Buffer.from('SANIDYA_OFFLINE_DISASTER_DATA_PAYLOAD_WITH_EMERGENCY_RECORDS_2026', 'utf8');
+  const samplePayload = Buffer.from('SANDYA_OFFLINE_DISASTER_DATA_PAYLOAD_WITH_EMERGENCY_RECORDS_2026', 'utf8');
   const splitResult = XorParityEngine.splitWithParity(samplePayload, 3);
   assert.strictEqual(splitResult.chunks.length, 4, '3 Data + 1 Parity Chunk');
 
@@ -138,7 +138,7 @@ async function runCoreDomainTests() {
   const remainingChunks = [splitResult.chunks[0]!, splitResult.chunks[2]!, splitResult.chunks[3]!]; // Chunk 1 lost!
   const restoredPayload = XorParityEngine.assembleFromChunks(remainingChunks, 3, originalLengths);
   assert.strictEqual(restoredPayload.toString('utf8'), samplePayload.toString('utf8'), 'Payload recovered perfectly from parity');
-  console.log('  ✅ XOR Parity Recovery Passed (100% Lossless Recovery)');
+  console.log('  [PASS] XOR Parity Recovery Passed (100% Lossless Recovery)');
 
   // 7. Cryptography Test: Ed25519 Sign & Verify
   console.log('Test 7: Ed25519 Keypair Generation & Signature Verification');
@@ -150,7 +150,7 @@ async function runCoreDomainTests() {
 
   const isTampered = Ed25519Signer.verifySignature(Buffer.from('TAMPERED_DATA', 'utf8'), signatureHex, keypair.publicKeyHex);
   assert.strictEqual(isTampered, false, 'Tampered data must fail signature verification');
-  console.log('  ✅ Ed25519 Cryptography Passed');
+  console.log('  [PASS] Ed25519 Cryptography Passed');
 
   // 8. End-to-End Use Case Pipeline Test
   console.log('Test 8: Fast Intake & Transactional Outbox Pipeline');
@@ -161,12 +161,12 @@ async function runCoreDomainTests() {
 
   const intakeUseCase = new FastIntakeUseCase(refugeeRepo, outboxRepo);
   const intakeResult = await intakeUseCase.execute({
-    poskoId: crypto.randomUUID(),
-    fullName: 'Siti Rahmawati',
-    gender: 'F',
-    age: 32,
-    shelterLocation: 'Tenda 02',
-    registeredByUserId: 'volunteer-1',
+  poskoId: crypto.randomUUID(),
+  fullName: 'Siti Rahmawati',
+  gender: 'F',
+  age: 32,
+  shelterLocation: 'Tenda 02',
+  registeredByUserId: 'volunteer-1',
   });
   assert.strictEqual(intakeResult.ok, true);
 
@@ -174,12 +174,12 @@ async function runCoreDomainTests() {
   const pendingOutbox = await outboxRepo.getPendingBatch(10);
   assert.strictEqual(pendingOutbox.ok, true);
   assert.strictEqual(pendingOutbox.value.length, 1, 'Event must be recorded in transactional outbox');
-  console.log('  ✅ End-to-End Pipeline & Outbox Verification Passed');
+  console.log('  [PASS] End-to-End Pipeline & Outbox Verification Passed');
 
-  console.log('\n🎉 ALL CORE DOMAIN TESTS PASSED SUCCESSFULLY (100% VERIFIED)!');
+  console.log('\n ALL CORE DOMAIN TESTS PASSED SUCCESSFULLY (100% VERIFIED)!');
 }
 
 runCoreDomainTests().catch((err) => {
-  console.error('❌ Core Domain Test Failed:', err);
+  console.error('[FAIL] Core Domain Test Failed:', err);
   process.exit(1);
 });

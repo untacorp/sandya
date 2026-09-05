@@ -1,6 +1,6 @@
 # Spesifikasi Protokol Transfer Data: Animated QR Dinamis & Poster Paritas
 
-Dokumen ini mendefinisikan arsitektur resmi protokol transfer data visual offline pada sistem **Sanidya**, yang mencakup dua moda adaptif:
+Dokumen ini mendefinisikan arsitektur resmi protokol transfer data visual offline pada sistem **Sandya**, yang mencakup dua moda adaptif:
 1. **Moda Layar Digital (Screen-to-Screen)**: Menggunakan **Animated Dynamic Multipart QR** untuk transfer super cepat antar-perangkat HP relawan.
 2. **Moda Cetak Fisik (Print/Paper Poster)**: Menggunakan **Poster Multi-QR dengan Paritas XOR** untuk serah terima posko yang ditinggalkan.
 
@@ -29,7 +29,7 @@ Moda ini digunakan saat relawan dari dua posko saling bertemu secara langsung di
 │   • ...                                                     │
 │   • Detik 1.8: Tertangkap Frame 2/10 (SLOT LENGKAP 10/10)   │
 │                                                             │
-│   💥 SELESAI INSTAN! HP bergetar (BZZT) & scan STOP detik itu│
+│    SELESAI INSTAN! HP bergetar (BZZT) & scan STOP detik itu│
 │   tanpa perlu menunggu animasi di layar pengirim selesai!   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -80,7 +80,7 @@ Moda ini digunakan saat relawan harus meninggalkan posko atau menyerahkan tanggu
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  ⛺ SANIDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
+│   SANDYA - POSTER SERAH TERIMA BERBASIS PARITAS      │
 │  Posko: GOR Pacet | Kapasitas: 1.000 Pengungsi           │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
@@ -93,7 +93,7 @@ Moda ini digunakan saat relawan harus meninggalkan posko atau menyerahkan tanggu
 │   [ QR Data 7 ]    [ QR PARITAS D ]                      │
 │   (@143 Jiwa)      (XOR Paritas Redundansi)              │
 │                                                          │
-│  ✨ KEBAL SOBEKAN: Cukup scan SEMBARANG 7 dari 8 QR.     │
+│   KEBAL SOBEKAN: Cukup scan SEMBARANG 7 dari 8 QR.     │
 │  Jika 1 kotak QR sobek / terkena lumpur total,           │
 │  data 1.000 pengungsi tetap pulih 100% sempurna!         │
 └──────────────────────────────────────────────────────────┘
@@ -122,8 +122,8 @@ Saat relawan memindai QR (baik via animasi layar maupun poster kertas), sistem s
 
 1. Sistem membandingkan field `missingKinName` (nama keluarga yang dicari) dari posko lokal dengan daftar `fullName` dari posko yang baru diimpor.
 2. Jika ada kecocokan nama dan asal domisili (`domicileOrigin`):
-   * Aplikasi langsung memunculkan notifikasi pop-up:
-     > *"🎉 KELUARGA DITEMUKAN: Siti Rahmawati (Dusun Cijedil) yang dicari oleh Budi Santoso terdaftar di Posko B (Ruang Kelas 2B SDN 1 Pacet)!"*
+  * Aplikasi langsung memunculkan notifikasi pop-up:
+  > *" KELUARGA DITEMUKAN: Siti Rahmawati (Dusun Cijedil) yang dicari oleh Budi Santoso terdaftar di Posko B (Ruang Kelas 2B SDN 1 Pacet)!"*
 3. Hubungan keluarga otomatis terhubung di basis data lokal SQLite tanpa membutuhkan koneksi internet.
 
 ---

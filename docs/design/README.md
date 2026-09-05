@@ -1,10 +1,10 @@
 # Rancangan Desain & Dokumen Teknis (`docs/design`)
 
-Folder ini digunakan untuk menyimpan seluruh rancangan desain, spesifikasi arsitektur, skema data, dan desain antarmuka aplikasi **Sanidya**.
+Folder ini digunakan untuk menyimpan seluruh rancangan desain, spesifikasi arsitektur, skema data, dan desain antarmuka aplikasi **Sandya**.
 
 ---
 
-## 📁 Struktur Folder
+##  Struktur Folder
 
 ```text
 docs/design/
@@ -16,7 +16,7 @@ docs/design/
 
 ---
 
-## 🧭 Kategori & Panduan Penggunaan
+##  Kategori & Panduan Penggunaan
 
 ### 1. [`architecture/`](./architecture/README.md)
 Menyimpan rancangan arsitektur tingkat tinggi maupun detail subsistem:
@@ -39,6 +39,6 @@ Menyimpan rancangan visual, interaksi antarmuka, dan struktur komponen:
 
 ---
 
-## 📝 Konvensi Penamaan File
+##  Konvensi Penamaan File
 - Gunakan format **kebab-case** dengan prefix angka untuk dokumen terurut (contoh: `01-arsitektur-sync-engine.md`, `02-desain-komponen-triase.md`).
 - Sertakan diagram Mermaid (`mermaid`) untuk alur atau relasi data visual.

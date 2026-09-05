@@ -26,43 +26,43 @@ export function PageHeader({
 }: PageHeaderProps) {
   const desc = description || subtitle;
   return (
-    <div
-      className={cn(
-        "flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 min-w-0",
-        className
-      )}
-    >
-      <div className="space-y-0.5 min-w-0">
-        {backHref && (
-          <div className="mb-1">
-            <Link href={backHref}>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="arrow-left"
-                iconVariant="linear"
-                className="-ml-2 px-2 py-1 text-xs text-text-muted hover:text-text-main h-7"
-              >
-                {backLabel}
-              </Button>
-            </Link>
-          </div>
-        )}
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-main truncate">
-          {title}
-        </h1>
-        {desc && (
-          <p className="text-xs text-text-muted leading-normal">
-            {desc}
-          </p>
-        )}
-      </div>
+  <div
+  className={cn(
+  "flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 min-w-0",
+  className
+  )}
+  >
+  <div className="space-y-0.5 min-w-0">
+  {backHref && (
+  <div className="mb-1">
+  <Link href={backHref}>
+  <Button
+  variant="ghost"
+  size="sm"
+  icon="arrow-left"
+  iconVariant="linear"
+  className="-ml-2 px-2 py-1 text-xs text-text-muted hover:text-text-main h-7"
+  >
+  {backLabel}
+  </Button>
+  </Link>
+  </div>
+  )}
+  <h1 className="text-lg sm:text-xl font-bold tracking-tight text-text-main truncate">
+  {title}
+  </h1>
+  {desc && (
+  <p className="text-xs text-text-muted leading-normal">
+  {desc}
+  </p>
+  )}
+  </div>
 
-      {children && (
-        <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
-          {children}
-        </div>
-      )}
-    </div>
+  {children && (
+  <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
+  {children}
+  </div>
+  )}
+  </div>
   );
 }

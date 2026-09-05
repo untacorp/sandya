@@ -34,11 +34,11 @@
 
 ```mermaid
 flowchart LR
-    A([1. Offline Evacuee Intake]) --> B([2. Local Event Log Storage])
-    B --> C([3. Export Compressed QR Payload])
-    C --> D([4. Peer Device Scans QR])
-    D --> E([5. Conflict Check & Merge])
-    E --> F([6. Deferred Cloud Sync])
+  A([1. Offline Evacuee Intake]) --> B([2. Local Event Log Storage])
+  B --> C([3. Export Compressed QR Payload])
+  C --> D([4. Peer Device Scans QR])
+  D --> E([5. Conflict Check & Merge])
+  E --> F([6. Deferred Cloud Sync])
 ```
 
 ---
@@ -47,54 +47,54 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start([Field Volunteer Opens App]) --> CheckPos{"Is Active Pos Configured?"}
-    
-    CheckPos -->|No| CreatePos["Create Pos Profile (Name, Location, Camp ID)"]
-    CreatePos --> SavePosLoc[(Save Pos to Local SQLite)]
-    SavePosLoc --> IntakeView["Open Pos Intake Screen"]
-    
-    CheckPos -->|Yes| IntakeView
-    
-    IntakeView --> InputData["Fill Evacuee Demographic & Needs Data"]
-    InputData --> TapSave["Tap 'Save Record'"]
-    
-    TapSave --> SaveLocal[(Append Event to Local Event Store)]
-    SaveLocal --> UpdateUI["Show Success Toast & Increment Unsynced Counter"]
-    
-    UpdateUI --> NextAction{"Action Chosen by Volunteer"}
-    NextAction -->|Add More| IntakeView
-    NextAction -->|Export to Peer| GenQR["Tap 'Export Sync QR'"]
-    
-    GenQR --> CompressData["Compress Event Logs (Gzip/CBOR) & Sign with Device Key"]
-    CompressData --> PayloadSize{"Payload > 2KB?"}
-    
-    PayloadSize -->|No| ShowSingleQR["Render High-Density QR Code"]
-    PayloadSize -->|Yes| ShowPaginatedQR["Render Paginated / Animated QR Stream"]
-    
-    ShowSingleQR --> PeerScan[/Peer Device Opens Scanner & Reads QR/]
-    ShowPaginatedQR --> PeerScan
-    
-    PeerScan --> VerifyPayload{"Verify Signature & Schema?"}
-    VerifyPayload -->|Invalid / Corrupt| ShowScanError["Show 'Corrupted QR' Alert & Prompt Rescan"]
-    
-    VerifyPayload -->|Valid| CheckDuplicates{"Check for ID / Conflict in Peer DB?"}
-    CheckDuplicates -->|New Records Only| FastMerge["Insert New Records into Peer DB"]
-    
-    CheckDuplicates -->|Conflicting Updates| ConflictModal["Open Conflict Resolution UI (Diff View)"]
-    ConflictModal --> ResolveChoice{"User Merge Decision"}
-    ResolveChoice -->|Use Newer Timestamp| AutoLWW["Apply Last-Write-Wins Rule"]
-    ResolveChoice -->|Manual Field Pick| ManualCommit["Save Custom Merged Version"]
-    
-    AutoLWW --> CommitPeer[(Commit to Peer Local DB)]
-    ManualCommit --> CommitPeer
-    FastMerge --> CommitPeer
-    
-    CommitPeer --> PeerSuccess["Show 'Synced X Records from Pos' Banner"]
-    
-    PeerSuccess --> NetCheck{"Internet Connection Restored?"}
-    NetCheck -->|No| StayOffline([Remain in Offline Queue])
-    NetCheck -->|Yes| PushCloud["Push Cumulative Event Logs to Central Server"]
-    PushCloud --> Done([Sync Complete])
+  Start([Field Volunteer Opens App]) --> CheckPos{"Is Active Pos Configured?"}
+  
+  CheckPos -->|No| CreatePos["Create Pos Profile (Name, Location, Camp ID)"]
+  CreatePos --> SavePosLoc[(Save Pos to Local SQLite)]
+  SavePosLoc --> IntakeView["Open Pos Intake Screen"]
+  
+  CheckPos -->|Yes| IntakeView
+  
+  IntakeView --> InputData["Fill Evacuee Demographic & Needs Data"]
+  InputData --> TapSave["Tap 'Save Record'"]
+  
+  TapSave --> SaveLocal[(Append Event to Local Event Store)]
+  SaveLocal --> UpdateUI["Show Success Toast & Increment Unsynced Counter"]
+  
+  UpdateUI --> NextAction{"Action Chosen by Volunteer"}
+  NextAction -->|Add More| IntakeView
+  NextAction -->|Export to Peer| GenQR["Tap 'Export Sync QR'"]
+  
+  GenQR --> CompressData["Compress Event Logs (Gzip/CBOR) & Sign with Device Key"]
+  CompressData --> PayloadSize{"Payload > 2KB?"}
+  
+  PayloadSize -->|No| ShowSingleQR["Render High-Density QR Code"]
+  PayloadSize -->|Yes| ShowPaginatedQR["Render Paginated / Animated QR Stream"]
+  
+  ShowSingleQR --> PeerScan[/Peer Device Opens Scanner & Reads QR/]
+  ShowPaginatedQR --> PeerScan
+  
+  PeerScan --> VerifyPayload{"Verify Signature & Schema?"}
+  VerifyPayload -->|Invalid / Corrupt| ShowScanError["Show 'Corrupted QR' Alert & Prompt Rescan"]
+  
+  VerifyPayload -->|Valid| CheckDuplicates{"Check for ID / Conflict in Peer DB?"}
+  CheckDuplicates -->|New Records Only| FastMerge["Insert New Records into Peer DB"]
+  
+  CheckDuplicates -->|Conflicting Updates| ConflictModal["Open Conflict Resolution UI (Diff View)"]
+  ConflictModal --> ResolveChoice{"User Merge Decision"}
+  ResolveChoice -->|Use Newer Timestamp| AutoLWW["Apply Last-Write-Wins Rule"]
+  ResolveChoice -->|Manual Field Pick| ManualCommit["Save Custom Merged Version"]
+  
+  AutoLWW --> CommitPeer[(Commit to Peer Local DB)]
+  ManualCommit --> CommitPeer
+  FastMerge --> CommitPeer
+  
+  CommitPeer --> PeerSuccess["Show 'Synced X Records from Pos' Banner"]
+  
+  PeerSuccess --> NetCheck{"Internet Connection Restored?"}
+  NetCheck -->|No| StayOffline([Remain in Offline Queue])
+  NetCheck -->|Yes| PushCloud["Push Cumulative Event Logs to Central Server"]
+  PushCloud --> Done([Sync Complete])
 ```
 
 ---
@@ -103,37 +103,37 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor VolA as Volunteer at Pos Alpha (Offline)
-    participant AppA as Sanidya App (Device A)
-    actor VolB as Coordinator at Pos Beta (Offline)
-    participant AppB as Sanidya App (Device B)
-    participant Cloud as Sanidya Central API
+  autonumber
+  actor VolA as Volunteer at Pos Alpha (Offline)
+  participant AppA as Sandya App (Device A)
+  actor VolB as Coordinator at Pos Beta (Offline)
+  participant AppB as Sandya App (Device B)
+  participant Cloud as Sandya Central API
 
-    VolA->>AppA: 1. Input evacuee data (NIK, Family Size, Urgent Needs)
-    AppA->>AppA: 2. Generate Event `EVACUEE_REGISTERED` & write to local DB
-    AppA-->>VolA: 3. UI updates instantly with [Saved Offline] badge
-    
-    VolA->>AppA: 4. Tap "Export Sync QR"
-    AppA->>AppA: 5. Serialize events & sign payload
-    AppA-->>VolA: 6. Display scannable QR code on screen
-    
-    VolB->>AppB: 7. Open Camera Scanner
-    VolB->>AppB: 8. Point camera at Device A's QR screen
-    AppB->>AppB: 9. Decode QR payload, verify signature & check deduplication
-    
-    alt Clean Merge (No conflicts)
-        AppB->>AppB: 10. Commit events to local DB
-        AppB-->>VolB: 11. Toast: "Successfully imported 5 records from Pos Alpha"
-    else Conflict Found
-        AppB-->>VolB: 12. Display "Conflict Resolver (1 record modified at both Pos)"
-        VolB->>AppB: 13. Select field-level resolution
-        AppB->>AppB: 14. Commit merged result
-    end
+  VolA->>AppA: 1. Input evacuee data (NIK, Family Size, Urgent Needs)
+  AppA->>AppA: 2. Generate Event `EVACUEE_REGISTERED` & write to local DB
+  AppA-->>VolA: 3. UI updates instantly with [Saved Offline] badge
+  
+  VolA->>AppA: 4. Tap "Export Sync QR"
+  AppA->>AppA: 5. Serialize events & sign payload
+  AppA-->>VolA: 6. Display scannable QR code on screen
+  
+  VolB->>AppB: 7. Open Camera Scanner
+  VolB->>AppB: 8. Point camera at Device A's QR screen
+  AppB->>AppB: 9. Decode QR payload, verify signature & check deduplication
+  
+  alt Clean Merge (No conflicts)
+  AppB->>AppB: 10. Commit events to local DB
+  AppB-->>VolB: 11. Toast: "Successfully imported 5 records from Pos Alpha"
+  else Conflict Found
+  AppB-->>VolB: 12. Display "Conflict Resolver (1 record modified at both Pos)"
+  VolB->>AppB: 13. Select field-level resolution
+  AppB->>AppB: 14. Commit merged result
+  end
 
-    Note over AppB,Cloud: When Device B reaches cell coverage
-    AppB->>Cloud: 15. POST /api/v1/sync/events (Payload from A + B)
-    Cloud-->>AppB: 16. 200 OK (Central database updated)
+  Note over AppB,Cloud: When Device B reaches cell coverage
+  AppB->>Cloud: 15. POST /api/v1/sync/events (Payload from A + B)
+  Cloud-->>AppB: 16. 200 OK (Central database updated)
 ```
 
 ---

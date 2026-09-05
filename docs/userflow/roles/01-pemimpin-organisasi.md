@@ -11,10 +11,10 @@
 
 ### Cakupan (In Scope)
 - **Pendaftaran Lembaga Pertama Kali**: Jalur [2] pada halaman pembuka (`/org-setup`).
-- **Generasi & Pengamanan Master Authority Key**: Pembuatan pasangan kunci Ed25519 (`did:sanidya:org_...`) dan pencatatan 12-Word Seed Phrase / Ekspor Backup Kunci (`.sanidya-key`).
+- **Generasi & Pengamanan Master Authority Key**: Pembuatan pasangan kunci Ed25519 (`did:sandya:org_...`) dan pencatatan 12-Word Seed Phrase / Ekspor Backup Kunci (`.sandya-key`).
 - **Konsol Manajemen Organisasi (`/(organization)`)**:
   - Profil Lembaga & Status Kunci Otoritas.
-  - Pengaturan Host Cloud (Sanidya Cloud Managed vs Server Mandiri BYOC).
+  - Pengaturan Host Cloud (Sandya Cloud Managed vs Server Mandiri BYOC).
   - Pembukaan Misi Tanggap Darurat Bencana Baru (`/organization/missions/create`).
   - Penutupan / Pengarsipan Misi yang telah selesai (`CLOSED_ARCHIVED`).
   - Penerbitan Kartu Tugas untuk **Komandan Misi** (`MISSION_COMMANDER`).
@@ -24,7 +24,7 @@
 - Operasional harian tenda posko (didelegasikan ke Komandan Misi dan Koordinator Posko).
 
 ### Prekondisi
-- Pengguna membuka aplikasi Sanidya untuk pertama kali dan memilih jalur pendirian lembaga baru.
+- Pengguna membuka aplikasi Sandya untuk pertama kali dan memilih jalur pendirian lembaga baru.
 
 ### Postkondisi
 - Entitas organisasi tersimpan permanen di basis data lokal `organizations`.
@@ -37,11 +37,11 @@
 
 ```mermaid
 flowchart LR
-    A(["1. Pilih 'Daftarkan Lembaga Baru'"]) --> B["2. Input Profil Lembaga & Generate Master Key"]
-    B --> C["3. Catat 12-Word Seed Phrase Cadangan"]
-    C --> D["4. Buka Misi Bencana Baru"]
-    D --> E["5. Terbitkan QR Tugas Komandan Misi"]
-    E --> F(["6. Monitor Seluruh Misi di Konsol Organisasi"])
+  A(["1. Pilih 'Daftarkan Lembaga Baru'"]) --> B["2. Input Profil Lembaga & Generate Master Key"]
+  B --> C["3. Catat 12-Word Seed Phrase Cadangan"]
+  C --> D["4. Buka Misi Bencana Baru"]
+  D --> E["5. Terbitkan QR Tugas Komandan Misi"]
+  E --> F(["6. Monitor Seluruh Misi di Konsol Organisasi"])
 ```
 
 ---
@@ -50,50 +50,50 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start(["Mulai: Buka Aplikasi Sanidya /"]) --> LandingGateway["Layar Gerbang Utama<br/>Pilih: '[2] Daftarkan Lembaga / Organisasi Baru'"]
-    
-    LandingGateway --> OrgWizard["Rute: /org-setup<br/>Form Profil Organisasi"]
-    
-    OrgWizard --> InputOrgDetails["Input Identitas Lembaga:<br/>• Nama Lembaga (e.g., 'PMI Kabupaten Cianjur')<br/>• Kategori (Pemerintah BPBD / NGO Yayasan / Komunitas Warga)<br/>• Kode Wilayah Induk (e.g., '3201')<br/>• Kontak Markas Pusat"]
-    
-    InputOrgDetails --> TapGenerateKey["User Ketuk: 'Buat Kunci Otoritas Lembaga'"]
-    
-    TapGenerateKey --> CryptGen["Generate Keypair Ed25519 Lokal<br/>Pub: did:sanidya:org_7a9f81...<br/>Priv: Encrypted in SQLite Keyring"]
-    
-    CryptGen --> SeedPhraseModal["Tampilkan Modal Cadangan Kunci (Wajib):<br/>🔑 12-Word Recovery Seed Phrase<br/>(e.g., 'mountain rescue anchor signal safe...')"]
-    
-    SeedPhraseModal --> ConfirmSeed["Pimpinan Menulis / Menyalin Seed Phrase<br/>-> Ketuk 'Saya Sudah Mencadangkan Kunci'"]
-    
-    ConfirmSeed --> SaveOrgDB[("INSERT INTO organizations (SQLite Lokal)")]
-    
-    SaveOrgDB --> SelectCloudOption{"Pilih Konfigurasi Penyedia Cloud"}
-    SelectCloudOption -->|Sanidya Cloud Hub| SetManagedCloud["Set Host: Managed Sanidya Cloud (Default)"]
-    SelectCloudOption -->|Server Mandiri BYOC| InputBYOCURL["Input URL Server Instansi:<br/>https://sanidya.bpbd.jabar.go.id"]
-    
-    SetManagedCloud --> OpenOrgConsole["Masuk KONSOL ORGANISASI<br/>Rute: /(organization)"]
-    InputBYOCURL --> OpenOrgConsole
-    
-    %% DI DALAM KONSOL ORGANISASI
-    OpenOrgConsole --> OrgConsoleActions{"Pimpinan Memilih Tindakan"}
-    
-    %% TINDAKAN A: BUAT MISI BENCANA BARU
-    OrgConsoleActions -->|"Buat Misi Bencana"| CreateMissionForm["Rute: /organization/missions/create<br/>Form Misi Operasi Bencana Baru"]
-    CreateMissionForm --> InputMissionData["Input Parameter Misi:<br/>• Nama Operasi: 'Tanggap Darurat Gempa Cugenang 2026'<br/>• Jenis Bencana: GEMPA BUMI / BANJIR / ERUPSI<br/>• Target Masa Tanggap: 14 Hari<br/>• Wilayah Cakupan: Kecamatan Cugenang & Pacet"]
-    
-    InputMissionData --> SignMissionAction["User Ketuk: 'Buka Misi Resmi'"]
-    SignMissionAction --> SignWithMasterKey["Tandatangani Payload Misi dengan Master Key Ed25519"]
-    SignWithMasterKey --> InsertMissionDB[("INSERT INTO disaster_missions (Status: ACTIVE_EMERGENCY)")]
-    
-    InsertMissionDB --> DelegateCommanderModal["Tampilkan Modal Penugasan Komandan Misi:<br/>Layar Menampilkan QR Kartu Tugas Komandan Misi"]
-    
-    DelegateCommanderModal --> CommanderScanAction["Komandan Misi Memindai QR dari HP Miliknya"]
-    CommanderScanAction --> MissionActiveState["Misi Resmi Aktif & Berjalan di Bawah Komando"]
-    
-    %% TINDAKAN B: AUDIT & MONITORING MAKRO
-    OrgConsoleActions -->|"Audit Global"| ViewGlobalAudit["Lihat Daftar Seluruh Misi Aktif & Arsip:<br/>• Total Jiwa Terdalam Lembaga: 12.450 Jiwa<br/>• Total Posko Aktif: 18 Posko di 2 Misi<br/>• Total Stok Logistik Sentral"]
-    
-    MissionActiveState --> EndState(["Selesai / Sesi Berjalan"])
-    ViewGlobalAudit --> EndState
+  Start(["Mulai: Buka Aplikasi Sandya /"]) --> LandingGateway["Layar Gerbang Utama<br/>Pilih: '[2] Daftarkan Lembaga / Organisasi Baru'"]
+  
+  LandingGateway --> OrgWizard["Rute: /org-setup<br/>Form Profil Organisasi"]
+  
+  OrgWizard --> InputOrgDetails["Input Identitas Lembaga:<br/>• Nama Lembaga (e.g., 'PMI Kabupaten Cianjur')<br/>• Kategori (Pemerintah BPBD / NGO Yayasan / Komunitas Warga)<br/>• Kode Wilayah Induk (e.g., '3201')<br/>• Kontak Markas Pusat"]
+  
+  InputOrgDetails --> TapGenerateKey["User Ketuk: 'Buat Kunci Otoritas Lembaga'"]
+  
+  TapGenerateKey --> CryptGen["Generate Keypair Ed25519 Lokal<br/>Pub: did:sandya:org_7a9f81...<br/>Priv: Encrypted in SQLite Keyring"]
+  
+  CryptGen --> SeedPhraseModal["Tampilkan Modal Cadangan Kunci (Wajib):<br/> 12-Word Recovery Seed Phrase<br/>(e.g., 'mountain rescue anchor signal safe...')"]
+  
+  SeedPhraseModal --> ConfirmSeed["Pimpinan Menulis / Menyalin Seed Phrase<br/>-> Ketuk 'Saya Sudah Mencadangkan Kunci'"]
+  
+  ConfirmSeed --> SaveOrgDB[("INSERT INTO organizations (SQLite Lokal)")]
+  
+  SaveOrgDB --> SelectCloudOption{"Pilih Konfigurasi Penyedia Cloud"}
+  SelectCloudOption -->|Sandya Cloud Hub| SetManagedCloud["Set Host: Managed Sandya Cloud (Default)"]
+  SelectCloudOption -->|Server Mandiri BYOC| InputBYOCURL["Input URL Server Instansi:<br/>https://sandya.bpbd.jabar.go.id"]
+  
+  SetManagedCloud --> OpenOrgConsole["Masuk KONSOL ORGANISASI<br/>Rute: /(organization)"]
+  InputBYOCURL --> OpenOrgConsole
+  
+  %% DI DALAM KONSOL ORGANISASI
+  OpenOrgConsole --> OrgConsoleActions{"Pimpinan Memilih Tindakan"}
+  
+  %% TINDAKAN A: BUAT MISI BENCANA BARU
+  OrgConsoleActions -->|"Buat Misi Bencana"| CreateMissionForm["Rute: /organization/missions/create<br/>Form Misi Operasi Bencana Baru"]
+  CreateMissionForm --> InputMissionData["Input Parameter Misi:<br/>• Nama Operasi: 'Tanggap Darurat Gempa Cugenang 2026'<br/>• Jenis Bencana: GEMPA BUMI / BANJIR / ERUPSI<br/>• Target Masa Tanggap: 14 Hari<br/>• Wilayah Cakupan: Kecamatan Cugenang & Pacet"]
+  
+  InputMissionData --> SignMissionAction["User Ketuk: 'Buka Misi Resmi'"]
+  SignMissionAction --> SignWithMasterKey["Tandatangani Payload Misi dengan Master Key Ed25519"]
+  SignWithMasterKey --> InsertMissionDB[("INSERT INTO disaster_missions (Status: ACTIVE_EMERGENCY)")]
+  
+  InsertMissionDB --> DelegateCommanderModal["Tampilkan Modal Penugasan Komandan Misi:<br/>Layar Menampilkan QR Kartu Tugas Komandan Misi"]
+  
+  DelegateCommanderModal --> CommanderScanAction["Komandan Misi Memindai QR dari HP Miliknya"]
+  CommanderScanAction --> MissionActiveState["Misi Resmi Aktif & Berjalan di Bawah Komando"]
+  
+  %% TINDAKAN B: AUDIT & MONITORING MAKRO
+  OrgConsoleActions -->|"Audit Global"| ViewGlobalAudit["Lihat Daftar Seluruh Misi Aktif & Arsip:<br/>• Total Jiwa Terdalam Lembaga: 12.450 Jiwa<br/>• Total Posko Aktif: 18 Posko di 2 Misi<br/>• Total Stok Logistik Sentral"]
+  
+  MissionActiveState --> EndState(["Selesai / Sesi Berjalan"])
+  ViewGlobalAudit --> EndState
 ```
 
 ---

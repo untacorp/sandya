@@ -1,5 +1,6 @@
 import { Ed25519Signer } from '@/core/crypto/ed25519-signer';
 import { Result, Ok, Err, DomainError } from '@/core/shared/result';
+import { HTTP_STATUS, TIME_CONSTANTS } from '@/core/shared/constants';
 
 export enum SmpPacketType {
   MESH_ANNOUNCE = 0x01,
@@ -25,100 +26,153 @@ export interface SmpPacket {
   signatureHex?: string; // 64 Bytes DER/Raw hex signature
 }
 
+export const SMP_PACKET_CONSTANTS = {
+  CURRENT_VERSION: 0x02,
+  BROADCAST_PEER_ID: '0000000000000000',
+  DEFAULT_TTL: 7,
+  HEADER_SIZE: 28, // 1 + 1 + 1 + 1 + 4 + 8 + 8 + 2 + 2 = 28 Bytes
+  PEER_ID_HEX_LENGTH: 16,
+  PEER_ID_BYTE_LENGTH: 8,
+  SIGNATURE_BYTE_LENGTH: 64,
+  VERSION_OFFSET: 0,
+  PACKET_TYPE_OFFSET: 1,
+  TTL_OFFSET: 2,
+  FLAGS_OFFSET: 3,
+  TIMESTAMP_OFFSET: 4,
+  SENDER_OFFSET: 8,
+  RECIPIENT_OFFSET: 16,
+  SEQUENCE_OFFSET: 24,
+  PAYLOAD_LEN_OFFSET: 26,
+  PAYLOAD_OFFSET: 28,
+} as const;
+
 export class SmpPacketCodec {
-  public static readonly CURRENT_VERSION = 0x02;
-  public static readonly BROADCAST_PEER_ID = '0000000000000000';
+  public static readonly CURRENT_VERSION = SMP_PACKET_CONSTANTS.CURRENT_VERSION;
+  public static readonly BROADCAST_PEER_ID = SMP_PACKET_CONSTANTS.BROADCAST_PEER_ID;
 
   /**
-   * Mengemas paket SMP v1 ke dalam buffer biner bertanda tangan digital
-   */
+  * Mengemas paket SMP v1 ke dalam buffer biner bertanda tangan digital
+  */
   public static encode(packet: SmpPacket, privateKeyHex?: string): Buffer {
-    const payloadLen = packet.payload.length;
-    const headerBuf = Buffer.alloc(28); // 1 + 1 + 1 + 1 + 4 + 8 + 8 + 2 + 2 = 28 Bytes
+  const payloadLen = packet.payload.length;
+  const headerBuf = Buffer.alloc(SMP_PACKET_CONSTANTS.HEADER_SIZE);
 
-    headerBuf.writeUInt8(packet.version || SmpPacketCodec.CURRENT_VERSION, 0);
-    headerBuf.writeUInt8(packet.packetType, 1);
-    headerBuf.writeUInt8(packet.ttl, 2);
-    headerBuf.writeUInt8(packet.flags, 3);
-    headerBuf.writeUInt32BE(packet.timestamp || Math.floor(Date.now() / 1000), 4);
+  headerBuf.writeUInt8(packet.version || SMP_PACKET_CONSTANTS.CURRENT_VERSION, SMP_PACKET_CONSTANTS.VERSION_OFFSET);
+  headerBuf.writeUInt8(packet.packetType, SMP_PACKET_CONSTANTS.PACKET_TYPE_OFFSET);
+  headerBuf.writeUInt8(packet.ttl, SMP_PACKET_CONSTANTS.TTL_OFFSET);
+  headerBuf.writeUInt8(packet.flags, SMP_PACKET_CONSTANTS.FLAGS_OFFSET);
+  headerBuf.writeUInt32BE(
+  packet.timestamp || Math.floor(Date.now() / TIME_CONSTANTS.MS_PER_SECOND),
+  SMP_PACKET_CONSTANTS.TIMESTAMP_OFFSET
+  );
 
-    const senderBuf = Buffer.from(packet.senderPeerId.padEnd(16, '0').slice(0, 16), 'hex');
-    senderBuf.copy(headerBuf, 8, 0, 8);
+  const senderBuf = Buffer.from(
+  packet.senderPeerId.padEnd(SMP_PACKET_CONSTANTS.PEER_ID_HEX_LENGTH, '0').slice(0, SMP_PACKET_CONSTANTS.PEER_ID_HEX_LENGTH),
+  'hex'
+  );
+  senderBuf.copy(headerBuf, SMP_PACKET_CONSTANTS.SENDER_OFFSET, 0, SMP_PACKET_CONSTANTS.PEER_ID_BYTE_LENGTH);
 
-    const recipientBuf = Buffer.from((packet.recipientPeerId || SmpPacketCodec.BROADCAST_PEER_ID).padEnd(16, '0').slice(0, 16), 'hex');
-    recipientBuf.copy(headerBuf, 16, 0, 8);
+  const recipientBuf = Buffer.from(
+  (packet.recipientPeerId || SMP_PACKET_CONSTANTS.BROADCAST_PEER_ID)
+  .padEnd(SMP_PACKET_CONSTANTS.PEER_ID_HEX_LENGTH, '0')
+  .slice(0, SMP_PACKET_CONSTANTS.PEER_ID_HEX_LENGTH),
+  'hex'
+  );
+  recipientBuf.copy(headerBuf, SMP_PACKET_CONSTANTS.RECIPIENT_OFFSET, 0, SMP_PACKET_CONSTANTS.PEER_ID_BYTE_LENGTH);
 
-    headerBuf.writeUInt16BE(packet.sequence, 24);
-    headerBuf.writeUInt16BE(payloadLen, 26);
+  headerBuf.writeUInt16BE(packet.sequence, SMP_PACKET_CONSTANTS.SEQUENCE_OFFSET);
+  headerBuf.writeUInt16BE(payloadLen, SMP_PACKET_CONSTANTS.PAYLOAD_LEN_OFFSET);
 
-    const unSignedPacket = Buffer.concat([headerBuf, packet.payload]);
+  const unSignedPacket = Buffer.concat([headerBuf, packet.payload]);
 
-    if (privateKeyHex) {
-      const sigHex = Ed25519Signer.signPayload(unSignedPacket, privateKeyHex);
-      const sigBuf = Buffer.from(sigHex, 'hex');
-      return Buffer.concat([unSignedPacket, sigBuf]);
-    }
+  if (privateKeyHex) {
+  const sigHex = Ed25519Signer.signPayload(unSignedPacket, privateKeyHex);
+  const sigBuf = Buffer.from(sigHex, 'hex');
+  return Buffer.concat([unSignedPacket, sigBuf]);
+  }
 
-    return unSignedPacket;
+  return unSignedPacket;
   }
 
   /**
-   * Mendekode buffer biner paket SMP v1 dan memverifikasi integritas tanda tangan
-   */
+  * Mendekode buffer biner paket SMP v1 dan memverifikasi integritas tanda tangan
+  */
   public static decode(
-    buffer: Buffer,
-    senderPublicKeyHex?: string
+  buffer: Buffer,
+  senderPublicKeyHex?: string
   ): Result<SmpPacket, DomainError> {
-    if (buffer.length < 28) {
-      return Err(new DomainError('PACKET_TOO_SHORT', 'Panjang paket biner kurang dari ukuran header minimum 28B.', 400));
-    }
+  if (buffer.length < SMP_PACKET_CONSTANTS.HEADER_SIZE) {
+  return Err(
+  new DomainError(
+  'PACKET_TOO_SHORT',
+  `Panjang paket biner kurang dari ukuran header minimum ${SMP_PACKET_CONSTANTS.HEADER_SIZE}B.`,
+  HTTP_STATUS.BAD_REQUEST
+  )
+  );
+  }
 
-    const version = buffer.readUInt8(0);
-    if (version !== SmpPacketCodec.CURRENT_VERSION) {
-      return Err(new DomainError('VERSION_MISMATCH', `Versi protokol SMP ${version} tidak didukung (harus ${SmpPacketCodec.CURRENT_VERSION}).`, 400));
-    }
+  const version = buffer.readUInt8(SMP_PACKET_CONSTANTS.VERSION_OFFSET);
+  if (version !== SMP_PACKET_CONSTANTS.CURRENT_VERSION) {
+  return Err(
+  new DomainError(
+  'VERSION_MISMATCH',
+  `Versi protokol SMP ${version} tidak didukung (harus ${SMP_PACKET_CONSTANTS.CURRENT_VERSION}).`,
+  HTTP_STATUS.BAD_REQUEST
+  )
+  );
+  }
 
-    const packetType = buffer.readUInt8(1) as SmpPacketType;
-    const ttl = buffer.readUInt8(2);
-    const flags = buffer.readUInt8(3);
-    const timestamp = buffer.readUInt32BE(4);
-    const senderPeerId = buffer.subarray(8, 16).toString('hex');
-    const recipientPeerId = buffer.subarray(16, 24).toString('hex');
-    const sequence = buffer.readUInt16BE(24);
-    const payloadLen = buffer.readUInt16BE(26);
+  const packetType = buffer.readUInt8(SMP_PACKET_CONSTANTS.PACKET_TYPE_OFFSET) as SmpPacketType;
+  const ttl = buffer.readUInt8(SMP_PACKET_CONSTANTS.TTL_OFFSET);
+  const flags = buffer.readUInt8(SMP_PACKET_CONSTANTS.FLAGS_OFFSET);
+  const timestamp = buffer.readUInt32BE(SMP_PACKET_CONSTANTS.TIMESTAMP_OFFSET);
+  const senderPeerId = buffer
+  .subarray(SMP_PACKET_CONSTANTS.SENDER_OFFSET, SMP_PACKET_CONSTANTS.RECIPIENT_OFFSET)
+  .toString('hex');
+  const recipientPeerId = buffer
+  .subarray(SMP_PACKET_CONSTANTS.RECIPIENT_OFFSET, SMP_PACKET_CONSTANTS.SEQUENCE_OFFSET)
+  .toString('hex');
+  const sequence = buffer.readUInt16BE(SMP_PACKET_CONSTANTS.SEQUENCE_OFFSET);
+  const payloadLen = buffer.readUInt16BE(SMP_PACKET_CONSTANTS.PAYLOAD_LEN_OFFSET);
 
-    if (buffer.length < 28 + payloadLen) {
-      return Err(new DomainError('TRUNCATED_PAYLOAD', 'Panjang payload aktual lebih pendek dari deklarasi header.', 400));
-    }
+  if (buffer.length < SMP_PACKET_CONSTANTS.HEADER_SIZE + payloadLen) {
+  return Err(
+  new DomainError('TRUNCATED_PAYLOAD', 'Panjang payload aktual lebih pendek dari deklarasi header.', HTTP_STATUS.BAD_REQUEST)
+  );
+  }
 
-    const payload = buffer.subarray(28, 28 + payloadLen);
-    const rawSignedData = buffer.subarray(0, 28 + payloadLen);
-    let signatureHex: string | undefined = undefined;
+  const payload = buffer.subarray(SMP_PACKET_CONSTANTS.PAYLOAD_OFFSET, SMP_PACKET_CONSTANTS.PAYLOAD_OFFSET + payloadLen);
+  const rawSignedData = buffer.subarray(0, SMP_PACKET_CONSTANTS.PAYLOAD_OFFSET + payloadLen);
+  let signatureHex: string | undefined = undefined;
 
-    // Jika ada signature di ekor paket (64 bytes = 128 hex chars)
-    if (buffer.length >= 28 + payloadLen + 64) {
-      const sigBuf = buffer.subarray(28 + payloadLen, 28 + payloadLen + 64);
-      signatureHex = sigBuf.toString('hex');
+  // Jika ada signature di ekor paket (64 bytes)
+  const minLengthWithSignature = SMP_PACKET_CONSTANTS.HEADER_SIZE + payloadLen + SMP_PACKET_CONSTANTS.SIGNATURE_BYTE_LENGTH;
+  if (buffer.length >= minLengthWithSignature) {
+  const sigBuf = buffer.subarray(
+  SMP_PACKET_CONSTANTS.HEADER_SIZE + payloadLen,
+  minLengthWithSignature
+  );
+  signatureHex = sigBuf.toString('hex');
 
-      if (senderPublicKeyHex) {
-        const isValid = Ed25519Signer.verifySignature(rawSignedData, signatureHex, senderPublicKeyHex);
-        if (!isValid) {
-          return Err(new DomainError('INVALID_SIGNATURE', 'Tanda tangan digital paket SMP v1 tidak valid.', 401));
-        }
-      }
-    }
+  if (senderPublicKeyHex) {
+  const isValid = Ed25519Signer.verifySignature(rawSignedData, signatureHex, senderPublicKeyHex);
+  if (!isValid) {
+  return Err(new DomainError('INVALID_SIGNATURE', 'Tanda tangan digital paket SMP v1 tidak valid.', HTTP_STATUS.UNAUTHORIZED));
+  }
+  }
+  }
 
-    return Ok({
-      version,
-      packetType,
-      ttl,
-      flags,
-      timestamp,
-      senderPeerId,
-      recipientPeerId,
-      sequence,
-      payload,
-      signatureHex,
-    });
+  return Ok({
+  version,
+  packetType,
+  ttl,
+  flags,
+  timestamp,
+  senderPeerId,
+  recipientPeerId,
+  sequence,
+  payload,
+  signatureHex,
+  });
   }
 }

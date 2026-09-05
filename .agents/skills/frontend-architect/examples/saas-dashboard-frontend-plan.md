@@ -21,28 +21,28 @@
 
 ```mermaid
 graph TD
-    classDef server fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
-    classDef client fill:#10b981,stroke:#059669,color:#ffffff;
+  classDef server fill:#2563eb,stroke:#1d4ed8,color:#ffffff;
+  classDef client fill:#10b981,stroke:#059669,color:#ffffff;
 
-    subgraph Server_Tree ["React Server Components (RSC)"]
-        DashboardShell["TenantDashboardLayout"]:::server
-        UsersPage["UsersManagementPage (/users)"]:::server
-        OrgSidebar["TenantSidebar (Org Switcher & Nav)"]:::server
-    end
+  subgraph Server_Tree ["React Server Components (RSC)"]
+  DashboardShell["TenantDashboardLayout"]:::server
+  UsersPage["UsersManagementPage (/users)"]:::server
+  OrgSidebar["TenantSidebar (Org Switcher & Nav)"]:::server
+  end
 
-    subgraph Client_Islands ["Client Components ('use client')"]
-        SearchFilterHeader["UserTableFilters (URL Synced)"]:::client
-        UserTanstackTable["UserTanstackTable (Sorting, Pagination)"]:::client
-        InviteUserModal["InviteUserModal (Zod Form)"]:::client
-        UserRoleSelect["UserRoleDropdown (Optimistic Role Mutation)"]:::client
-    end
+  subgraph Client_Islands ["Client Components ('use client')"]
+  SearchFilterHeader["UserTableFilters (URL Synced)"]:::client
+  UserTanstackTable["UserTanstackTable (Sorting, Pagination)"]:::client
+  InviteUserModal["InviteUserModal (Zod Form)"]:::client
+  UserRoleSelect["UserRoleDropdown (Optimistic Role Mutation)"]:::client
+  end
 
-    DashboardShell --> OrgSidebar
-    DashboardShell --> UsersPage
-    UsersPage --> SearchFilterHeader
-    UsersPage --> UserTanstackTable
-    UsersPage --> InviteUserModal
-    UserTanstackTable --> UserRoleSelect
+  DashboardShell --> OrgSidebar
+  DashboardShell --> UsersPage
+  UsersPage --> SearchFilterHeader
+  UsersPage --> UserTanstackTable
+  UsersPage --> InviteUserModal
+  UserTanstackTable --> UserRoleSelect
 ```
 
 ---
