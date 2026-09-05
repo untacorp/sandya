@@ -227,6 +227,18 @@ Dokumentasi lengkap sistem Sandya tersusun di direktori [`docs/`](./docs/README.
 
 ---
 
-## Lisensi & Kontribusi
+## 👥 Kontributor & Penghargaan (Credits & Contributors)
 
-Proyek ini dilisensikan di bawah lisensi Apache-2.0. Dikembangkan untuk mendukung operasi tanggap darurat bencana kemanusiaan dan penanganan krisis yang tangguh.
+Terima kasih yang sebesar-besarnya kepada kontributor yang telah berperan dalam merancang dan mengembangkan fondasi Sandya:
+
+- **[@Oktazz](https://github.com/Oktazz)** — *Kontributor Proyek & Pengembangan Awal*
+- **[@kasumadana](https://github.com/kasumadana)** — *Kontributor Proyek & Pengembangan Awal*
+
+Daftar lengkap dan panduan kontribusi dapat dilihat pada berkas [`CONTRIBUTORS.md`](./CONTRIBUTORS.md).
+
+---
+
+## Lisensi
+
+Proyek ini dilisensikan di bawah lisensi Apache-2.0 / MIT. Dikembangkan untuk mendukung operasi tanggap darurat bencana kemanusiaan dan penanganan krisis yang tangguh.
+
