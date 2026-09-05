@@ -54,8 +54,8 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   const [gender, setGender] = React.useState<"M" | "F">("M");
   const [hasKtp, setHasKtp] = React.useState(false);
   const [nik, setNik] = React.useState("");
-  const [domicileOrigin, setDomicileOrigin] = React.useState("Dusun Cijedil");
-  const [shelterLocation, setShelterLocation] = React.useState("Tenda Darurat 01");
+  const [domicileOrigin, setDomicileOrigin] = React.useState("");
+  const [shelterLocation, setShelterLocation] = React.useState("");
   const [missingKinName, setMissingKinName] = React.useState("");
   const [vulnerabilities, setVulnerabilities] = React.useState<VulnerabilityCategory[]>([]);
   const [urgentNeeds, setUrgentNeeds] = React.useState<string[]>([]);

@@ -30,18 +30,11 @@ export default function OrgMembersPage() {
   scope: session.orgName || "Seluruh Wilayah Lembaga",
   status: "ACTIVE",
   },
-  {
-  id: "PIM-02",
-  name: "dr. H. Hendrawan, Sp.EM",
-  role: "Koordinator Medis Darurat Induk",
-  scope: session.orgName || "Seluruh Wilayah Lembaga",
-  status: "ACTIVE",
-  },
   ];
 
   const coordinators = missions.map((m, idx) => ({
   id: `KOR-0${idx + 1}`,
-  name: idx === 0 ? "Drs. H. Mamat (Koordinator Misi)" : `Koordinator Lapangan ${m.name}`,
+  name: `Koordinator Operasi ${m.name}`,
   role: "Koordinator Lapangan Wilayah",
   missionId: m.id,
   missionName: m.name,

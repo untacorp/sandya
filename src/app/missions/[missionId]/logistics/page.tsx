@@ -17,9 +17,9 @@ export default function MissionLogisticsHubPage() {
 
   const [dispatchModalOpen, setDispatchModalOpen] = React.useState(false);
   const [selectedPoskoId, setSelectedPoskoId] = React.useState("POS-01");
-  const [selectedItem, setSelectedItem] = React.useState("Beras Premium 50kg");
-  const [qty, setQty] = React.useState(20);
-  const [driverName, setDriverName] = React.useState("Sopian (Truk Logistik #02)");
+  const [selectedItem, setSelectedItem] = React.useState(centralInventory[0]?.itemName || "");
+  const [qty, setQty] = React.useState(1);
+  const [driverName, setDriverName] = React.useState("");
 
   const [waybillModal, setWaybillModal] = React.useState<any | null>(null);
 
@@ -29,14 +29,14 @@ export default function MissionLogisticsHubPage() {
 
   issueMissionWaybill({
   missionId: session.missionId,
-  sourceHub: "Gudang Sentral GOR Pacet",
+  sourceHub: session.poskoName || "Gudang Sentral Logistik",
   targetPoskoId: selectedPoskoId,
   targetPoskoName: targetP?.name || "Posko Lapangan",
   itemName: selectedItem,
   quantity: Number(qty),
   unit: "SAK",
   status: "IN_TRANSIT",
-  driverName,
+  driverName: driverName || "Menunggu Penugasan Armada",
   });
 
   setDispatchModalOpen(false);

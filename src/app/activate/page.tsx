@@ -178,102 +178,53 @@ export default function ActivatePassPage() {
 
   {/* Hasil Scan Sukses */}
   {verifiedPass && !verifying ? (
-  <Card className="p-5 border-status-safe-border bg-surface space-y-4 shadow-2xs">
-  <div className="flex items-start gap-3">
-  <div className="w-10 h-10 rounded-lg bg-status-safe-bg border border-status-safe-border text-status-safe flex items-center justify-center shrink-0">
-  <Icon name="check" variant="bold" size={20} />
-  </div>
-  <div className="space-y-1 min-w-0 flex-1">
-  <div className="flex items-center gap-1.5">
-  <Badge variant="triage-green" size="sm">Tanda Tangan Sah</Badge>
-  </div>
-  <h2 className="text-base font-bold text-text-main">
-  {getRoleDisplayName(verifiedPass.role)}
-  </h2>
-  <div className="text-xs text-text-muted space-y-0.5">
-  <p>Nama: <strong>{verifiedPass.userName}</strong></p>
-  <p>Posko: <strong>{verifiedPass.poskoName || verifiedPass.poskoId}</strong></p>
-  <p>Masa Berlaku: <strong>14 Hari</strong></p>
-  </div>
-  </div>
-  </div>
+          <Card className="p-5 border-status-safe-border bg-surface space-y-4 shadow-2xs">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-status-safe-bg border border-status-safe-border text-status-safe flex items-center justify-center shrink-0">
+                <Icon name="check" variant="bold" size={20} />
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="triage-green" size="sm">Tanda Tangan Sah</Badge>
+                </div>
+                <h2 className="text-base font-bold text-text-main">
+                  {getRoleDisplayName(verifiedPass.role)}
+                </h2>
+                <div className="text-xs text-text-muted space-y-0.5">
+                  <p>Nama: <strong>{verifiedPass.userName}</strong></p>
+                  <p>Posko: <strong>{verifiedPass.poskoName || verifiedPass.poskoId}</strong></p>
+                  <p>Masa Berlaku: <strong>14 Hari</strong></p>
+                </div>
+              </div>
+            </div>
 
-  <div className="pt-2 border-t border-border flex items-center gap-2">
-  <Button
-  variant="secondary"
-  size="md"
-  onClick={() => setVerifiedPass(null)}
-  className="flex-1"
-  >
-  Pindai Ulang
-  </Button>
-  <Button
-  variant="primary"
-  size="md"
-  onClick={handleConfirmActivation}
-  icon="arrow-right"
-  iconVariant="bold"
-  className="flex-1 justify-center"
-  >
-  Mulai Bekerja
-  </Button>
-  </div>
-  </Card>
-  ) : mode === "SCAN" && !verifying ? (
-  /* Jendela Scanner Kamera Nyata */
-  <div className="space-y-3">
-  <QRCameraScanner onScan={handleScanPass} />
-
-  {/* Opsi Cepat Pengujian Dev / Lapangan */}
-  <div className="p-3 rounded-xl bg-surface border border-border space-y-1.5">
-  <span className="text-[11px] text-text-muted font-medium block text-center">
-  Pintasan Penugasan Cepat:
-  </span>
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-  <Button
-  variant="secondary"
-  size="sm"
-  onClick={() => handleScanPass("SAN-MED-001-0001")}
-  icon="health"
-  iconVariant="bold"
-  className="text-xs justify-center"
-  >
-  Medis
-  </Button>
-  <Button
-  variant="secondary"
-  size="sm"
-  onClick={() => handleScanPass("SAN-LOG-001-0002")}
-  icon="box"
-  iconVariant="bold"
-  className="text-xs justify-center"
-  >
-  Logistik
-  </Button>
-  <Button
-  variant="secondary"
-  size="sm"
-  onClick={() => handleScanPass("SAN-REL-001-0003")}
-  icon="users"
-  iconVariant="bold"
-  className="text-xs justify-center"
-  >
-  Relawan
-  </Button>
-  <Button
-  variant="secondary"
-  size="sm"
-  onClick={() => handleScanPass("SAN-KOR-001-0004")}
-  icon="home"
-  iconVariant="bold"
-  className="text-xs justify-center"
-  >
-  Koordinator
-  </Button>
-  </div>
-  </div>
-  </div>
-  ) : !verifying ? (
+            <div className="pt-2 border-t border-border flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setVerifiedPass(null)}
+                className="flex-1"
+              >
+                Pindai Ulang
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleConfirmActivation}
+                icon="arrow-right"
+                iconVariant="bold"
+                className="flex-1 justify-center"
+              >
+                Mulai Bekerja
+              </Button>
+            </div>
+          </Card>
+        ) : !verifying && mode === "SCAN" ? (
+          /* Jendela Scanner Kamera Nyata */
+          <div className="space-y-3">
+            <QRCameraScanner onScan={handleScanPass} />
+          </div>
+        ) : !verifying ? (
   /* Ketik Kode Manual */
   <Card className="p-5 space-y-3.5 shadow-2xs">
   <form onSubmit={handleManualSubmit} className="space-y-3.5">

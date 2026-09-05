@@ -157,7 +157,7 @@ export default function LandingGatewayPage() {
   iconVariant="bold"
   iconRight="arrow-right"
   >
-  <span>Masuk ke Posko RW 03</span>
+  <span className="truncate">{session.poskoName ? `Posko ${session.poskoName}` : "Masuk ke Posko"}</span>
   </Button>
   </Link>
 
@@ -170,7 +170,7 @@ export default function LandingGatewayPage() {
   iconVariant="bold"
   iconRight="arrow-right"
   >
-  <span>Operasi Gempa Cianjur</span>
+  <span className="truncate">{session.missionName || "Operasi Wilayah"}</span>
   </Button>
   </Link>
 
@@ -183,7 +183,7 @@ export default function LandingGatewayPage() {
   iconVariant="bold"
   iconRight="arrow-right"
   >
-  <span>Markas PMI Cianjur</span>
+  <span className="truncate">{session.orgName || "Pusat Lembaga"}</span>
   </Button>
   </Link>
   </div>

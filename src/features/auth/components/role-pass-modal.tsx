@@ -9,16 +9,19 @@ import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { RolePassCodec, RolePassPayload, ROLE_PASS_CONSTANTS } from "@/core/codecs/role-pass-codec";
 import { StaffRole } from "@/core/shared/roles";
 
+import { IsomorphicEd25519 } from "@/core/crypto/ed25519-isomorphic";
+
 interface RolePassModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   role: StaffRole;
   officerName: string;
-  poskoId: string;
-  poskoName: string;
-  missionId: string;
-  missionName: string;
-  orgId: string;
+  poskoId?: string;
+  poskoName?: string;
+  missionId?: string;
+  missionName?: string;
+  orgId?: string;
+  orgName?: string;
   masterPrivateKeyHex?: string;
   masterPublicKeyHex?: string;
 }
@@ -40,6 +43,7 @@ export function RolePassModal({
   missionId,
   missionName,
   orgId,
+  orgName,
   masterPrivateKeyHex,
   masterPublicKeyHex,
 }: RolePassModalProps) {
@@ -48,55 +52,64 @@ export function RolePassModal({
   const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
-  if (!open) return;
+    if (!open) return;
 
-  let isMounted = true;
-  const randomUserSuffix = Math.floor(
-  ROLE_PASS_MODAL_CONSTANTS.RANDOM_USER_ID_BASE +
-  Math.random() * ROLE_PASS_MODAL_CONSTANTS.RANDOM_USER_ID_RANGE
-  );
+    let isMounted = true;
+    const randomUserSuffix = Math.floor(
+      ROLE_PASS_MODAL_CONSTANTS.RANDOM_USER_ID_BASE +
+      Math.random() * ROLE_PASS_MODAL_CONSTANTS.RANDOM_USER_ID_RANGE
+    );
 
-  const payload: RolePassPayload = {
-  orgId: orgId || "ORG-01",
-  orgName: "PMI Kabupaten Cianjur",
-  missionId: missionId || "MSN-01",
-  missionName: missionName || "Tanggap Gempa Cianjur 2026",
-  poskoId: poskoId || "POS-01",
-  poskoName: poskoName || "Posko Lapangan RW 03 Cijedil",
-  role,
-  userId: `USR-${randomUserSuffix}`,
-  userName: officerName,
-  issuedAt: Date.now(),
-  expiresAt: Date.now() + ROLE_PASS_CONSTANTS.DEFAULT_EXPIRATION_MS, // 14 days emergency duration
-  };
+    const payload: RolePassPayload = {
+      orgId: orgId || "ORG-LOCAL",
+      orgName: orgName || "Markas Lembaga",
+      missionId: missionId || "MSN-LOCAL",
+      missionName: missionName || "Misi Operasi Lapangan",
+      poskoId: poskoId || "POS-LOCAL",
+      poskoName: poskoName || "Posko Lapangan",
+      role,
+      userId: `USR-${randomUserSuffix}`,
+      userName: officerName,
+      issuedAt: Date.now(),
+      expiresAt: Date.now() + ROLE_PASS_CONSTANTS.DEFAULT_EXPIRATION_MS,
+    };
 
-  const code = RolePassCodec.generateManualCode(payload);
-  setManualCode(code);
+    const code = RolePassCodec.generateManualCode(payload);
+    setManualCode(code);
 
-  // If master private key is provided, sign with it, otherwise generate with fallback/mock key
-  const privKey = masterPrivateKeyHex || "302e020100300506032b6570042204207a9f81bc92e3419bb6a20d43f01948275f112e3419bb6a20d43f01948275f112";
-  const pubKey = masterPublicKeyHex || "302a300506032b65700321005f3c12aa89bb0c918a3d5e21976a40df612803b392a76f2d918a3d5e21976a40";
+    const signAndIssue = async () => {
+      let privKey = masterPrivateKeyHex;
+      let pubKey = masterPublicKeyHex;
 
-  RolePassCodec.issuePassAsync(payload, privKey, pubKey).then((qrStr) => {
-  if (isMounted) {
-  setPassString(qrStr);
-  }
-  });
+      if (!privKey) {
+        const generatedKeys = await IsomorphicEd25519.generateKeyPair();
+        privKey = generatedKeys.privateKeyHex;
+        pubKey = generatedKeys.rawPublicKeyHex;
+      }
 
-  return () => {
-  isMounted = false;
-  };
+      const qrStr = await RolePassCodec.issuePassAsync(payload, privKey, pubKey);
+      if (isMounted) {
+        setPassString(qrStr);
+      }
+    };
+
+    signAndIssue();
+
+    return () => {
+      isMounted = false;
+    };
   }, [
-  open,
-  role,
-  officerName,
-  poskoId,
-  poskoName,
-  missionId,
-  missionName,
-  orgId,
-  masterPrivateKeyHex,
-  masterPublicKeyHex,
+    open,
+    role,
+    officerName,
+    poskoId,
+    poskoName,
+    missionId,
+    missionName,
+    orgId,
+    orgName,
+    masterPrivateKeyHex,
+    masterPublicKeyHex,
   ]);
 
   const handleCopyCode = () => {

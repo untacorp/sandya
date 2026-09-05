@@ -16,11 +16,11 @@ export default function CreateMissionPage() {
   const router = useRouter();
   const { session, addMission } = usePoskoStore();
 
-  const [name, setName] = React.useState("Tanggap Darurat Gempa Cugenang 2026");
+  const [name, setName] = React.useState("");
   const [disasterType, setDisasterType] = React.useState<any>("GEMPA_BUMI");
-  const [location, setLocation] = React.useState("Kecamatan Cugenang & Pacet, Kab. Cianjur");
+  const [location, setLocation] = React.useState("");
   const [targetDays, setTargetDays] = React.useState(14);
-  const [commanderName, setCommanderName] = React.useState("Drs. H. Mamat");
+  const [commanderName, setCommanderName] = React.useState(session.userName || "");
 
   const [qrModalOpen, setQrModalOpen] = React.useState(false);
   const [createdMissionId, setCreatedMissionId] = React.useState<string | null>(null);

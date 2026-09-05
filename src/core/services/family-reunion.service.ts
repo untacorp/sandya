@@ -278,13 +278,6 @@ export class FamilyReunionService {
   }
 
   private getPoskoDisplayName(poskoId: string): string {
-  const map: Record<string, string> = {
-  'POS-01': 'Posko Lapangan RW 03 Kp. Cijedil',
-  'POS-02': 'Posko GOR Pacet / Balai Desa',
-  'POS-03': 'Posko Tenda Lapangan Cariu',
-  'posko-demo-001': 'Posko Lapangan RW 03 Kp. Cijedil',
-  'posko-demo-002': 'Posko GOR Pacet / Balai Desa',
-  };
-  return map[poskoId] || `Posko ${poskoId}`;
+    return `Posko ${poskoId}`;
   }
 }

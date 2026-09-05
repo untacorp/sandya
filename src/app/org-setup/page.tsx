@@ -16,10 +16,10 @@ export default function OrgSetupPage() {
   const { addOrganization, addMission, addPosko, setSessionOrg, setSessionMission, setSessionPosko, setSessionRole } = usePoskoStore();
 
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
-  const [orgName, setOrgName] = React.useState("PMI Kabupaten Cianjur");
+  const [orgName, setOrgName] = React.useState("");
   const [orgCategory, setOrgCategory] = React.useState<"PMI_LEMBAGA" | "BPBD_PEMERINTAH" | "NGO_YAYASAN" | "KOMUNITAS_MANDIRI">("PMI_LEMBAGA");
-  const [missionName, setMissionName] = React.useState("Tanggap Darurat Gempa Cianjur 2026");
-  const [poskoName, setPoskoName] = React.useState("Posko Lapangan RW 03 Cijedil");
+  const [missionName, setMissionName] = React.useState("");
+  const [poskoName, setPoskoName] = React.useState("");
   const [seedWords, setSeedWords] = React.useState<string[]>([]);
   const [keyPair, setKeyPair] = React.useState<KeyPairResult | null>(null);
   const [seedConfirmed, setSeedConfirmed] = React.useState(false);
@@ -56,7 +56,7 @@ export default function OrgSetupPage() {
   disasterType: "GEMPA_BUMI",
   status: "ACTIVE_EMERGENCY",
   targetDays: 14,
-  location: "Kabupaten Cianjur",
+  location: orgName.trim() || poskoName.trim() || "Wilayah Operasi",
   });
 
   // 3. Create First Field Posko

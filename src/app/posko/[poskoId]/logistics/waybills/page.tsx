@@ -33,11 +33,11 @@ export default function WaybillsPage() {
   const { session, poskos, missionWaybills, issueMissionWaybill, receiveWaybill } = usePoskoStore();
 
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [targetPoskoId, setTargetPoskoId] = React.useState("POS-03");
+  const [targetPoskoId, setTargetPoskoId] = React.useState(poskos[0]?.id || "");
   const [selectedCatalogId, setSelectedCatalogId] = React.useState<number>(0x01);
   const [requestQty, setRequestQty] = React.useState(50);
   const [unit, setUnit] = React.useState("KG");
-  const [driverName, setDriverName] = React.useState("Sopian (Truk Logistik #02)");
+  const [driverName, setDriverName] = React.useState("");
   const [waybillModal, setWaybillModal] = React.useState<MacroWaybill | null>(null);
   const [successToast, setSuccessToast] = React.useState<string | null>(null);
 
@@ -58,7 +58,7 @@ export default function WaybillsPage() {
 
   issueMissionWaybill({
   missionId: session.missionId,
-  sourceHub: targetP?.name || "Gudang Sentral GOR Pacet",
+  sourceHub: targetP?.name || "Gudang Sentral Logistik",
   targetPoskoId: session.poskoId,
   targetPoskoName: session.poskoName,
   itemName,

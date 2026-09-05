@@ -26,7 +26,7 @@ export const POSKO_STORE_CONSTANTS = {
   RANDOM_ID_4_DIGIT_RANGE: 9000,
   RANDOM_ID_3_DIGIT_MIN: 100,
   RANDOM_ID_3_DIGIT_RANGE: 900,
-  MOCK_RADIO_AUDIO_DURATION_MS: 4200,
+  DEFAULT_RADIO_AUDIO_DURATION_MS: 4200,
   PEER_A1_LAST_SEEN_OFFSET_MS: 5000,
   PEER_B2_LAST_SEEN_OFFSET_MS: 12000,
   PEER_C3_LAST_SEEN_OFFSET_MS: 25000,
@@ -632,11 +632,7 @@ export const usePoskoStore = create<PoskoState>((set, get) => ({
   setCloudProvider: (provider, endpoint) =>
   set({
   cloudProvider: provider,
-  cloudEndpoint:
-  endpoint ||
-  (provider === "MANAGED"
-  ? "https://api.sandya.id"
-  : "https://sandya.pmi-cianjur.org"),
+  cloudEndpoint: endpoint || "https://api.sandya.id",
   }),
 
   triggerCloudSync: async () => {

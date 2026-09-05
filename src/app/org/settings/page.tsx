@@ -285,7 +285,7 @@ export default function OrgSettingsPage() {
   <Input
   value={byocUrl}
   onChange={(e) => setByocUrl(e.target.value)}
-  placeholder="https://sandya.pmi-cianjur.org"
+  placeholder="https://sandya.lembaga.id"
   className="flex-1 font-mono text-xs"
   />
   <Button

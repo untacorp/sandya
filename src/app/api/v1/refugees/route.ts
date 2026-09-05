@@ -8,7 +8,7 @@ import { HTTP_STATUS } from '@/core/shared/constants';
 export async function GET(req: NextRequest) {
   try {
   const { searchParams } = new URL(req.url);
-  const poskoId = searchParams.get('poskoId') || 'posko-demo-001';
+  const poskoId = searchParams.get('poskoId') || 'ALL';
   const container = ServiceContainer.getInstance();
 
   const result = await container.refugeeRepo.findByPoskoId(asPoskoId(poskoId));

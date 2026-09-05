@@ -43,7 +43,7 @@ export class SqliteInventoryRepository implements IInventoryRepository {
   const list: InventoryAggregate[] = [];
 
   for (const row of table.values()) {
-  if (row['post_id'] === poskoId) {
+  if (poskoId === 'ALL' || poskoId === asPoskoId('ALL') || row['post_id'] === poskoId) {
   const itemId = asItemId(row['id'] as string);
   const txsResult = await this.getTransactionsByItemId(itemId);
   const transactions = txsResult.ok ? txsResult.value : [];
