@@ -18,6 +18,7 @@ import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { FamilyReunionMatch } from "@/core/services/family-reunion.service";
 import { FamilyReunionPassModal } from "@/features/refugees/components/family-reunion-pass-modal";
 import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 
 export default function PublicGuestPage() {
   const [searchName, setSearchName] = React.useState("");
@@ -85,7 +86,10 @@ export default function PublicGuestPage() {
   Kembali
   </Button>
   </Link>
-  <span className="text-xs font-semibold text-text-muted">Pusat Pencarian Kerabat (Mode Warga)</span>
+        <div className="flex items-center gap-2">
+          <SandyaLogo size={20} className="text-primary" />
+          <span className="text-xs font-semibold text-text-muted">Pusat Pencarian Kerabat (Mode Warga)</span>
+        </div>
   </div>
   </header>
 

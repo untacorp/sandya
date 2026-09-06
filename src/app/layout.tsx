@@ -60,6 +60,10 @@ export const metadata: Metadata = {
   statusBarStyle: "black-translucent",
   title: "Sandya",
   },
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
   formatDetection: {
   telephone: true,
   date: true,

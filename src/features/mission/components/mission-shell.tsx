@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 import { MissionNotFoundState } from "@/features/mission/components/mission-not-found";
 
 interface NavItem {
@@ -87,9 +88,7 @@ export function MissionShell({
   <aside className="hidden md:flex flex-col w-60 border-r border-border bg-surface shrink-0 min-h-screen">
   {/* Brand Header */}
   <div className="p-4 border-b border-border flex items-center gap-2.5 bg-surface-subtle">
-  <div className="w-8 h-8 rounded-lg bg-status-danger text-text-inverse flex items-center justify-center font-bold text-sm">
-  W
-  </div>
+  <SandyaLogo size={28} className="text-status-danger" />
   <div className="min-w-0">
   <h1 className="font-bold text-sm tracking-tight text-text-main truncate">
   {mission.name}

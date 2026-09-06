@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 
 export default function NotFound() {
   return (
@@ -9,9 +10,7 @@ export default function NotFound() {
   {/* Top Header */}
   <header className="max-w-md mx-auto w-full flex items-center justify-between py-2">
   <div className="flex items-center gap-2">
-  <div className="w-8 h-8 rounded-lg bg-primary text-text-inverse flex items-center justify-center font-bold text-sm">
-  S
-  </div>
+  <SandyaLogo size={28} />
   <div>
   <span className="font-bold text-sm text-text-main">Sandya</span>
   <span className="text-[10px] block text-text-muted">Navigasi Rute</span>
