@@ -1,6 +1,6 @@
 [package]
 name = "sandya"
-version = "1.0.0"
+version = "0.1.0-alpha.1"
 description = "Sandya - Offline-First Disaster Response Management Native Application"
 authors = ["Sandya Humanitarian Project <team@sandya.id>"]
 license = "Apache-2.0"

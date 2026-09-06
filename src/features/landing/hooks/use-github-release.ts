@@ -27,7 +27,7 @@ export function useGitHubRelease(): ReleaseInfo & {
   getAssetForOS: (os: SupportedOS) => { downloadUrl: string; fileName: string; isDirect: boolean };
 } {
   const [releaseInfo, setReleaseInfo] = React.useState<ReleaseInfo>({
-    version: "v1.0.0",
+    version: "v0.1.0-alpha.1",
     publishedDate: "September 2026",
     releaseUrl: `https://github.com/${GITHUB_REPO}/releases`,
     releaseNotes: "Rilis stabil sistem operasi posko darurat mandiri (offline-first & BLE mesh).",
