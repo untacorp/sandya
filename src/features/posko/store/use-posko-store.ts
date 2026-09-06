@@ -85,12 +85,14 @@ export interface PoskoState {
   addRefugee: (refugee: Omit<DisasterPerson, "createdAt"> & { id?: string }) => void;
   updateRefugee: (refugeeId: string, data: Partial<Omit<DisasterPerson, "id" | "createdAt">>) => void;
   deleteRefugee: (refugeeId: string) => void;
-  importRefugeeBatch: (persons: Array<Omit<DisasterPerson, "id" | "createdAt">>) => void;
+  importRefugeeBatch: (persons: Array<Omit<DisasterPerson, "id" | "createdAt"> & { id?: string }>) => void;
   updateRefugeeTriage: (refugeeId: string, triage: TriageCategory) => void;
 
   // Level 3: Inventory & Single-Writer Ledger
   inventory: InventoryItem[];
   transactions: InventoryTransaction[];
+  importInventoryBatch: (items: Array<Omit<InventoryItem, "id" | "postId" | "lastUpdatedAt" | "burnRateDays">>) => void;
+  importTransactionBatch: (txs: Array<Omit<InventoryTransaction, "postId"> & { postId?: string }>) => void;
   addRestock: (itemName: string, category: InventoryItem["category"], qty: number, unit: string, id?: string, targetPoskoId?: string) => void;
   updateInventoryItem: (itemId: string, data: Partial<Omit<InventoryItem, "id">>) => void;
   deleteInventoryItem: (itemId: string) => void;
@@ -98,6 +100,7 @@ export interface PoskoState {
 
   // Level 3: Needs Requests & Distribution
   needsTickets: NeedsTicket[];
+  importNeedsTicketsBatch: (tickets: NeedsTicket[]) => void;
   createNeedsTicket: (ticket: Omit<NeedsTicket, "id" | "createdAt" | "status">) => void;
   cancelNeedsTicket: (ticketId: string) => void;
   completeDelivery: (ticketId: string) => void;
@@ -460,7 +463,7 @@ export const usePoskoStore = create<PoskoState>()(
   // Tambah warga baru
   const newPerson: DisasterPerson = {
   ...p,
-  id: `REF-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
+  id: p.id || `REF-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
   createdAt: Date.now(),
   };
   currentList.unshift(newPerson);
@@ -487,6 +490,70 @@ export const usePoskoStore = create<PoskoState>()(
   // Level 3: Inventory (Pristine - Zero Mock Data)
   inventory: [],
   transactions: [],
+
+  importInventoryBatch: (items) => {
+    set((state) => {
+      const currentList = [...state.inventory];
+      let newAddedCount = 0;
+
+      for (const item of items) {
+        const existingIdx = currentList.findIndex((i) => 
+          i.itemName.toLowerCase() === item.itemName.toLowerCase() && 
+          i.category === item.category &&
+          i.unit.toLowerCase() === item.unit.toLowerCase()
+        );
+
+        if (existingIdx >= 0) {
+          // Idempotent upsert: perbarui kuantitas (menggunakan nilai dari QR yang menjadi source of truth dari Posko asal)
+          currentList[existingIdx] = {
+            ...currentList[existingIdx],
+            currentQuantity: item.currentQuantity,
+            lastUpdatedAt: Date.now(),
+          };
+        } else {
+          // Tambah item baru
+          currentList.unshift({
+            ...item,
+            id: `INV-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`,
+            postId: state.session.poskoId,
+            burnRateDays: POSKO_STORE_CONSTANTS.DEFAULT_BURN_RATE_DAYS,
+            lastUpdatedAt: Date.now(),
+          });
+          newAddedCount++;
+        }
+      }
+
+      return {
+        inventory: currentList,
+        pendingOutboxCount: state.pendingOutboxCount + newAddedCount,
+      };
+    });
+  },
+
+  importTransactionBatch: (txs) => {
+    set((state) => {
+      const currentList = [...state.transactions];
+      const existingIds = new Set(currentList.map((t) => t.id));
+      let newAddedCount = 0;
+
+      for (const tx of txs) {
+        if (!existingIds.has(tx.id)) {
+          currentList.unshift({
+            ...tx,
+            postId: tx.postId || state.session.poskoId,
+            deviceTimestamp: tx.deviceTimestamp || Date.now(),
+          });
+          existingIds.add(tx.id);
+          newAddedCount++;
+        }
+      }
+
+      return {
+        transactions: currentList,
+        pendingOutboxCount: state.pendingOutboxCount + newAddedCount,
+      };
+    });
+  },
 
   addRestock: (itemName, category, qty, unit, id, targetPoskoId) => {
     const state = get();
@@ -604,6 +671,32 @@ export const usePoskoStore = create<PoskoState>()(
 
   // Needs Tickets (Pristine - Zero Mock Data)
   needsTickets: [],
+
+  importNeedsTicketsBatch: (tickets) => {
+    set((state) => {
+      const existingMap = new Map(state.needsTickets.map((t) => [t.id, t]));
+      let newCount = 0;
+      for (const tkt of tickets) {
+        const existing = existingMap.get(tkt.id);
+        if (!existing) {
+          existingMap.set(tkt.id, {
+            ...tkt,
+            postId: tkt.postId || state.session.poskoId,
+          });
+          newCount++;
+        } else {
+          existingMap.set(tkt.id, {
+            ...existing,
+            ...tkt,
+          });
+        }
+      }
+      return {
+        needsTickets: Array.from(existingMap.values()),
+        pendingOutboxCount: state.pendingOutboxCount + newCount,
+      };
+    });
+  },
 
   createNeedsTicket: (ticket) => {
   const newTicket: NeedsTicket = {
