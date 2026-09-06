@@ -10,6 +10,7 @@ import { Icon } from "@/shared/ui/icon";
 import { generate12WordSeed } from "@/core/crypto/seed-phrase";
 import { IsomorphicEd25519, KeyPairResult } from "@/core/crypto/ed25519-isomorphic";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { type Organization } from "@/shared/types";
 
 export default function OrgSetupPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function OrgSetupPage() {
 
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [orgName, setOrgName] = React.useState("");
-  const [orgCategory, setOrgCategory] = React.useState<"PMI_LEMBAGA" | "BPBD_PEMERINTAH" | "NGO_YAYASAN" | "KOMUNITAS_MANDIRI">("PMI_LEMBAGA");
+  const [orgCategory, setOrgCategory] = React.useState<Organization["category"]>("PMI_LEMBAGA");
   const [missionName, setMissionName] = React.useState("");
   const [poskoName, setPoskoName] = React.useState("");
   const [seedWords, setSeedWords] = React.useState<string[]>([]);
@@ -130,7 +131,7 @@ export default function OrgSetupPage() {
   </label>
   <select
   value={orgCategory}
-  onChange={(e) => setOrgCategory(e.target.value as any)}
+  onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="PMI_LEMBAGA">PMI / Lembaga Kemanusiaan</option>

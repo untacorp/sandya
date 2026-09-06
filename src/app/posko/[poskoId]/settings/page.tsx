@@ -6,9 +6,10 @@ import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { RolePassModal } from "@/features/auth/components/role-pass-modal";
 import { StaffRole } from "@/core/shared/roles";
+import { type PostType, type PostStatus } from "@/shared/types";
 
 interface OfficerPassTarget {
   name: string;
@@ -28,8 +29,8 @@ export default function PoskoSettingsPage() {
   const [poskoName, setPoskoName] = React.useState(currentPosko?.name || session.poskoName || "");
   const [locationName, setLocationName] = React.useState(currentPosko?.locationName || "");
   const [capacity, setCapacity] = React.useState(currentPosko?.capacity || 0);
-  const [postType, setPostType] = React.useState(currentPosko?.postType || "FIELD_SHELTER");
-  const [status, setStatus] = React.useState(currentPosko?.status || "OPERATIONAL_NORMAL");
+  const [postType, setPostType] = React.useState<PostType>(currentPosko?.postType || "FIELD_SHELTER");
+  const [status, setStatus] = React.useState<PostStatus>(currentPosko?.status || "OPERATIONAL_NORMAL");
   const [isSaved, setIsSaved] = React.useState(false);
 
   React.useEffect(() => {
@@ -49,14 +50,14 @@ export default function PoskoSettingsPage() {
   name: poskoName.trim(),
   locationName: locationName.trim(),
   capacity: Number(capacity) || 0,
-  postType: postType as any,
-  status: status as any,
+  postType,
+  status,
   });
   setIsSaved(true);
   setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const teamRoles: { role: StaffRole; title: string; desc: string; icon: string }[] = [
+  const teamRoles: { role: StaffRole; title: string; desc: string; icon: SolarIconName }[] = [
   {
   role: "PETUGAS_MEDIS",
   title: "Tim Medis / Dokter",
@@ -151,7 +152,7 @@ export default function PoskoSettingsPage() {
   </label>
   <select
   value={status}
-  onChange={(e) => setStatus(e.target.value as any)}
+  onChange={(e) => setStatus(e.target.value as PostStatus)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="OPERATIONAL_NORMAL">Normal (Operasional)</option>
@@ -166,7 +167,7 @@ export default function PoskoSettingsPage() {
   </label>
   <select
   value={postType}
-  onChange={(e) => setPostType(e.target.value as any)}
+  onChange={(e) => setPostType(e.target.value as PostType)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="FIELD_SHELTER">Posko Tenda Lapangan</option>
@@ -235,7 +236,7 @@ export default function PoskoSettingsPage() {
   >
   <div className="flex items-center gap-3">
   <div className="w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center shrink-0">
-  <Icon name={r.icon as any} variant="bold" size={18} className="text-primary" />
+  <Icon name={r.icon} variant="bold" size={18} className="text-primary" />
   </div>
   <div>
   <h4 className="text-sm font-bold text-text-main">

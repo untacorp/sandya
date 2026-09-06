@@ -9,6 +9,7 @@ import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
 import { PageHeader } from "@/shared/ui/page-header";
+import { type Organization } from "@/shared/types";
 
 export default function OrgSettingsPage() {
   const {
@@ -23,7 +24,7 @@ export default function OrgSettingsPage() {
   const org = organizations.find((o) => o.id === session.orgId) || null;
 
   const [orgName, setOrgName] = React.useState(org?.name || session.orgName || "");
-  const [orgCategory, setOrgCategory] = React.useState(org?.category || "BPBD_PEMERINTAH");
+  const [orgCategory, setOrgCategory] = React.useState<Organization["category"]>(org?.category || "BPBD_PEMERINTAH");
   const [headquartersAddress, setHeadquartersAddress] = React.useState(org?.headquartersAddress || "");
   const [contactNumber, setContactNumber] = React.useState(org?.contactNumber || "");
   const [leadPersonName, setLeadPersonName] = React.useState(session.userName || "");
@@ -80,7 +81,7 @@ export default function OrgSettingsPage() {
   if (org) {
   updateOrganization(org.id, {
   name: orgName.trim(),
-  category: orgCategory as any,
+  category: orgCategory,
   contactNumber: contactNumber.trim(),
   });
   setSessionOrg(org.id, orgName.trim());
@@ -142,7 +143,7 @@ export default function OrgSettingsPage() {
   </label>
   <select
   value={orgCategory}
-  onChange={(e) => setOrgCategory(e.target.value as any)}
+  onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="PMI_LEMBAGA">Palang Merah Indonesia (PMI)</option>

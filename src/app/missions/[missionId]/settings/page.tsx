@@ -12,7 +12,7 @@ import { Dialog } from "@/shared/ui/dialog";
 import { RolePassModal } from "@/features/auth/components/role-pass-modal";
 import { PageHeader } from "@/shared/ui/page-header";
 import { useParams } from "next/navigation";
-import { type DisasterMission, type Posko, type MissionStatus } from "@/shared/types";
+import { type DisasterMission, type Posko, type MissionStatus, type DisasterType } from "@/shared/types";
 
 export default function MissionSettingsPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function MissionSettingsPage() {
   const mission = missions.find((m) => m.id === missionId || m.id === session.missionId);
 
   const [name, setName] = React.useState(mission?.name || "");
-  const [disasterType, setDisasterType] = React.useState(mission?.disasterType || "GEMPA_BUMI");
+  const [disasterType, setDisasterType] = React.useState<DisasterType>(mission?.disasterType || "GEMPA_BUMI");
   const [location, setLocation] = React.useState(mission?.location || "");
   const [targetDays, setTargetDays] = React.useState(mission?.targetDays || 14);
   const [status, setStatus] = React.useState<MissionStatus>(mission?.status || "ACTIVE_EMERGENCY");
@@ -31,19 +31,21 @@ export default function MissionSettingsPage() {
   const [archiveDialogOpen, setArchiveDialogOpen] = React.useState(false);
   const [commanderPassOpen, setCommanderPassOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    if (mission) {
+      queueMicrotask(() => {
+        setName(mission.name);
+        setDisasterType(mission.disasterType);
+        setLocation(mission.location);
+        setTargetDays(mission.targetDays);
+        setStatus(mission.status);
+      });
+    }
+  }, [mission]);
+
   if (!mission) {
   return null;
   }
-
-  React.useEffect(() => {
-  if (mission) {
-  setName(mission.name);
-  setDisasterType(mission.disasterType);
-  setLocation(mission.location);
-  setTargetDays(mission.targetDays);
-  setStatus(mission.status);
-  }
-  }, [mission]);
 
   const missionPoskos: Posko[] = poskos.filter((p) => p.missionId === mission.id);
 
@@ -136,7 +138,7 @@ export default function MissionSettingsPage() {
   </label>
   <select
   value={disasterType}
-  onChange={(e) => setDisasterType(e.target.value as any)}
+  onChange={(e) => setDisasterType(e.target.value as DisasterType)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="GEMPA_BUMI">Gempa Bumi</option>
@@ -180,7 +182,7 @@ export default function MissionSettingsPage() {
   </label>
   <select
   value={status}
-  onChange={(e) => setStatus(e.target.value as any)}
+  onChange={(e) => setStatus(e.target.value as MissionStatus)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
   >
   <option value="ACTIVE_EMERGENCY">Tanggap Darurat Aktif</option>

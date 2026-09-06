@@ -5,7 +5,7 @@ import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { RolePassModal } from "@/features/auth/components/role-pass-modal";
 import { StaffRole } from "@/core/shared/roles";
 
@@ -41,7 +41,7 @@ export default function OrgMembersPage() {
   status: m.status === "ACTIVE_EMERGENCY" ? "ON_DUTY" : "STANDBY",
   }));
 
-  const standardFieldRoles: { title: string; role: StaffRole; icon: string; desc: string }[] = [
+  const standardFieldRoles: { title: string; role: StaffRole; icon: SolarIconName; desc: string }[] = [
   {
   title: "Petugas Medis Lapangan",
   role: "PETUGAS_MEDIS",
@@ -136,7 +136,7 @@ export default function OrgMembersPage() {
   <div className="space-y-1">
   <div className="flex items-center gap-2">
   <div className="w-7 h-7 rounded-md bg-surface-muted text-primary flex items-center justify-center">
-  <Icon name={item.icon as any} variant="bold" size={16} />
+  <Icon name={item.icon} variant="bold" size={16} />
   </div>
   <h4 className="text-sm font-bold text-text-main">{item.title}</h4>
   </div>
