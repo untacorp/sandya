@@ -32,7 +32,7 @@
   "longDescription": "Sandya adalah platform manajemen operasi tanggap darurat bencana offline-first untuk pendataan pengungsi, triase medis lapangan, logistik gudang posko, temu keluarga terpisah, dan komunikasi taktis PTT.",
   "copyright": "Copyright 2026 Sandya Humanitarian Project. All rights reserved.",
   "publisher": "Sandya Humanitarian Project",
-  "targets": "all",
+  "targets": ["nsis", "appimage", "deb", "dmg"],
   "icon": [
   "icons/32x32.png",
   "icons/128x128.png",

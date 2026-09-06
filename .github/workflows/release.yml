@@ -85,7 +85,7 @@ jobs:
             args: ''
             targets: ''
           - platform: 'windows-latest'
-            args: ''
+            args: '--bundles nsis'
             targets: ''
           - platform: 'macos-latest'
             args: '--target universal-apple-darwin'

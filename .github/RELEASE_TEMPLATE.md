@@ -7,7 +7,7 @@ Sistem Operasi Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-
 ### 📦 Paket Instalasi Resmi Lintas-Platform
 Unduh paket binary sesuai sistem operasi perangkat posko atau ponsel relawan:
 - 🐧 **Linux**: Berkas `.AppImage` (siap pakai tanpa root) & `.deb` (Debian / Ubuntu)
-- 🪟 **Windows**: Berkas `sandya_x64-setup.exe` (NSIS Installer) & installer `.msi`
+- 🪟 **Windows**: Berkas `sandya_x64-setup.exe` (NSIS Installer 64-bit)
 - 🍎 **macOS**: Berkas `.dmg` (Universal Binary: Apple Silicon M1/M2/M3/M4 & Intel)
 - 🤖 **Android**: Berkas `.apk` mandiri (arsitektur ARM64, ARMv7, x86_64)
 - 📱 **iOS**: Paket bundle aplikasi iOS mandiri (`sandya-ios-build.zip`)
