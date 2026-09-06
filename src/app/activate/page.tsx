@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
 import { RolePassCodec, RolePassPayload } from "@/core/codecs/role-pass-codec";
 import { type UserRole } from "@/shared/types";
@@ -80,7 +81,10 @@ export default function ActivatePassPage() {
   Kembali
   </Button>
   </Link>
-  <span className="text-xs font-semibold text-text-muted">Aktivasi Kartu Tugas</span>
+        <div className="flex items-center gap-2">
+          <SandyaLogo size={20} className="text-primary" />
+          <span className="text-xs font-semibold text-text-muted">Aktivasi Kartu Tugas</span>
+        </div>
   </div>
   </header>
 

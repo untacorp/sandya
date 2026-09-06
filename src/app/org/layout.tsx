@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 
 interface NavItem {
   label: string;
@@ -141,9 +142,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
   <aside className="hidden md:flex flex-col w-60 border-r border-border bg-surface shrink-0 min-h-screen">
   {/* Brand Header */}
   <div className="p-4 border-b border-border flex items-center gap-2.5 bg-surface-subtle">
-  <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-  S
-  </div>
+        <SandyaLogo size={28} />
   <div className="min-w-0">
   <h1 className="font-bold text-sm tracking-tight text-text-main truncate">
   {session.orgName}

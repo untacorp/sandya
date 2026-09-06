@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 
 export default function ErrorBoundary({
   error,
@@ -22,9 +23,7 @@ export default function ErrorBoundary({
   {/* Top Header */}
   <header className="max-w-md mx-auto w-full flex items-center justify-between py-2">
   <div className="flex items-center gap-2">
-  <div className="w-8 h-8 rounded-lg bg-status-danger text-text-inverse flex items-center justify-center font-bold text-sm">
-  !
-  </div>
+  <SandyaLogo size={28} className="text-status-danger" />
   <div>
   <span className="font-bold text-sm text-text-main">Sandya</span>
   <span className="text-[10px] block text-text-muted">Protokol Penanganan Kendala</span>

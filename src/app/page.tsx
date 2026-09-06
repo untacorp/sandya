@@ -7,6 +7,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Badge } from "@/shared/ui/badge";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { getRoleDisplayName } from "@/features/auth/utils/role-routing";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 
 export default function LandingGatewayPage() {
   const { session } = usePoskoStore();
@@ -24,9 +25,7 @@ export default function LandingGatewayPage() {
       <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
         <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs">
-              S
-            </div>
+            <SandyaLogo size={32} />
             <div>
               <span className="text-base font-bold tracking-tight text-text-main">
                 Sandya
