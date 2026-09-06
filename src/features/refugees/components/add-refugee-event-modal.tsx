@@ -38,7 +38,7 @@ export function AddRefugeeEventModal({
   refugeeName,
   onEventAdded,
 }: AddRefugeeEventModalProps) {
-  const { session, updateRefugeeTriage } = usePoskoStore();
+  const { session, refugees, updateRefugeeTriage, createNeedsTicket } = usePoskoStore();
 
   const [eventType, setEventType] = React.useState<EventTypeOption>("HEALTH_CHECK");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -112,10 +112,25 @@ export function AddRefugeeEventModal({
   eventPayload,
   });
 
-  if (result.ok) {
-  if (onEventAdded) onEventAdded();
-  handleClose();
-  }
+    if (result.ok) {
+      if (eventType === "NEED_REPORTED") {
+        const currentRefugee = refugees.find((r) => r.id === refugeeId);
+        createNeedsTicket({
+          refugeeId,
+          refugeeName,
+          shelterLocation: currentRefugee?.shelterLocation || "Tenda Pengungsian",
+          postId: session.poskoId,
+          itemName: needItem,
+          quantity: needQuantity,
+          unit: needItem.toLowerCase().includes("beras") ? "karung" : needItem.toLowerCase().includes("galon") ? "galon" : "paket",
+          urgency: "HIGH",
+          createdByUserId: session.userId,
+          createdByUserName: session.userName,
+        });
+      }
+      if (onEventAdded) onEventAdded();
+      handleClose();
+    }
   } catch (err) {
   console.error("Failed to record event:", err);
   } finally {

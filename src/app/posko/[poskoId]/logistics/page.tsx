@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
-import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { usePoskoStore, calculatePoskoInventoryResilience } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
 import { InventoryAggregate, INVENTORY_CATEGORIES, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
@@ -34,10 +34,11 @@ export default function LogisticsPage() {
   const [isLedgerOpen, setIsLedgerOpen] = React.useState(false);
   const params = useParams();
   const routePoskoId = (params?.poskoId as string) || "";
-  const { session, inventory, transactions, addRestock } = usePoskoStore();
+  const { session, inventory, transactions, addRestock, refugees } = usePoskoStore();
   const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
 
   const poskoInventory = inventory.filter((i) => i.postId === effectivePoskoId);
+  const poskoRefugees = refugees.filter((r) => r.postId === effectivePoskoId);
   const poskoTransactions = transactions.filter((tx) => tx.postId === effectivePoskoId);
 
   const [restockOpen, setRestockOpen] = React.useState(false);
@@ -241,7 +242,7 @@ export default function LogisticsPage() {
   />
   )}
         {/* NEW: Logistics Charts */}
-        <LogisticsCharts inventory={poskoInventory} />
+        <LogisticsCharts inventory={poskoInventory} totalRefugees={poskoRefugees.length} />
 
         {/* 3. Grid Ketersediaan Stok Barang */}
   <div>
@@ -267,39 +268,77 @@ export default function LogisticsPage() {
   ) : (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
   {poskoInventory.map((item) => {
-  const isCritical = item.burnRateDays <= 1 || item.currentQuantity <= 10;
-  return (
-  <div
-  key={item.id}
-  className={`p-3.5 rounded-xl border bg-surface shadow-2xs space-y-2.5 transition-all ${
-  isCritical ? "border-status-danger-border bg-status-danger-bg/15" : "border-border"
-  }`}
-  >
-  <div className="flex items-start justify-between gap-2">
-  <div className="min-w-0">
-  <span className="text-[11px] text-text-muted font-semibold block truncate">
-  {getCategoryLabel(item.category)}
-  </span>
-  <h3 className="text-sm font-bold text-text-main mt-0.5 truncate">
-  {item.itemName}
-  </h3>
-  </div>
-  <div className="text-right shrink-0">
-  <p className={`text-xl font-black ${isCritical ? "text-status-danger" : "text-text-main"}`}>
-  {item.currentQuantity.toLocaleString()}
-  </p>
-  <span className="text-[11px] text-text-muted font-bold">{item.unit}</span>
-  </div>
-  </div>
+    const resilience = calculatePoskoInventoryResilience(item, poskoRefugees);
+    const isCritical = resilience.status === "CRITICAL";
+    const isWarning = resilience.status === "WARNING";
+    const isStandby = resilience.status === "STANDBY";
 
-  <div className="flex items-center justify-between text-xs pt-2 border-t border-border/80">
-  <span className="text-text-muted">Ketahanan Konsumsi:</span>
-  <span className={`font-bold ${isCritical ? "text-status-danger" : "text-text-main"}`}>
-  {isCritical ? "Kritis (< 24 Jam)" : `~${item.burnRateDays} Hari`}
-  </span>
-  </div>
-  </div>
-  );
+    return (
+      <div
+        key={item.id}
+        className={`p-3.5 rounded-xl border bg-surface shadow-2xs space-y-2.5 transition-all ${
+          isCritical
+            ? "border-status-danger-border bg-status-danger-bg/15"
+            : isWarning
+            ? "border-status-warning-border bg-status-warning-bg/10"
+            : "border-border"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="text-[11px] text-text-muted font-semibold block truncate">
+              {getCategoryLabel(item.category)}
+            </span>
+            <h3 className="text-sm font-bold text-text-main mt-0.5 truncate">
+              {item.itemName}
+            </h3>
+            <p className="text-[11px] text-text-muted mt-0.5 truncate">
+              {isStandby
+                ? `Siaga: ~${resilience.standbyDaysFor100Pax} hari / 100 jiwa`
+                : `Kebutuhan: ~${resilience.dailyDemand} ${item.unit}/hari (${resilience.targetGroupName})`}
+            </p>
+          </div>
+          <div className="text-right shrink-0">
+            <p
+              className={`text-xl font-black ${
+                isCritical
+                  ? "text-status-danger"
+                  : isWarning
+                  ? "text-status-warning"
+                  : "text-text-main"
+              }`}
+            >
+              {item.currentQuantity.toLocaleString()}
+            </p>
+            <span className="text-[11px] text-text-muted font-bold">{item.unit}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-xs pt-2 border-t border-border/80">
+          <span className="text-text-muted">Ketahanan:</span>
+          <div>
+            {isCritical ? (
+              <Badge variant="danger" size="sm" className="font-bold flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-status-danger animate-pulse" />
+                {resilience.statusLabel}
+              </Badge>
+            ) : isWarning ? (
+              <Badge variant="warning" size="sm" className="font-bold">
+                {resilience.statusLabel}
+              </Badge>
+            ) : isStandby ? (
+              <Badge variant="neutral" size="sm" className="font-semibold text-text-muted">
+                {resilience.statusLabel}
+              </Badge>
+            ) : (
+              <Badge variant="safe" size="sm" className="font-bold">
+                {resilience.statusLabel}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   })}
   </div>
   )}

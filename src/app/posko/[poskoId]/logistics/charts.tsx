@@ -67,9 +67,10 @@ interface LogisticsChartsProps {
     currentQuantity: number;
     burnRateDays: number;
   }>;
+  totalRefugees?: number;
 }
 
-export function LogisticsCharts({ inventory }: LogisticsChartsProps) {
+export function LogisticsCharts({ inventory, totalRefugees }: LogisticsChartsProps) {
   // Process data for Category Pie Chart
   const categoryDataMap: Record<string, number> = {};
   inventory.forEach((item) => {
@@ -157,7 +158,7 @@ export function LogisticsCharts({ inventory }: LogisticsChartsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="text-xs flex items-center gap-1.5 text-status-danger">
             <Icon name="alert" size={14} />
-            Peringatan Stok Kritis
+            Peringatan Stok Kritis {typeof totalRefugees === 'number' ? (totalRefugees > 0 ? `(${totalRefugees} Jiwa Terdaftar)` : '(Mode Siaga)') : ''}
           </CardTitle>
         </CardHeader>
         <CardContent className="h-60 pt-0">
