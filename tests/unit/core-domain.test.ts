@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { ALL_USER_ROLES, STAFF_ROLES } from '@/core/shared/roles';
-import { INDONESIAN_NAME_WORDS, tokenizeFullName, detokenizeFullName } from '@/core/codecs/name-dictionary';
+import { INDONESIAN_NAME_WORDS } from '@/core/codecs/name-dictionary';
 import { NameTokenizer } from '@/core/codecs/name-tokenizer';
 import { RefugeeAggregate } from '@/core/domain/refugees/refugee.aggregate';
 import {
@@ -14,7 +14,6 @@ import { Ed25519Signer } from '@/core/crypto/ed25519-signer';
 import { FastIntakeUseCase } from '@/core/use-cases/refugees/fast-intake.usecase';
 import { InMemorySqliteConnection } from '@/infrastructure/db/sqlite/sqlite-connection';
 import { SqliteRefugeeRepository } from '@/infrastructure/db/sqlite/repositories/sqlite-refugee.repository';
-import { SqliteInventoryRepository } from '@/infrastructure/db/sqlite/repositories/sqlite-inventory.repository';
 import { SqliteOutboxRepository } from '@/infrastructure/db/sqlite/repositories/sqlite-outbox.repository';
 import { asRefugeeId, asPoskoId, asItemId, asPeerId } from '@/core/shared/branded-types';
 
@@ -156,7 +155,6 @@ async function runCoreDomainTests() {
   console.log('Test 8: Fast Intake & Transactional Outbox Pipeline');
   const db = new InMemorySqliteConnection();
   const refugeeRepo = new SqliteRefugeeRepository(db);
-  const inventoryRepo = new SqliteInventoryRepository(db);
   const outboxRepo = new SqliteOutboxRepository(db);
 
   const intakeUseCase = new FastIntakeUseCase(refugeeRepo, outboxRepo);

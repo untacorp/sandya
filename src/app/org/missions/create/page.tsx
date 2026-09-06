@@ -11,14 +11,14 @@ import { Dialog } from "@/shared/ui/dialog";
 import { Icon } from "@/shared/ui/icon";
 import { RolePassModal } from "@/features/auth/components/role-pass-modal";
 import { PageHeader } from "@/shared/ui/page-header";
-import { type DisasterMission } from "@/shared/types";
+import { type DisasterType } from "@/shared/types";
 
 export default function CreateMissionPage() {
   const router = useRouter();
   const { session, addMission } = usePoskoStore();
 
   const [name, setName] = React.useState("");
-  const [disasterType, setDisasterType] = React.useState<DisasterMission["disasterType"]>("GEMPA_BUMI");
+  const [disasterType, setDisasterType] = React.useState<DisasterType>("GEMPA_BUMI");
   const [location, setLocation] = React.useState("");
   const [targetDays, setTargetDays] = React.useState(14);
   const [commanderName, setCommanderName] = React.useState(session.userName || "");
@@ -77,9 +77,10 @@ export default function CreateMissionPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Jenis Bencana
   </label>
-  <select value={disasterType}
-  onChange={(e) => setDisasterType(e.target.value as DisasterMission["disasterType"])}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
+  <select
+    value={disasterType}
+    onChange={(e) => setDisasterType(e.target.value as DisasterType)}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="GEMPA_BUMI">Gempa Bumi</option>
   <option value="BANJIR_BANDANG">Banjir Bandang</option>

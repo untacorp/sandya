@@ -5,8 +5,17 @@ import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
-import { InventoryAggregate, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
+import { InventoryAggregate, INVENTORY_CATEGORIES, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
 import { asItemId, asPoskoId } from "@/core/shared/branded-types";
+
+const mapClusterToCategory = (cluster: string): InventoryCategory => {
+  if (cluster === "FOOD_WATER") return "FOOD";
+  if (cluster === "CLOTHING_BEDDING") return "CLOTHING";
+  if (INVENTORY_CATEGORIES.includes(cluster as InventoryCategory)) {
+    return cluster as InventoryCategory;
+  }
+  return "OTHER";
+};
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
@@ -15,6 +24,7 @@ import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { Badge } from "@/shared/ui/badge";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { type ItemCategory } from "@/shared/types";
 import { LogisticsCharts } from "./charts";
 import { LogisticsLedger } from "./ledger";
 import { DisasterCatalogCombobox } from "@/shared/ui/disaster-catalog-combobox";
@@ -154,7 +164,7 @@ export default function LogisticsPage() {
   }
 
   // Update zustand store
-  addRestock(finalItemName, category as any, quantityNumber, unit.toUpperCase(), finalItemId, effectivePoskoId);
+  addRestock(finalItemName, category as ItemCategory, quantityNumber, unit.toUpperCase(), finalItemId, effectivePoskoId);
 
   setSuccessToast(`Stok ${quantityNumber} ${unit.toUpperCase()} ${finalItemName} berhasil ditambahkan.`);
   setTimeout(() => setSuccessToast(null), 4000);
@@ -162,8 +172,8 @@ export default function LogisticsPage() {
   setCustomItemName("");
   setQty("");
   setRestockOpen(false);
-  } catch (err: any) {
-  setErrorMessage(err?.message || "Terjadi kesalahan saat memproses stok masuk.");
+  } catch (err: unknown) {
+  setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat memproses stok masuk.");
   } finally {
   setIsSubmitting(false);
   }
@@ -357,7 +367,7 @@ export default function LogisticsPage() {
     value={selectedCatalogId}
     onChange={(id, cluster) => {
       setSelectedCatalogId(id);
-      setCategory(cluster as any);
+      setCategory(mapClusterToCategory(cluster));
     }}
   />
   </div>
@@ -375,7 +385,7 @@ export default function LogisticsPage() {
   <label className="font-semibold text-text-main block">Kategori Komoditas</label>
   <Select
   value={category}
-  onChange={(e) => setCategory(e.target.value as any)}
+  onChange={(e) => setCategory(e.target.value as InventoryCategory)}
   >
   <option value="FOOD">Pangan & Air Minum (FOOD)</option>
   <option value="CLOTHING">Sandang & Alas Tidur (CLOTHING)</option>

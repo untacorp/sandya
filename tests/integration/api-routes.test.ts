@@ -5,7 +5,6 @@ import { GET as getTimeline } from '@/app/api/v1/refugees/[refugeeId]/timeline/r
 import { GET as getLogistics } from '@/app/api/v1/logistics/route';
 import { POST as mutateStock } from '@/app/api/v1/logistics/mutate/route';
 import { POST as ingestPacket } from '@/app/api/v1/sync/ingest-packet/route';
-import { POST as vectorProbe } from '@/app/api/v1/sync/vector-probe/route';
 import { GET as getAnalytics } from '@/app/api/v1/analytics/route';
 import { GET as getTactical, POST as postTactical } from '@/app/api/v1/tactical/messages/route';
 import { Ed25519Signer } from '@/core/crypto/ed25519-signer';
@@ -16,7 +15,6 @@ import { InventoryAggregate } from '@/core/domain/logistics/inventory.aggregate'
 
 async function runIntegrationTests() {
   console.log('RUNNING Sandya BACKEND INTEGRATION & API TEST SUITE...\n');
-  const poskoId = 'posko-demo-001';
 
   // 1. Test POST /api/v1/refugees (Fast Intake)
   console.log('Test 1: POST /api/v1/refugees (Fast Intake Endpoint)');

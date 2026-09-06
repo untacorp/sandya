@@ -140,9 +140,10 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kategori Lembaga
   </label>
-  <select value={orgCategory}
-  onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
+  <select
+    value={orgCategory}
+    onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="PMI_LEMBAGA">Palang Merah Indonesia (PMI)</option>
   <option value="BPBD_PEMERINTAH">BPBD / Pemerintah Daerah</option>

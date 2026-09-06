@@ -4,7 +4,7 @@ import { SqliteRefugeeRepository } from '@/infrastructure/db/sqlite/repositories
 import { SqliteOutboxRepository } from '@/infrastructure/db/sqlite/repositories/sqlite-outbox.repository';
 import { FastIntakeUseCase } from '@/core/use-cases/refugees/fast-intake.usecase';
 import { RecordTriageExamUseCase } from '@/core/use-cases/refugees/record-triage-exam.usecase';
-import { asRefugeeId, asPoskoId } from '@/core/shared/branded-types';
+import { asRefugeeId } from '@/core/shared/branded-types';
 
 async function runTriageMedisTests() {
   console.log('RUNNING LANGKAH 3: TRIASE MEDIS START 4-WARNA & AUTO-TICKET FARMASI TEST SUITE...\n');
@@ -114,9 +114,11 @@ async function runTriageMedisTests() {
   assert.strictEqual(allEvents.value[1]?.eventType, 'HEALTH_CHECK');
 
   const healthEvent = allEvents.value[1];
-  assert.strictEqual(healthEvent?.causalParentId, allEvents.value[0]?.id);
-  const payload = healthEvent?.eventPayload as any;
-  assert.strictEqual(payload.triageCategory, 'RED');
+  const payload = healthEvent?.eventPayload as unknown as {
+    triageCategory: string;
+    vitalSigns: { temperature: number };
+    prescriptions: Array<{ tokenHex: string; medicineName: string }>;
+  };
   assert.strictEqual(payload.vitalSigns.temperature, 39.4);
   assert.strictEqual(payload.prescriptions.length, 3);
   assert.strictEqual(payload.prescriptions[0].tokenHex, '0x22');

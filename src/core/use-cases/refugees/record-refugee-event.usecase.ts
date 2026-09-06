@@ -2,7 +2,7 @@ import { Result, Ok, Err, DomainError } from '@/core/shared/result';
 import { IRefugeeRepository } from '@/core/domain/refugees/refugee.repository.interface';
 import { IOutboxRepository } from '@/core/domain/sync/outbox.repository.interface';
 import { asRefugeeId, asPoskoId, asEventId } from '@/core/shared/branded-types';
-import { RefugeeEventProps } from '@/core/domain/refugees/refugee.aggregate';
+import { RefugeeEventProps, TriageCategory } from '@/core/domain/refugees/refugee.aggregate';
 import { HTTP_STATUS } from '@/core/shared/constants';
 
 export interface RecordRefugeeEventInput {
@@ -66,9 +66,9 @@ export class RecordRefugeeEventUseCase {
 
   // If it's a triage update, update currentTriage
   if (input.eventType === 'TRIAGE_UPDATE' && input.eventPayload['triageCategory']) {
-  refugee.updateTriageStatus(input.eventPayload['triageCategory'] as any);
+  refugee.updateTriageStatus(input.eventPayload['triageCategory'] as TriageCategory);
   } else if (input.eventType === 'HEALTH_CHECK' && input.eventPayload['triageCategory']) {
-  refugee.updateTriageStatus(input.eventPayload['triageCategory'] as any);
+  refugee.updateTriageStatus(input.eventPayload['triageCategory'] as TriageCategory);
   }
 
   // Persist to repository

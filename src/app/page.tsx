@@ -1,268 +1,257 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { Badge } from "@/shared/ui/badge";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
-import { cn } from "@/shared/lib/utils";
+import { getRoleDisplayName } from "@/features/auth/utils/role-routing";
 
 export default function LandingGatewayPage() {
   const { session } = usePoskoStore();
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const hasActivePosko = Boolean(session.poskoId && session.poskoId !== "POS-LOCAL");
-  const hasActiveOrg = Boolean(session.orgId);
-  // User dianggap sudah pernah login jika sudah memiliki orgId atau poskoId aktif
-  const hasLoggedIn = isMounted && (hasActiveOrg || hasActivePosko);
-  const isOrgLeader = isMounted && session.userRole === "PEMIMPIN_ORGANISASI";
-  // Tampilkan 3 kartu jika Pemimpin Organisasi ATAU belum pernah login sama sekali
-  const showThirdCard = isOrgLeader || !hasLoggedIn;
+  const hasActiveSession = isMounted && Boolean(session.poskoId || session.missionId);
 
   return (
     <div className="min-h-screen bg-canvas text-text-main flex flex-col justify-between">
-      {/* 1. Header Bersih */}
+      {/* 1. Header Ringkas & Status Perangkat */}
       <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
         <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs">
               S
             </div>
             <div>
-              <span className="text-sm font-bold tracking-tight text-text-main">
+              <span className="text-base font-bold tracking-tight text-text-main">
                 Sandya
               </span>
-              <span className="hidden sm:inline text-xs text-text-muted ml-2">
-                Tanggap Darurat Posko
+              <span className="hidden sm:inline text-xs text-text-muted ml-2 font-medium">
+                Tanggap Darurat Offline-First
               </span>
             </div>
           </div>
 
-          {hasActivePosko && (
-            <div className="flex items-center gap-2 text-xs text-text-muted">
-              <span className="w-2 h-2 rounded-full bg-status-safe animate-pulse" />
-              <span className="hidden sm:inline">Posko Aktif:</span>
-              <span className="font-semibold text-text-main">{session.poskoName}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-safe-bg text-status-safe border border-status-safe-border font-semibold text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-status-safe animate-pulse" />
+              Siaga Offline (0 Internet)
+            </span>
+          </div>
         </div>
       </header>
 
       {/* 2. Portal Masuk Utama */}
-      <main className="max-w-3xl mx-auto w-full px-4 py-8 sm:py-12 my-auto space-y-6">
-        {/* Judul & Penjelasan */}
-        <div className="space-y-1.5 text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-main">
-            Pusat Koordinasi & Pendataan Bencana
-          </h1>
-          <p className="text-sm text-text-muted leading-relaxed max-w-2xl">
-            Sistem pencatatan data warga, pemeriksaan kesehatan, dan pembagian bantuan yang dapat beroperasi mandiri tanpa koneksi internet.
-          </p>
-        </div>
-
-        {/* Pilihan Akses: 3 kartu jika Pemimpin Organisasi atau Belum Login, 2 kartu jika relawan biasa */}
-        <div
-          className={cn(
-            "grid grid-cols-1 gap-3",
-            showThirdCard ? "sm:grid-cols-3" : "sm:grid-cols-2"
-          )}
-        >
-          {/* Pilihan 1: Masuk Petugas */}
-          <Link
-            href="/activate"
-            className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-primary transition-colors cursor-pointer shadow-2xs"
-          >
-            <div className="space-y-2.5">
-              <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-                <Icon name="qr-code" variant="bold" size={18} />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">
-                  Masuk Petugas
-                </h2>
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  Pindai kartu tugas untuk mulai mencatat warga, medis, atau logistik.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-3 mt-3 border-t border-border flex items-center justify-between text-xs font-semibold text-primary">
-              <span>Buka Pemindai</span>
-              <Icon
-                name="arrow-right"
-                variant="linear"
-                size={14}
-                className="transition-transform group-hover:translate-x-0.5"
-              />
-            </div>
-          </Link>
-
-          {/* Pilihan 2: Cari Keluarga */}
-          <Link
-            href="/guest"
-            className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-status-safe-border transition-colors cursor-pointer shadow-2xs"
-          >
-            <div className="space-y-2.5">
-              <div className="w-9 h-9 rounded-lg bg-status-safe-bg text-status-safe border border-status-safe-border flex items-center justify-center">
-                <Icon name="search" variant="bold" size={18} />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-text-main group-hover:text-status-safe transition-colors">
-                  Cari Keluarga
-                </h2>
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  Layanan untuk warga yang mencari informasi sanak saudara di posko.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-3 mt-3 border-t border-border flex items-center justify-between text-xs font-semibold text-status-safe">
-              <span>Cari Nama / NIK</span>
-              <Icon
-                name="arrow-right"
-                variant="linear"
-                size={14}
-                className="transition-transform group-hover:translate-x-0.5"
-              />
-            </div>
-          </Link>
-
-          {/* Pilihan 3:
-              - Jika Pemimpin Organisasi: Tampilkan "Pengelola Induk" (/org)
-              - Jika Belum Pernah Login / Aktivasi Sama Sekali: Tampilkan "Daftarkan Lembaga" (/org-setup)
-              - Jika Staf Biasa (sudah aktivasi tapi bukan leader): Tidak menampilkan kartu ke-3 (hanya 2 kartu)
-          */}
-          {isOrgLeader ? (
-            <Link
-              href="/org"
-              className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-border-hover transition-colors cursor-pointer shadow-2xs"
-            >
-              <div className="space-y-2.5">
-                <div className="w-9 h-9 rounded-lg bg-surface-muted text-text-main border border-border flex items-center justify-center">
-                  <Icon name="buildings" variant="bold" size={18} />
+      <main className="max-w-3xl mx-auto w-full px-4 py-6 sm:py-10 my-auto space-y-6">
+        {/* Banner Sesi Aktif (Jika Petugas sudah Scan QR sebelumnya) */}
+        {hasActiveSession && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-surface border-2 border-primary/40 shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+                  <Icon name="shield" variant="bold" size={20} />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">
-                    Pengelola Induk
-                  </h2>
-                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    Pusat komando induk PMI / BPBD untuk ringkasan posko wilayah.
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
+                      Kartu Tugas Aktif
+                    </span>
+                    <Badge variant="primary" size="sm">
+                      {session.userRole}
+                    </Badge>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-text-main mt-0.5">
+                    {session.userName} • {getRoleDisplayName(session.userRole)}
+                  </h3>
+                  <p className="text-xs text-text-muted">
+                    {session.poskoName ? `Posko: ${session.poskoName}` : ""}
+                    {session.missionName ? ` • Misi: ${session.missionName}` : ""}
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="pt-3 mt-3 border-t border-border flex items-center justify-between text-xs font-semibold text-text-main group-hover:text-primary">
-                <span>Buka Menu Induk</span>
-                <Icon
-                  name="arrow-right"
-                  variant="linear"
-                  size={14}
-                  className="transition-transform group-hover:translate-x-0.5"
-                />
-              </div>
-            </Link>
-          ) : !hasLoggedIn ? (
-            <Link
-              href="/org-setup"
-              className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-primary transition-colors cursor-pointer shadow-2xs"
-            >
-              <div className="space-y-2.5">
-                <div className="w-9 h-9 rounded-lg bg-surface-subtle text-text-main border border-border flex items-center justify-center">
-                  <Icon name="buildings" variant="linear" size={18} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">
-                    Daftarkan Lembaga
-                  </h2>
-                  <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                    Buka institusi baru dan dapatkan akses penuh sebagai Pemimpin Organisasi.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 mt-3 border-t border-border flex items-center justify-between text-xs font-semibold text-text-main group-hover:text-primary">
-                <span>Buat Lembaga Baru</span>
-                <Icon
-                  name="arrow-right"
-                  variant="linear"
-                  size={14}
-                  className="transition-transform group-hover:translate-x-0.5"
-                />
-              </div>
-            </Link>
-          ) : null}
-        </div>
-
-        {/* 3. Pintasan Langsung (Hanya jika sesi aktif ada) */}
-        {(hasActivePosko || (isMounted && session.missionId) || isOrgLeader) && (
-          <div className="p-3.5 rounded-xl bg-surface border border-border space-y-2.5">
-            <p className="text-xs font-semibold text-text-muted">
-              Pintasan Langsung:
-            </p>
-
-            <div
-              className={cn(
-                "grid grid-cols-1 gap-2",
-                isOrgLeader ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"
-              )}
-            >
-              {hasActivePosko && (
-                <Link href={`/posko/${session.poskoId}`} className="block">
+            <div className="pt-2 border-t border-border flex flex-col sm:flex-row items-center gap-2">
+              {session.poskoId && (
+                <Link href={`/posko/${session.poskoId}`} className="w-full sm:flex-1">
                   <Button
                     variant="primary"
-                    size="sm"
-                    className="w-full justify-between"
+                    size="md"
+                    className="w-full justify-center"
                     icon="home"
                     iconVariant="bold"
                     iconRight="arrow-right"
                   >
-                    <span className="truncate">{session.poskoName ? `Posko ${session.poskoName}` : "Masuk ke Posko"}</span>
+                    Lanjutkan Tugas di Posko
                   </Button>
                 </Link>
               )}
-
               {session.missionId && (
-                <Link href={`/missions/${session.missionId}`} className="block">
+                <Link href={`/missions/${session.missionId}`} className="w-full sm:w-auto">
                   <Button
                     variant="secondary"
-                    size="sm"
-                    className="w-full justify-between"
+                    size="md"
+                    className="w-full justify-center"
                     icon="radar"
                     iconVariant="bold"
-                    iconRight="arrow-right"
                   >
-                    <span className="truncate">{session.missionName || "Operasi Wilayah"}</span>
+                    Ruang Situasi Misi
                   </Button>
                 </Link>
               )}
-
-              {isOrgLeader && (
-                <Link href="/org" className="block">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full justify-between"
-                    icon="buildings"
-                    iconVariant="bold"
-                    iconRight="arrow-right"
-                  >
-                    <span className="truncate">{session.orgName || "Pusat Lembaga"}</span>
-                  </Button>
-                </Link>
-              )}
+              <Link href="/activate" className="w-full sm:w-auto">
+                <Button
+                  variant="ghost"
+                  size="md"
+                  className="w-full justify-center text-xs text-text-muted hover:text-text-main"
+                >
+                  Ganti Kartu / Pindai Ulang
+                </Button>
+              </Link>
             </div>
           </div>
         )}
+
+        {/* Judul Hero */}
+        <div className="space-y-2 text-center sm:text-left">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-text-main">
+            Pusat Operasi Tanggap Darurat
+          </h1>
+          <p className="text-xs sm:text-sm text-text-muted leading-relaxed max-w-2xl">
+            Sistem pencatatan terdesentralisasi tanpa internet untuk pendataan warga, triase medis lapangan, logistik gudang posko, dan komunikasi radio taktis BLE Mesh.
+          </p>
+        </div>
+
+        {/* 3 Pintu Akses Terstruktur */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* PINTU 1: Scan Kartu Tugas (Pilihan Utama Petugas) */}
+          <Link
+            href="/activate"
+            className="group flex flex-col justify-between p-4 sm:p-5 rounded-2xl border-2 border-primary/30 bg-surface hover:border-primary hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+                  <Icon name="qr-code" variant="bold" size={22} />
+                </div>
+                <Badge variant="primary" size="sm">
+                  Petugas / Tim
+                </Badge>
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-text-main group-hover:text-primary transition-colors">
+                  Pindai Kartu Tugas
+                </h2>
+                <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                  Untuk Dokter, Petugas Logistik, dan Relawan. Sorot kamera ke QR atau ketik kode manual dari Koordinator.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-4 border-t border-border flex items-center justify-between text-xs font-bold text-primary">
+              <span>Buka Pemindai QR</span>
+              <Icon
+                name="arrow-right"
+                variant="linear"
+                size={16}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </div>
+          </Link>
+
+          {/* PINTU 2: Mode Warga (Cari Keluarga) */}
+          <Link
+            href="/guest"
+            className="group flex flex-col justify-between p-4 sm:p-5 rounded-2xl border border-border bg-surface hover:border-status-safe-border hover:shadow-md transition-all cursor-pointer"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-status-safe-bg text-status-safe border border-status-safe-border flex items-center justify-center">
+                  <Icon name="search" variant="bold" size={22} />
+                </div>
+                <Badge variant="triage-green" size="sm">
+                  Publik / Warga
+                </Badge>
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-text-main group-hover:text-status-safe transition-colors">
+                  Cari Keluarga
+                </h2>
+                <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                  Layanan pencarian kerabat terpisah atau meninjau daftar warga antar-posko tanpa perlu akun atau izin khusus.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-4 border-t border-border flex items-center justify-between text-xs font-bold text-status-safe">
+              <span>Cari Kerabat / Poster</span>
+              <Icon
+                name="arrow-right"
+                variant="linear"
+                size={16}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </div>
+          </Link>
+
+          {/* PINTU 3: Inisiasi Lembaga (Khusus Pimpinan Organisasi) */}
+          <Link
+            href="/org-setup"
+            className="group flex flex-col justify-between p-4 sm:p-5 rounded-2xl border border-border bg-surface hover:border-border-hover hover:shadow-md transition-all cursor-pointer"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-surface-muted text-text-main border border-border flex items-center justify-center">
+                  <Icon name="buildings" variant="bold" size={22} />
+                </div>
+                <Badge variant="neutral" size="sm">
+                  Pimpinan
+                </Badge>
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-text-main group-hover:text-primary transition-colors">
+                  Setup Lembaga Baru
+                </h2>
+                <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                  Inisiasi lembaga PMI, BPBD, atau Yayasan baru, generate Master Key Ed25519, dan buka Misi Bencana.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 mt-4 border-t border-border flex items-center justify-between text-xs font-semibold text-text-muted group-hover:text-text-main">
+              <span>Inisiasi Master Key</span>
+              <Icon
+                name="arrow-right"
+                variant="linear"
+                size={16}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </div>
+          </Link>
+        </div>
+
+        {/* 4. Opsi Akses Darurat / Fallback */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-surface border border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-text-muted text-center sm:text-left">
+            <Icon name="shield" variant="linear" size={18} className="shrink-0 text-text-muted" />
+            <span>Kamera ponsel bermasalah atau lensa rusak di reruntuhan bencana?</span>
+          </div>
+          <Link href="/activate" className="shrink-0">
+            <Button variant="outline" size="sm">
+              Gunakan Kode Manual (SAN-...)
+            </Button>
+          </Link>
+        </div>
       </main>
 
-      {/* 4. Footer Bersih */}
+      {/* 5. Footer Bersih */}
       <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
-        Sandya • Sistem Tanggap Bencana Terdistribusi
+        Sandya • Platform Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-Mesh Ecosystem)
       </footer>
     </div>
   );

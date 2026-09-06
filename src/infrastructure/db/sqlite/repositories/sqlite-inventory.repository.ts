@@ -1,11 +1,12 @@
-import { Result, Ok, Err } from '@/core/shared/result';
+import { Result, Ok } from '@/core/shared/result';
 import { IInventoryRepository } from '@/core/domain/logistics/inventory.repository.interface';
 import {
   InventoryAggregate,
   InventoryTransactionProps,
   InventoryCategory,
+  MutationType,
 } from '@/core/domain/logistics/inventory.aggregate';
-import { ItemId, PoskoId, asItemId, asPoskoId } from '@/core/shared/branded-types';
+import { ItemId, PoskoId, TicketId, asItemId, asPoskoId } from '@/core/shared/branded-types';
 import { InMemorySqliteConnection } from '../sqlite-connection';
 
 export class SqliteInventoryRepository implements IInventoryRepository {
@@ -118,13 +119,13 @@ export class SqliteInventoryRepository implements IInventoryRepository {
   poskoId: asPoskoId(row['post_id'] as string),
   officerId: row['officer_id'] as string,
   officerRole: row['officer_role'] as string,
-  txType: row['tx_type'] as any,
-  quantityChange: row['quantity_change'] as number,
-  referenceTicketId: row['reference_ticket_id'] as any,
-  notes: row['notes'] as string | undefined,
-  deviceTimestamp: row['device_timestamp'] as number,
-  logicalSeq: row['logical_seq'] as number,
-  });
+        txType: row['tx_type'] as MutationType,
+        quantityChange: row['quantity_change'] as number,
+        referenceTicketId: (row['reference_ticket_id'] as TicketId | undefined) || undefined,
+        notes: row['notes'] as string | undefined,
+        deviceTimestamp: row['device_timestamp'] as number,
+        logicalSeq: row['logical_seq'] as number,
+      });
   }
   }
 

@@ -9,7 +9,6 @@ import * as React from "react";
 import { Dialog } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
@@ -93,7 +92,7 @@ export function AddRefugeeEventModal({
 
   try {
   const container = ServiceContainer.getInstance();
-  const roleMap: Record<string, any> = {
+  const roleMap: Record<string, "PEMIMPIN" | "KOMANDAN" | "KOORDINATOR" | "MEDIS" | "LOGISTIK" | "RELAWAN"> = {
   PEMIMPIN_ORGANISASI: "PEMIMPIN",
   KOMANDAN_MISI: "KOMANDAN",
   KOORDINATOR_POSKO: "KOORDINATOR",

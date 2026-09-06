@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
-import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { usePoskoStore, type MacroWaybill } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -33,7 +33,7 @@ export default function MissionLogisticsHubPage() {
     }
   }, [missionPoskos, selectedPoskoId]);
 
-  const [waybillModal, setWaybillModal] = React.useState<any | null>(null);
+  const [waybillModal, setWaybillModal] = React.useState<MacroWaybill | null>(null);
 
   const handleCreateDispatch = (e: React.FormEvent) => {
     e.preventDefault();

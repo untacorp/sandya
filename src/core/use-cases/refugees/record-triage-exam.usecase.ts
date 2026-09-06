@@ -88,7 +88,7 @@ export class RecordTriageExamUseCase {
   const now = Date.now();
 
   // Map internal author role
-  const authorRoleMap: Record<string, any> = {
+  const authorRoleMap: Record<string, RefugeeEventProps['authorRole']> = {
   PEMIMPIN_ORGANISASI: 'PEMIMPIN',
   KOMANDAN_MISI: 'KOMANDAN',
   KOORDINATOR_POSKO: 'KOORDINATOR',

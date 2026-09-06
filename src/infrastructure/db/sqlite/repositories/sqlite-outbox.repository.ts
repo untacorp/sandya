@@ -36,9 +36,9 @@ export class SqliteOutboxRepository implements IOutboxRepository {
   id: asOutboxId(row['id'] as string),
   poskoId: asPoskoId(row['pos_id'] as string),
   topic: row['topic'] as string,
-  payload: row['payload'] as string,
-  status: row['status'] as any,
-  retryCount: row['retry_count'] as number,
+          payload: row['payload'] as string,
+          status: row['status'] as OutboxItem['status'],
+          retryCount: row['retry_count'] as number,
   createdAt: row['created_at'] as number,
   });
   if (pending.length >= limit) break;

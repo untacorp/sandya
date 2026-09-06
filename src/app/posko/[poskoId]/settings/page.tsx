@@ -148,7 +148,8 @@ export default function PoskoSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Status Operasional
   </label>
-  <select value={status}
+  <select
+  value={status}
   onChange={(e) => setStatus(e.target.value as PostStatus)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
@@ -162,7 +163,8 @@ export default function PoskoSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Jenis Fasilitas
   </label>
-  <select value={postType}
+  <select
+  value={postType}
   onChange={(e) => setPostType(e.target.value as PostType)}
   className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >

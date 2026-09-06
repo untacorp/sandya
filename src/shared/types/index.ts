@@ -26,7 +26,17 @@ export type VulnerabilityCategory =
 
 export type TriageCategory = "RED" | "YELLOW" | "GREEN" | "BLACK";
 
-export type ItemCategory = "FOOD" | "CLOTHING" | "MEDICAL" | "HYGIENE" | "SHELTER" | "BABY_SUPPLIES";
+export type ItemCategory =
+  | "FOOD"
+  | "CLOTHING"
+  | "MEDICAL"
+  | "HYGIENE"
+  | "SHELTER"
+  | "INFANT"
+  | "BABY_SUPPLIES"
+  | "ASSISTIVE"
+  | "EMERGENCY_TOOLS"
+  | "OTHER";
 
 export type TicketStatus = "PENDING" | "ALLOCATED" | "COMPLETED" | "REJECTED";
 
@@ -42,11 +52,13 @@ export interface Organization {
   createdAt: number;
 }
 
+export type DisasterType = "GEMPA_BUMI" | "BANJIR_BANDANG" | "ERUPSI_GUNUNG" | "LONGSOR" | "TSUNAMI";
+
 export interface DisasterMission {
   id: string;
   orgId: string;
   name: string;
-  disasterType: "GEMPA_BUMI" | "BANJIR_BANDANG" | "ERUPSI_GUNUNG" | "LONGSOR" | "TSUNAMI";
+  disasterType: DisasterType;
   status: MissionStatus;
   targetDays: number;
   location: string;

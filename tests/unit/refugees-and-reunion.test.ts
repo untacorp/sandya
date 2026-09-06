@@ -5,7 +5,6 @@ import { SqliteOutboxRepository } from '@/infrastructure/db/sqlite/repositories/
 import { FastIntakeUseCase } from '@/core/use-cases/refugees/fast-intake.usecase';
 import { RecordRefugeeEventUseCase } from '@/core/use-cases/refugees/record-refugee-event.usecase';
 import { FamilyReunionService } from '@/core/services/family-reunion.service';
-import { RefugeeAggregate } from '@/core/domain/refugees/refugee.aggregate';
 import { asRefugeeId, asPoskoId } from '@/core/shared/branded-types';
 
 async function runRefugeesAndReunionTests() {
@@ -20,7 +19,6 @@ async function runRefugeesAndReunionTests() {
   const familyReunionService = new FamilyReunionService(refugeeRepo);
 
   const posko1Id = asPoskoId('POS-01');
-  const posko2Id = asPoskoId('POS-02');
 
   // Test 1: Fast Mobile Intake with 0-Byte Dynamic NIK Null-Bypass
   console.log('Test 1: Fast Mobile Intake (Without KTP / 0 Byte NIK)');

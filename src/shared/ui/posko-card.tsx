@@ -8,7 +8,7 @@ import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
-import { type Posko } from "@/shared/types";
+import { type Posko, type PostStatus } from "@/shared/types";
 
 export const POSKO_CARD_CONSTANTS = {
   PERCENTAGE_BASE: 100,
@@ -19,7 +19,7 @@ export const POSKO_CARD_CONSTANTS = {
 
 export interface PoskoCardProps {
   posko: Posko;
-  onToggleStatus?: (id: string, newStatus: Posko["status"]) => void;
+  onToggleStatus?: (id: string, newStatus: PostStatus) => void;
   className?: string;
   showToggleAction?: boolean;
 }

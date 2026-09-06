@@ -28,9 +28,16 @@ export function QRCodeSVG({
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-  if (!value) return;
+    let isMounted = true;
 
-  let isMounted = true;
+    if (!value) {
+      queueMicrotask(() => {
+        if (isMounted) setSvgString("");
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
   QRCode.toString(value, {
   type: "svg",
   errorCorrectionLevel: level,

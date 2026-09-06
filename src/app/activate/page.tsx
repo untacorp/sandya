@@ -13,10 +13,11 @@ import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
 import { RolePassCodec, RolePassPayload } from "@/core/codecs/role-pass-codec";
 import { type UserRole } from "@/shared/types";
 import { StaffRole } from "@/core/shared/roles";
+import { getRoleDisplayName, getRoleDefaultPath } from "@/features/auth/utils/role-routing";
 
 export default function ActivatePassPage() {
   const router = useRouter();
-  const { session, setSessionRole, setSessionPosko, setSessionMission, setSessionOrg } = usePoskoStore();
+  const { session, setFullSession } = usePoskoStore();
 
   const [mode, setMode] = React.useState<"SCAN" | "MANUAL">("SCAN");
   const [manualCode, setManualCode] = React.useState("");
@@ -45,47 +46,28 @@ export default function ActivatePassPage() {
   };
 
   const handleConfirmActivation = () => {
-  if (verifiedPass) {
-  // Map to UserRole
-  const role = verifiedPass.role as UserRole;
-  setSessionRole(role);
-  setSessionPosko(verifiedPass.poskoId, verifiedPass.poskoName || `Posko ${verifiedPass.poskoId}`);
-  if (verifiedPass.missionId) {
-  setSessionMission(verifiedPass.missionId, verifiedPass.missionName || `Misi ${verifiedPass.missionId}`);
-  }
-  if (verifiedPass.orgId) {
-  setSessionOrg(verifiedPass.orgId, verifiedPass.orgName || `Organisasi ${verifiedPass.orgId}`);
-  }
+    if (verifiedPass) {
+      const role = verifiedPass.role as UserRole;
+      setFullSession({
+        userId: verifiedPass.userId || `USR-${Math.floor(100 + Math.random() * 900)}`,
+        userName: verifiedPass.userName || `Petugas (${role})`,
+        userRole: role,
+        poskoId: verifiedPass.poskoId,
+        poskoName: verifiedPass.poskoName || `Posko ${verifiedPass.poskoId}`,
+        missionId: verifiedPass.missionId || session.missionId,
+        missionName: verifiedPass.missionName || session.missionName || `Misi ${verifiedPass.missionId}`,
+        orgId: verifiedPass.orgId || session.orgId,
+        orgName: verifiedPass.orgName || session.orgName || `Organisasi ${verifiedPass.orgId}`,
+      });
 
-  if (role === "PEMIMPIN_ORGANISASI") {
-  router.push("/org");
-  } else if (role === "KOMANDAN_MISI") {
-  router.push(`/missions/${verifiedPass.missionId || session.missionId}`);
-  } else {
-  router.push(`/posko/${verifiedPass.poskoId || session.poskoId}`);
-  }
-  } else {
-  router.push(`/posko/${session.poskoId}`);
-  }
-  };
-
-  const getRoleDisplayName = (role: StaffRole | UserRole) => {
-  switch (role) {
-  case "PETUGAS_MEDIS":
-  return "Petugas Medis (Kesehatan & Triase)";
-  case "PETUGAS_LOGISTIK":
-  return "Petugas Logistik (Gudang & Single-Writer)";
-  case "RELAWAN_LAPANGAN":
-  return "Relawan Lapangan (Pendataan 30s & Antar Bantuan)";
-  case "KOORDINATOR_POSKO":
-  return "Koordinator Posko (Otoritas Tenda)";
-  case "KOMANDAN_MISI":
-  return "Komandan Misi (Operasi Wilayah)";
-  case "PEMIMPIN_ORGANISASI":
-  return "Pimpinan Lembaga Induk";
-  default:
-  return "Petugas Lapangan";
-  }
+      const targetPath = getRoleDefaultPath(role, {
+        missionId: verifiedPass.missionId || session.missionId,
+        poskoId: verifiedPass.poskoId || session.poskoId,
+      });
+      router.push(targetPath);
+    } else {
+      router.push(getRoleDefaultPath(session.userRole, { poskoId: session.poskoId }));
+    }
   };
 
   return (

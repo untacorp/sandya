@@ -8,7 +8,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { type TacticalChannel, type TacticalMessage } from "@/shared/types";
 import { TIME_CONSTANTS } from "@/core/shared/constants";
@@ -153,11 +153,11 @@ export default function TacticalChatPage() {
   sendTextMessage("SOS", "ALARM DARURAT DIBATALKAN: Situasi telah terkendali oleh Koordinator Posko.", false);
   };
 
-  const channels: { id: TacticalChannel; label: string; icon: any; desc: string }[] = [
-  { id: "POSKO_ALL", label: "Umum (#posko-all)", icon: "chat", desc: "Koordinasi umum posko" },
-  { id: "MEDIS", label: "Tim Medis (#medis)", icon: "health", desc: "Triase & resep obat darurat" },
-  { id: "LOGISTIK", label: "Tim Logistik (#logistik)", icon: "box", desc: "Stok gudang & armada kirim" },
-  { id: "SOS", label: "Darurat (#sos)", icon: "sos", desc: "Sirene evakuasi & peringatan" },
+  const channels: { id: TacticalChannel; label: string; icon: SolarIconName; desc: string }[] = [
+    { id: "POSKO_ALL", label: "Umum (#posko-all)", icon: "chat", desc: "Koordinasi umum posko" },
+    { id: "MEDIS", label: "Tim Medis (#medis)", icon: "health", desc: "Triase & resep obat darurat" },
+    { id: "LOGISTIK", label: "Tim Logistik (#logistik)", icon: "box", desc: "Stok gudang & armada kirim" },
+    { id: "SOS", label: "Darurat (#sos)", icon: "sos", desc: "Sirene evakuasi & peringatan" },
   ];
 
   const quickChips = [

@@ -33,45 +33,50 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
 
   const fetchEvents = React.useCallback(async () => {
-  if (!person) return;
-  setIsLoadingEvents(true);
-  try {
-  const container = ServiceContainer.getInstance();
-  const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
-  if (result.ok) {
-  setDbEvents(result.value);
-  }
-  } catch (err) {
-  console.error("Failed to load refugee events:", err);
-  } finally {
-  setIsLoadingEvents(false);
-  }
+    if (!person) {
+      setIsLoadingEvents(false);
+      return;
+    }
+    try {
+      const container = ServiceContainer.getInstance();
+      const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
+      if (result.ok) {
+        setDbEvents(result.value);
+      }
+    } catch (err) {
+      console.error("Failed to load refugee events:", err);
+    } finally {
+      setIsLoadingEvents(false);
+    }
   }, [person]);
 
   React.useEffect(() => {
-  let isCancelled = false;
-  if (!person) return;
+    let isCancelled = false;
+    if (!person) {
+      setIsLoadingEvents(false);
+      return;
+    }
 
-  const loadData = async () => {
-  try {
-  const container = ServiceContainer.getInstance();
-  const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
-  if (result.ok && !isCancelled) {
-  setDbEvents(result.value);
-  }
-  } catch (err) {
-  console.error("Failed to load refugee events:", err);
-  } finally {
-  if (!isCancelled) {
-  setIsLoadingEvents(false);
-  }
-  }
-  };
+    const loadData = async () => {
+      try {
+        const container = ServiceContainer.getInstance();
+        const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
+        if (result.ok && !isCancelled) {
+          setDbEvents(result.value);
+        }
+      } catch (err) {
+        console.error("Failed to load refugee events:", err);
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingEvents(false);
+        }
+      }
+    };
 
-  loadData();
-  return () => {
-  isCancelled = true;
-  };
+    loadData();
+    return () => {
+      isCancelled = true;
+    };
   }, [person]);
 
   const handleCheckout = () => {
@@ -129,29 +134,29 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   };
 
   const formatPayloadDescription = (evt: RefugeeEventProps) => {
-  const p = evt.eventPayload as Record<string, any>;
-  if (evt.eventType === "HEALTH_CHECK" || evt.eventType === "TRIAGE_UPDATE") {
-  const v = p.vitalSigns || {};
-  const parts = [];
-  if (v.temperature) parts.push(`Suhu: ${v.temperature}°C`);
-  if (v.systolic && v.diastolic) parts.push(`Tensi: ${v.systolic}/${v.diastolic} mmHg`);
-  if (v.complaint) parts.push(`Keluhan: "${v.complaint}"`);
-  if (p.triageCategory) parts.push(`Triase: ${p.triageCategory}`);
-  return parts.join(" • ") || "Pemeriksaan vital stabil.";
-  }
-  if (evt.eventType === "NEED_REPORTED") {
-  return `Permintaan: ${p.item || "Barang"} (${p.quantity || 1} unit)`;
-  }
-  if (evt.eventType === "AID_RECEIVED") {
-  return `Bantuan Diserahkan: ${p.item || p.payload || "Bantuan logistik resmi"}`;
-  }
-  if (evt.eventType === "INTAKE") {
-  return `Warga didata pertama kali saat tiba di ${p.initialShelter || person.shelterLocation || "posko evakuasi"}.`;
-  }
-  if (p.note) {
-  return p.note;
-  }
-  return JSON.stringify(p);
+    const payload = evt.eventPayload as Record<string, unknown>;
+    if (evt.eventType === "HEALTH_CHECK" || evt.eventType === "TRIAGE_UPDATE") {
+      const vitalSigns = (payload.vitalSigns || {}) as Record<string, unknown>;
+      const parts = [];
+      if (vitalSigns.temperature) parts.push(`Suhu: ${vitalSigns.temperature}°C`);
+      if (vitalSigns.systolic && vitalSigns.diastolic) parts.push(`Tensi: ${vitalSigns.systolic}/${vitalSigns.diastolic} mmHg`);
+      if (vitalSigns.complaint) parts.push(`Keluhan: "${vitalSigns.complaint}"`);
+      if (payload.triageCategory) parts.push(`Triase: ${payload.triageCategory}`);
+      return parts.join(" • ") || "Pemeriksaan vital stabil.";
+    }
+    if (evt.eventType === "NEED_REPORTED") {
+      return `Permintaan: ${(payload.item as string) || "Barang"} (${payload.quantity || 1} unit)`;
+    }
+    if (evt.eventType === "AID_RECEIVED") {
+      return `Bantuan Diserahkan: ${(payload.item as string) || (payload.payload as string) || "Bantuan logistik resmi"}`;
+    }
+    if (evt.eventType === "INTAKE") {
+      return `Warga didata pertama kali saat tiba di ${(payload.initialShelter as string) || person.shelterLocation || "posko evakuasi"}.`;
+    }
+    if (payload.note) {
+      return payload.note as string;
+    }
+    return JSON.stringify(payload);
   };
 
   return (

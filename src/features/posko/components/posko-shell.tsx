@@ -13,11 +13,23 @@ import { useParams, usePathname } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { asPoskoId, asItemId, asRefugeeId } from "@/core/shared/branded-types";
-import { InventoryAggregate } from "@/core/domain/logistics/inventory.aggregate";
+import { InventoryAggregate, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
 import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 import { type ItemCategory } from "@/shared/types";
+import { useMeshSync } from "@/features/posko/hooks/use-mesh-sync";
+
+const toInventoryCategory = (cat: string): InventoryCategory => {
+  if (cat === "BABY_SUPPLIES") return "INFANT";
+  if (["FOOD", "CLOTHING", "MEDICAL", "HYGIENE", "SHELTER", "INFANT", "ASSISTIVE", "EMERGENCY_TOOLS"].includes(cat)) {
+    return cat as InventoryCategory;
+  }
+  return "OTHER";
+};
 
 export function PoskoShell({ children }: { children: React.ReactNode }) {
+  // Global BLE mesh synchronization hook active across all posko screens
+  useMeshSync();
+
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
   const params = useParams();
   const pathname = usePathname();
@@ -65,7 +77,7 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
         id: asItemId(item.id),
         poskoId: asPoskoId(item.postId || activePoskoId),
         itemName: item.itemName,
-        category: item.category as any,
+        category: toInventoryCategory(item.category),
         currentQuantity: item.currentQuantity,
         unit: item.unit,
         lastUpdatedAt: item.lastUpdatedAt,

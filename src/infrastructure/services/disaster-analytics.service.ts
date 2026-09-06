@@ -1,6 +1,6 @@
 import { IRefugeeRepository } from '@/core/domain/refugees/refugee.repository.interface';
 import { IInventoryRepository } from '@/core/domain/logistics/inventory.repository.interface';
-import { PoskoId, asPoskoId } from '@/core/shared/branded-types';
+import { asPoskoId } from '@/core/shared/branded-types';
 
 export interface PoskoTriageSummary {
   poskoId: string;

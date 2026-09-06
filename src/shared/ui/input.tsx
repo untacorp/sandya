@@ -31,8 +31,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   },
   ref
   ) => {
-  const generatedId = React.useId();
-  const inputId = id || generatedId;
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
 
   return (
   <div className="w-full space-y-1.5">

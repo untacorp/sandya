@@ -58,51 +58,57 @@ export function QRCameraScanner({
   }
   }, []);
 
+  const scanFrameRef = React.useRef<() => void>(() => {});
+
   const scanFrame = React.useCallback(() => {
-  if (!isScanning) return;
-  const video = videoRef.current;
-  const canvas = canvasRef.current;
+    if (!isScanning) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
 
-  if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (ctx) {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (ctx) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height, {
-  inversionAttempts: "dontInvert",
-  });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert",
+        });
 
-  if (code && code.data && code.data.trim().length > 0) {
-  const text = code.data.trim();
-  const now = Date.now();
+        if (code && code.data && code.data.trim().length > 0) {
+          const text = code.data.trim();
+          const now = Date.now();
 
-  if (continuous) {
-  // For continuous scanning: debounce identical text or allow new text after interval
-  if (
-  text !== lastScannedTextRef.current ||
-  now - lastScanTimestampRef.current > QR_SCANNER_CONSTANTS.SCAN_DEBOUNCE_INTERVAL_MS
-  ) {
-  lastScannedTextRef.current = text;
-  lastScanTimestampRef.current = now;
-  onScan(text);
-  }
-  } else {
-  setIsScanning(false);
-  stopCamera();
-  onScan(text);
-  return;
-  }
-  }
-  }
-  }
+          if (continuous) {
+            // For continuous scanning: debounce identical text or allow new text after interval
+            if (
+              text !== lastScannedTextRef.current ||
+              now - lastScanTimestampRef.current > QR_SCANNER_CONSTANTS.SCAN_DEBOUNCE_INTERVAL_MS
+            ) {
+              lastScannedTextRef.current = text;
+              lastScanTimestampRef.current = now;
+              onScan(text);
+            }
+          } else {
+            setIsScanning(false);
+            stopCamera();
+            onScan(text);
+            return;
+          }
+        }
+      }
+    }
 
-  if (isScanning) {
-  animationFrameId.current = requestAnimationFrame(scanFrame);
-  }
+    if (isScanning) {
+      animationFrameId.current = requestAnimationFrame(() => scanFrameRef.current());
+    }
   }, [continuous, isScanning, onScan, stopCamera]);
+
+  React.useEffect(() => {
+    scanFrameRef.current = scanFrame;
+  }, [scanFrame]);
 
   const startCamera = React.useCallback(async () => {
   stopCamera();
@@ -146,7 +152,7 @@ export function QRCameraScanner({
   videoRef.current.setAttribute("playsinline", "true");
   await videoRef.current.play();
   setHasPermission(true);
-  animationFrameId.current = requestAnimationFrame(scanFrame);
+  animationFrameId.current = requestAnimationFrame(() => scanFrameRef.current());
   }
   } catch (err) {
   const errorMsg =
@@ -157,13 +163,15 @@ export function QRCameraScanner({
   setErrorMessage(errorMsg);
   if (onError) onError(errorMsg);
   }
-  }, [facingMode, isTauriMobile, onError, onScan, scanFrame, stopCamera]);
+  }, [facingMode, isTauriMobile, onError, onScan, stopCamera]);
 
   React.useEffect(() => {
-  startCamera();
-  return () => {
-  stopCamera();
-  };
+    queueMicrotask(() => {
+      startCamera();
+    });
+    return () => {
+      stopCamera();
+    };
   }, [startCamera, stopCamera]);
 
   const toggleFacingMode = () => {
