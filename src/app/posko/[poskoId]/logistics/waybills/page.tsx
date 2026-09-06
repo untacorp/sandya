@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -236,30 +237,21 @@ export default function WaybillsPage() {
   <form onSubmit={handleCreateWaybill} className="space-y-3 pt-1 text-xs">
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Posko / Hub Sasaran Suplai</label>
-  <select value={targetPoskoId}
-  onChange={(e) => setTargetPoskoId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  {poskos.map((p) => (
-  <option key={p.id} value={p.id}>
-  {p.name} ({p.locationName})
-  </option>
-  ))}
-  </select>
+  <Select value={targetPoskoId}
+  onChange={(val) => setTargetPoskoId(val)}
+  options={poskos.map(p => ({ value: p.id, label: `${p.name} (${p.locationName})` }))}
+  />
   </div>
 
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
-  <select value={selectedCatalogId}
-  onChange={(e) => setSelectedCatalogId(parseInt(e.target.value))}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  {Object.values(DISASTER_NEEDS_CATALOG).map((c) => (
-  <option key={c.id} value={c.id}>
-  [0x{c.id.toString(16).padStart(2, "0")}] {c.nameId} ({c.cluster})
-  </option>
-  ))}
-  </select>
+  <Select value={selectedCatalogId.toString()}
+  onChange={(val) => setSelectedCatalogId(parseInt(val))}
+  options={Object.values(DISASTER_NEEDS_CATALOG).map((c) => ({
+    value: c.id.toString(),
+    label: `[0x${c.id.toString(16).padStart(2, "0")}] ${c.nameId} (${c.cluster})`
+  }))}
+  />
   </div>
 
   <div className="grid grid-cols-2 gap-2">
@@ -275,21 +267,18 @@ export default function WaybillsPage() {
   </div>
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Satuan</label>
-  <select value={unit}
-  onChange={(e) => setUnit(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="KG">KG</option>
-  <option value="LITER">LITER</option>
-  <option value="KOTAK">KOTAK</option>
-  <option value="DUS">DUS</option>
-  <option value="STRIP">STRIP</option>
-  <option value="PCS">PCS</option>
-  <option value="SAK">SAK</option>
-  <option value="GALON">GALON</option>
-  <option value="TABUNG">TABUNG</option>
-  <option value="UNIT">UNIT</option>
-  </select>
+  <Select value={unit}
+  onChange={(val) => setUnit(val)}
+  options={[
+    { value: "KG", label: "KG" },
+    { value: "LITER", label: "LITER" },
+    { value: "KOTAK", label: "KOTAK" },
+    { value: "DUS", label: "DUS" },
+    { value: "STRIP", label: "STRIP" },
+    { value: "PCS", label: "PCS" },
+    { value: "SAK", label: "SAK" }
+  ]}
+  />
   </div>
   </div>
 

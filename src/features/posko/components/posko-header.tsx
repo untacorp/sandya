@@ -20,7 +20,7 @@ export function PoskoHeader() {
   const isRootPosko = pathname === `/posko/${poskoId}`;
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-surface border-b border-border shadow-2xs pt-[env(safe-area-inset-top,0px)]">
+    <header className="sticky top-0 z-30 w-full bg-surface border-b border-border shadow-2xs pt-[env(safe-area-inset-top,0px)] print:hidden">
       <div className="flex items-center justify-between px-3 sm:px-6 py-2 max-w-7xl mx-auto min-h-[52px]">
         {/* Left: Simple Back button or Brand link */}
         <div className="flex items-center gap-2 min-w-0">

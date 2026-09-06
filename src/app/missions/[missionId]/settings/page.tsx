@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import Link from "next/link";
@@ -135,17 +136,17 @@ export default function MissionSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Jenis Bencana
   </label>
-  <select
+  <Select
     value={disasterType}
-    onChange={(e) => setDisasterType(e.target.value as DisasterType)}
-    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="GEMPA_BUMI">Gempa Bumi</option>
-  <option value="BANJIR_BANDANG">Banjir Bandang</option>
-  <option value="ERUPSI_GUNUNG">Erupsi Gunung Api</option>
-  <option value="LONGSOR">Tanah Longsor</option>
-  <option value="TSUNAMI">Tsunami</option>
-  </select>
+    onChange={(val) => setDisasterType(val as DisasterType)}
+    options={[
+      { value: "GEMPA_BUMI", label: "Gempa Bumi" },
+      { value: "BANJIR_BANDANG", label: "Banjir Bandang" },
+      { value: "ERUPSI_GUNUNG", label: "Erupsi Gunung Api" },
+      { value: "LONGSOR", label: "Tanah Longsor" },
+      { value: "TSUNAMI", label: "Tsunami" }
+    ]}
+  />
   </div>
   </div>
 
@@ -177,16 +178,16 @@ export default function MissionSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Status Siklus Misi
   </label>
-  <select
+  <Select
     value={status}
-    onChange={(e) => setStatus(e.target.value as MissionStatus)}
-    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="ACTIVE_EMERGENCY">Tanggap Darurat Aktif</option>
-  <option value="TRANSITION_RECOVERY">Masa Pemulihan</option>
-  <option value="PREPAREDNESS">Kesiapsiagaan</option>
-  <option value="CLOSED_ARCHIVED">Tutup & Diarsipkan</option>
-  </select>
+    onChange={(val) => setStatus(val as MissionStatus)}
+    options={[
+      { value: "ACTIVE_EMERGENCY", label: "Tanggap Darurat Aktif" },
+      { value: "TRANSITION_RECOVERY", label: "Masa Pemulihan" },
+      { value: "PREPAREDNESS", label: "Kesiapsiagaan" },
+      { value: "CLOSED_ARCHIVED", label: "Tutup & Diarsipkan" }
+    ]}
+  />
   </div>
   </div>
 

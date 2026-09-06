@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -165,16 +166,10 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Posko Lapangan Tujuan
   </label>
-  <select value={selectedPoskoId}
-  onChange={(e) => setSelectedPoskoId(e.target.value)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  {missionPoskos.map((p) => (
-  <option key={p.id} value={p.id}>
-  {p.name} ({p.locationName})
-  </option>
-  ))}
-  </select>
+  <Select value={selectedPoskoId}
+  onChange={(val) => setSelectedPoskoId(val)}
+  options={missionPoskos.map((p) => ({ value: p.id, label: `${p.name} (${p.locationName})` }))}
+  />
   </div>
 
   <div className="grid grid-cols-3 gap-2">
@@ -182,16 +177,10 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Komoditas Barang
   </label>
-  <select value={selectedItem}
-  onChange={(e) => setSelectedItem(e.target.value)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  {centralInventory.map((i) => (
-  <option key={i.id} value={i.itemName}>
-  {i.itemName} (Stok: {i.currentQuantity} {i.unit})
-  </option>
-  ))}
-  </select>
+  <Select value={selectedItem}
+  onChange={(val) => setSelectedItem(val)}
+  options={centralInventory.map((i) => ({ value: i.itemName, label: `${i.itemName} (Stok: ${i.currentQuantity} ${i.unit})` }))}
+  />
   </div>
   <div>
   <label className="text-xs font-semibold text-text-muted block mb-1">

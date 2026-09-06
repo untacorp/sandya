@@ -128,7 +128,7 @@ export default function RefugeesPage() {
             <div className="flex-1 min-w-[130px] sm:w-36">
               <Select
                 value={selectedTriage}
-                onChange={(e) => setSelectedTriage(e.target.value)}
+                onChange={(val) => setSelectedTriage(val)}
                 options={[
                   { value: "ALL", label: "Semua Medis" },
                   { value: "RED", label: "Merah (Segera)" },
@@ -143,7 +143,7 @@ export default function RefugeesPage() {
             <div className="flex-1 min-w-[140px] sm:w-40">
               <Select
                 value={selectedVulnerability}
-                onChange={(e) => setSelectedVulnerability(e.target.value)}
+                onChange={(val) => setSelectedVulnerability(val)}
                 options={[
                   { value: "ALL", label: "Semua Rentan" },
                   { value: "BALITA", label: "Balita" },

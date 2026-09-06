@@ -24,9 +24,8 @@ export default function SyncHubPage() {
   {/* 2. Kartu Utama: Pembaruan Nirkabel Otomatis */}
   <Card className="border border-border bg-surface shadow-2xs">
   <CardHeader>
-  <div className="flex items-center justify-between">
   <div className="flex items-center gap-3">
-  <div className="w-9 h-9 rounded-lg bg-status-safe-bg border border-status-safe-border text-status-safe flex items-center justify-center font-bold">
+  <div className="w-9 h-9 rounded-lg bg-status-safe-bg border border-status-safe-border text-status-safe flex items-center justify-center font-bold shrink-0">
   <Icon name="radar" variant="bold" size={18} />
   </div>
   <div>
@@ -35,10 +34,6 @@ export default function SyncHubPage() {
   HP Anda secara otomatis bertukar data saat berdekatan dengan HP petugas lain.
   </p>
   </div>
-  </div>
-  <span className="text-xs font-semibold text-status-safe bg-status-safe-bg px-2 py-0.5 rounded border border-status-safe-border">
-  Aktif
-  </span>
   </div>
   </CardHeader>
   <CardContent className="space-y-3 pt-0">

@@ -21,6 +21,7 @@ import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { SandyaLogo } from "@/shared/ui/sandya-logo";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { asRefugeeId, asPoskoId, asEventId } from "@/core/shared/branded-types";
@@ -375,7 +376,12 @@ export default function ParityPosterSyncPage() {
   };
 
   const handlePrint = () => {
-  window.print();
+    const originalTitle = document.title;
+    document.title = "";
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
 
   return (
@@ -426,7 +432,7 @@ export default function ParityPosterSyncPage() {
   <div>
   <div className="flex items-center gap-2">
   <h3 className="text-sm font-bold text-text-main">
-  Lembar Cetak Cadangan Posko (Paritas Dinamis $N+1$)
+  Lembar Cetak Cadangan Posko
   </h3>
   <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
   {posterSpec ? `${posterSpec.totalDataParts} Data + 1 Paritas (${posterSpec.totalGridCells} QR)` : "Memuat..."}
@@ -450,14 +456,29 @@ export default function ParityPosterSyncPage() {
   </div>
 
   {/* Printable Physical Paper Canvas */}
-  <div className="max-w-3xl mx-auto p-4 sm:p-8 rounded-2xl bg-white border border-border shadow-xs space-y-5 text-slate-900 print:max-w-none print:border-none print:p-0 print:shadow-none">
+  <div className="max-w-3xl mx-auto p-4 sm:p-8 rounded-2xl bg-white border border-border shadow-xs space-y-5 text-slate-900 print:max-w-none print:border-none print:p-[10mm] print:m-0 print:shadow-none print:space-y-3 print:rounded-none">
+  <style dangerouslySetInnerHTML={{ __html: `
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `}} />
+
   {/* Header Posko */}
-  <div className="border-b-2 border-slate-900 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+  <div className="border-b-2 border-slate-900 pb-3 print:pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
   <div>
-  <div className="flex items-center gap-2">
-  <div className="w-6 h-6 rounded bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
-  S2
-  </div>
+  <div className="flex items-center gap-2.5">
+  <SandyaLogo size={28} className="text-slate-900 shrink-0" />
   <h1 className="text-lg font-black tracking-tight uppercase">
   Sandya • Lembar Arsip Data Posko
   </h1>
@@ -474,7 +495,7 @@ export default function ParityPosterSyncPage() {
   </div>
 
   {/* Posko Metric Summary */}
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 print:p-2 print:gap-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
   <div>
   <span className="text-slate-500 font-medium">Total Warga Terdata:</span>
   <p className="text-sm font-bold text-slate-900">{posterSpec?.totalRefugees || refugees.length} Jiwa</p>
@@ -494,7 +515,7 @@ export default function ParityPosterSyncPage() {
   </div>
 
   {/* Instructions Banner */}
-  <div className="p-3 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 flex items-start gap-2">
+  <div className="p-3 print:p-2 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 flex items-start gap-2">
   <Icon name="shield" variant="bold" size={16} className="text-sky-700 shrink-0 mt-0.5" />
   <div>
   <p className="font-bold">Protokol Pemulihan Lapangan Tanpa Internet:</p>
@@ -508,25 +529,25 @@ export default function ParityPosterSyncPage() {
   {/* Dynamic Grid Layout (N+1 QR Cells) */}
   {posterSpec && (
   <div
-  className={`grid gap-3 sm:gap-4 pt-1 ${
+  className={`grid gap-3 sm:gap-4 pt-1 print:gap-2 print:pt-0 ${
   posterSpec.totalGridCells <= 4
-  ? "grid-cols-1 sm:grid-cols-2"
+  ? "grid-cols-1 sm:grid-cols-2 print:grid-cols-2"
   : posterSpec.totalGridCells <= 6
-  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3"
+  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 print:grid-cols-4"
   }`}
   >
   {posterSpec.cells.map((cell, idx) => (
   <div
   key={idx}
-  className={`p-3 rounded-xl border text-center space-y-2 flex flex-col items-center justify-between ${
+  className={`p-3 rounded-xl border text-center space-y-2 flex flex-col items-center justify-between print:p-2 print:space-y-1 print:break-inside-avoid ${
   cell.isParity
-  ? "bg-sky-50/50 border-sky-400/80 shadow-xs"
+  ? "bg-sky-50/50 border-sky-400/80 shadow-xs print:bg-white print:border-slate-300"
   : "bg-white border-slate-200"
   }`}
   >
   {/* QR Code SVG */}
-  <div className="w-full flex justify-center py-1">
+  <div className="w-full flex justify-center py-1 print:py-0.5">
   <QRCodeSVG
   value={cell.qrRawString}
   size={PARITY_POSTER_PAGE_CONSTANTS.POSTER_QR_SIZE}
@@ -537,7 +558,7 @@ export default function ParityPosterSyncPage() {
   </div>
 
   {/* Cell Meta */}
-  <div className="w-full border-t border-slate-200 pt-1.5 space-y-0.5">
+  <div className="w-full border-t border-slate-200 pt-1.5 print:pt-1 space-y-0.5">
   <p
   className={`text-xs font-bold font-mono ${
   cell.isParity ? "text-sky-700" : "text-slate-900"
@@ -555,7 +576,7 @@ export default function ParityPosterSyncPage() {
   )}
 
   {/* Footer Verification Badge */}
-  <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-[11px] text-slate-500">
+  <div className="border-t border-slate-200 pt-3 print:pt-2 flex items-center justify-between text-[11px] text-slate-500">
   <span className="font-mono font-semibold">SANDYA-OFFLINE-XOR-V2 • VERIFIED</span>
   <span>Dokumen Resmi Penanganan Bencana BNPB / Relawan</span>
   </div>

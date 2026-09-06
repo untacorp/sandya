@@ -36,12 +36,6 @@ export default function LandingGatewayPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-safe-bg text-status-safe border border-status-safe-border font-semibold text-[11px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-status-safe animate-pulse" />
-              Siaga Offline (0 Internet)
-            </span>
-          </div>
         </div>
       </header>
 

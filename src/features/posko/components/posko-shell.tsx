@@ -202,32 +202,42 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
   }, [activePoskoId]);
 
   return (
-    <div className="min-h-[100dvh] flex bg-canvas text-text-main">
+    <div className="min-h-[100dvh] flex bg-canvas text-text-main print:bg-white print:text-black print:min-h-0 print:block">
       {/* Desktop Sidebar */}
-      <PoskoDesktopSidebar />
+      <div className="print:hidden">
+        <PoskoDesktopSidebar />
+      </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
-  {/* Sticky Header */}
-  <PoskoHeader />
+      <div className="flex-1 flex flex-col min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-8 print:p-0 print:m-0 print:block">
+        {/* Sticky Header */}
+        <div className="print:hidden">
+          <PoskoHeader />
+        </div>
 
-  {/* Page Content */}
-  <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 md:p-8">
-  {children}
-  </main>
+        {/* Page Content */}
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3.5 sm:p-6 md:p-8 print:p-0 print:m-0 print:max-w-none">
+          {children}
+        </main>
 
-  {/* Floating Action Button (Fast Intake 30s) */}
-  <FastIntakeFAB />
+        {/* Floating Action Button (Fast Intake 30s) */}
+        <div className="print:hidden">
+          <FastIntakeFAB />
+        </div>
 
-  {/* Mobile Bottom Navigation Bar */}
-  <PoskoBottomNav />
+        {/* Mobile Bottom Navigation Bar */}
+        <div className="print:hidden">
+          <PoskoBottomNav />
+        </div>
 
-  {/* Posko & Role Switcher Modal */}
-  <PoskoSwitcherModal
-  open={switcherOpen}
-  onOpenChange={setSwitcherOpen}
-  />
-  </div>
-  </div>
+        {/* Posko & Role Switcher Modal */}
+        <div className="print:hidden">
+          <PoskoSwitcherModal
+            open={switcherOpen}
+            onOpenChange={setSwitcherOpen}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

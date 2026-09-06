@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
@@ -145,17 +146,11 @@ export default function OrgMembersPage() {
   {poskos.length === 0 ? (
   <span className="text-xs text-text-muted italic">Belum ada posko terdaftar</span>
   ) : (
-  <select
+  <Select
   value={selectedPoskoId}
-  onChange={(e) => setSelectedPoskoId(e.target.value)}
-  className="flex-1 h-9 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none transition-colors"
-  >
-  {poskos.map((p) => (
-  <option key={p.id} value={p.id}>
-  {p.name} ({p.id})
-  </option>
-  ))}
-  </select>
+  onChange={(val) => setSelectedPoskoId(val)}
+  options={poskos.map((p) => ({ value: p.id, label: `${p.name} (${p.id})` }))}
+  />
   )}
   </div>
 

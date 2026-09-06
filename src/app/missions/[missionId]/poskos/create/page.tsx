@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import Link from "next/link";
@@ -86,14 +87,15 @@ export default function CreatePoskoPage() {
                 <label className="text-xs font-semibold text-text-muted block mb-1">
                   Jenis Fasilitas Posko
                 </label>
-                <select value={postType}
-                  onChange={(e) => setPostType(e.target.value as PostType)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-                >
-                  <option value="FIELD_SHELTER">Posko Tenda Pengungsi</option>
-                  <option value="MEDICAL_POST">Pos Medis / RS Lapangan</option>
-                  <option value="MAIN_WAREHOUSE">Gudang Logistik Satelit</option>
-                </select>
+                <Select value={postType}
+                  onChange={(val) => setPostType(val as PostType)}
+                  options={[
+                    { value: "FIELD_SHELTER", label: "Posko Tenda Pengungsi" },
+                    { value: "MEDICAL_POST", label: "Pos Medis / RS Lapangan" },
+                    { value: "MAIN_WAREHOUSE", label: "Gudang Logistik Satelit" },
+                    { value: "COMMAND_CENTER", label: "Pusat Komando (Pusdallops)" }
+                  ]}
+                />
               </div>
 
               <div>

@@ -4,6 +4,7 @@
  * status: PASSED (15/15 slop checks verified)
  */
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { Dialog } from "@/shared/ui/dialog";
@@ -259,20 +260,17 @@ export function AddRefugeeEventModal({
   <div className="space-y-3 p-3.5 rounded-xl bg-surface-subtle border-[1.5px] border-border">
   <div className="space-y-1">
   <label className="text-xs font-bold text-text-main">Komoditas yang Dibutuhkan</label>
-  <select value={needItem}
-  onChange={(e) => setNeedItem(e.target.value)}
-  aria-label="Pilih Komoditas Kebutuhan"
-  className="w-full p-2.5 rounded-lg bg-surface border border-border text-xs text-text-main font-medium focus:ring-2 focus:ring-primary focus:outline-hidden appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="Beras 5kg">Beras 5kg</option>
-  <option value="Susu Formula Balita">Susu Formula Balita</option>
-  <option value="Selimut Hangat">Selimut Hangat</option>
-  <option value="Air Bersih Galon">Air Bersih Galon 19L</option>
-  <option value="Obat & P3K">Obat & P3K Standar</option>
-  <option value="Popok Bayi (Size M)">Popok Bayi (Size M)</option>
-  <option value="Pembalut Wanita">Pembalut Wanita</option>
-  <option value="Tenda & Terpal">Tenda & Terpal Plastik</option>
-  </select>
+  <Select value={needItem}
+  onChange={(val) => setNeedItem(val)}
+  options={[
+    { value: "Beras 5kg", label: "Beras 5kg" },
+    { value: "Susu Formula Balita", label: "Susu Formula Balita" },
+    { value: "Selimut Hangat", label: "Selimut Hangat" },
+    { value: "Air Bersih Galon", label: "Air Bersih Galon 19L" },
+    { value: "Obat & P3K", label: "Obat & P3K Standar" },
+    { value: "Popok Bayi (Size M)", label: "Popok Bayi (Size M)" }
+  ]}
+  />
   </div>
 
   <div className="space-y-1">

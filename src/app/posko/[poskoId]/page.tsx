@@ -58,14 +58,9 @@ export default function PoskoDashboardPage() {
   {/* 1. Header Ringkas Posko */}
   <div className="p-4 rounded-xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
   <div>
-  <div className="flex items-center gap-2">
   <h1 className="text-lg font-bold text-text-main">
   {currentPosko.name}
   </h1>
-  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-status-safe-bg text-status-safe border border-status-safe-border">
-  Aktif
-  </span>
-  </div>
   <p className="text-xs text-text-muted mt-0.5">
   {uniqueShelters > 0 ? `${uniqueShelters} Area Hunian • ` : ""}{totalRefugees} Jiwa Terdaftar
   </p>

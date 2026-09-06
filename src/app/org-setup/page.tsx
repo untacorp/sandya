@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Select } from "@/shared/ui/select";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Icon } from "@/shared/ui/icon";
@@ -128,16 +129,17 @@ export default function OrgSetupPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kategori
   </label>
-  <select
+  <Select
     value={orgCategory}
-    onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
-    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="PMI_LEMBAGA">PMI / Lembaga Kemanusiaan</option>
-  <option value="BPBD_PEMERINTAH">BPBD / Pemerintah</option>
-  <option value="NGO_YAYASAN">Yayasan / LSM</option>
-  <option value="KOMUNITAS_MANDIRI">Komunitas Relawan Mandiri</option>
-  </select>
+    onChange={(val) => setOrgCategory(val as Organization["category"])}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-border-strong transition-colors"
+    options={[
+      { value: "PMI_LEMBAGA", label: "PMI / Lembaga Kemanusiaan" },
+      { value: "BPBD_PEMERINTAH", label: "BPBD / Pemerintah" },
+      { value: "NGO_YAYASAN", label: "Yayasan / LSM" },
+      { value: "KOMUNITAS_MANDIRI", label: "Komunitas Relawan Mandiri" }
+    ]}
+  />
   </div>
 
   <div className="pt-2">

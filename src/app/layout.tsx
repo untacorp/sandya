@@ -61,8 +61,11 @@ export const metadata: Metadata = {
   title: "Sandya",
   },
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: "/apple-icon.png",
   },
   formatDetection: {
   telephone: true,

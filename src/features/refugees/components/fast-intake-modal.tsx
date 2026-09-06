@@ -404,7 +404,7 @@ export function FastIntakeFAB() {
   type="button"
   onClick={() => setOpen(true)}
   aria-label="Pendaftaran Cepat Pengungsi"
-  className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 md:right-6 z-40 h-12 sm:h-13 px-3.5 sm:px-4 rounded-full bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-2 hover:bg-primary/90 active:scale-95 transition-all cursor-pointer border border-white/20"
+  className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 md:right-6 z-40 h-12 sm:h-13 px-3.5 sm:px-4 rounded-full bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-2 hover:bg-primary/90 active:scale-95 transition-all cursor-pointer border border-white/20 print:hidden"
   >
   <Icon name="user" variant="bold" size={20} />
   <span className="text-xs sm:text-sm font-bold tracking-tight">Daftar Cepat (30s)</span>

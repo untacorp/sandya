@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -743,18 +744,13 @@ export default function TriagePage() {
   <label className="text-[10px] font-semibold text-text-muted block">
   Nama Obat (uint8 Token)
   </label>
-  <select value={rx.needTokenId}
-  onChange={(e) =>
-  handleUpdatePrescription(idx, "needTokenId", parseInt(e.target.value))
-  }
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  {medicalCatalog.map((item) => (
-  <option key={item.id} value={item.id}>
-  [0x{item.id.toString(16).padStart(2, "0")}] {item.nameId}
-  </option>
-  ))}
-  </select>
+  <Select value={rx.needTokenId.toString()}
+  onChange={(val) => handleUpdatePrescription(idx, "needTokenId", parseInt(val))}
+  options={medicalCatalog.map((item) => ({
+    value: item.id.toString(),
+    label: `[0x${item.id.toString(16).padStart(2, "0")}] ${item.nameId}`
+  }))}
+  />
   </div>
 
   {/* Jumlah & Satuan */}
@@ -780,20 +776,17 @@ export default function TriagePage() {
   <label className="text-[10px] font-semibold text-text-muted block">
   Satuan
   </label>
-  <select value={rx.unit}
-  onChange={(e) =>
-  handleUpdatePrescription(idx, "unit", e.target.value)
-  }
-  className="w-full h-10 rounded-lg border border-border bg-surface px-1.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="STRIP">STRIP</option>
-  <option value="BOTOL">BOTOL</option>
-  <option value="TUBE">TUBE</option>
-  <option value="SACHET">SACHET</option>
-  <option value="TABUNG">TABUNG</option>
-  <option value="KOTAK">KOTAK</option>
-  <option value="PCS">PCS</option>
-  </select>
+  <Select value={rx.unit}
+  onChange={(val) => handleUpdatePrescription(idx, "unit", val)}
+  options={[
+    { value: "STRIP", label: "STRIP" },
+    { value: "BOTOL", label: "BOTOL" },
+    { value: "TUBE", label: "TUBE" },
+    { value: "SACHET", label: "SACHET" },
+    { value: "TABUNG", label: "TABUNG" },
+    { value: "PCS", label: "PCS" }
+  ]}
+  />
   </div>
   </div>
   </div>

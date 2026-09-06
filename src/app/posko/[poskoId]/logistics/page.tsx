@@ -383,17 +383,19 @@ export default function LogisticsPage() {
   <label className="font-semibold text-text-main block">Kategori Komoditas</label>
   <Select
   value={category}
-  onChange={(e) => setCategory(e.target.value as InventoryCategory)}
-  >
-  <option value="FOOD">Pangan & Air Minum (FOOD)</option>
-  <option value="CLOTHING">Sandang & Alas Tidur (CLOTHING)</option>
-  <option value="MEDICAL">Medis & Obat-Obatan (MEDICAL)</option>
-  <option value="HYGIENE">Sanitasi & Kebersihan (HYGIENE)</option>
-  <option value="SHELTER">Tenda & Hunian Sementara (SHELTER)</option>
-  <option value="INFANT">Perlengkapan Bayi (INFANT)</option>
-  <option value="ASSISTIVE">Alat Bantu Disabilitas (ASSISTIVE)</option>
-  <option value="EMERGENCY_TOOLS">Peralatan Darurat (EMERGENCY_TOOLS)</option>
-  </Select>
+  onChange={(val) => setCategory(val as InventoryCategory)}
+  options={[
+    { value: "FOOD", label: "Pangan & Air Minum (FOOD)" },
+    { value: "CLOTHING", label: "Sandang & Alas Tidur (CLOTHING)" },
+    { value: "MEDICAL", label: "Medis & Obat-Obatan (MEDICAL)" },
+    { value: "HYGIENE", label: "Sanitasi & Kebersihan (HYGIENE)" },
+    { value: "SHELTER", label: "Tenda & Hunian Sementara (SHELTER)" },
+    { value: "INFANT", label: "Perlengkapan Bayi (INFANT)" },
+    { value: "ASSISTIVE", label: "Alat Bantu Disabilitas (ASSISTIVE)" },
+    { value: "EMERGENCY_TOOLS", label: "Peralatan Darurat (EMERGENCY_TOOLS)" },
+    { value: "OTHER", label: "Lain-Lain (OTHER)" }
+  ]}
+/>
   </div>
   </div>
   )}
@@ -413,20 +415,21 @@ export default function LogisticsPage() {
   <label className="font-semibold text-text-main block">Satuan Fisik</label>
   <Select
   value={unit}
-  onChange={(e) => setUnit(e.target.value)}
-  >
-  <option value="KG">KG</option>
-  <option value="LITER">LITER</option>
-  <option value="KOTAK">KOTAK</option>
-  <option value="DUS">DUS</option>
-  <option value="STRIP">STRIP</option>
-  <option value="BOTOL">BOTOL</option>
-  <option value="PCS">PCS</option>
-  <option value="SAK">SAK</option>
-  <option value="GALON">GALON</option>
-  <option value="TABUNG">TABUNG</option>
-  <option value="UNIT">UNIT</option>
-  </Select>
+  onChange={(val) => setUnit(val)}
+  options={[
+    { value: "KG", label: "KG" },
+    { value: "LITER", label: "LITER" },
+    { value: "KOTAK", label: "KOTAK" },
+    { value: "DUS", label: "DUS" },
+    { value: "STRIP", label: "STRIP" },
+    { value: "BOTOL", label: "BOTOL" },
+    { value: "PCS", label: "PCS" },
+    { value: "SAK", label: "SAK" },
+    { value: "GALON", label: "GALON" },
+    { value: "TABUNG", label: "TABUNG" },
+    { value: "UNIT", label: "UNIT" }
+  ]}
+/>
   </div>
   </div>
 

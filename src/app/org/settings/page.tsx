@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import Link from "next/link";
@@ -140,16 +141,16 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kategori Lembaga
   </label>
-  <select
+  <Select
     value={orgCategory}
-    onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
-    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
-  >
-  <option value="PMI_LEMBAGA">Palang Merah Indonesia (PMI)</option>
-  <option value="BPBD_PEMERINTAH">BPBD / Pemerintah Daerah</option>
-  <option value="NGO_YAYASAN">Lembaga Swadaya / Yayasan Kemanusiaan</option>
-  <option value="KOMUNITAS_MANDIRI">Komunitas Relawan Mandiri</option>
-  </select>
+    onChange={(val) => setOrgCategory(val as Organization["category"])}
+    options={[
+      { value: "PMI_LEMBAGA", label: "Palang Merah Indonesia (PMI)" },
+      { value: "BPBD_PEMERINTAH", label: "BPBD / Pemerintah Daerah" },
+      { value: "NGO_YAYASAN", label: "Lembaga Swadaya / Yayasan Kemanusiaan" },
+      { value: "KOMUNITAS_MANDIRI", label: "Komunitas Relawan Mandiri" }
+    ]}
+  />
   </div>
   </div>
 

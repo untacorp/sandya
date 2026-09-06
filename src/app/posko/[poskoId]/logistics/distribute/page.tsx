@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -432,16 +433,13 @@ export default function LogisticsDistributePage() {
   <label className="font-bold text-text-main block">
   Pilih Komoditas Sumber di Gudang
   </label>
-  <select value={selectedItemId}
-  onChange={(e) => setSelectedItemId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
-  >
-  {poskoInventory.map((item) => (
-  <option key={item.id} value={item.id}>
-  {item.itemName} (Tersedia: {item.currentQuantity} {item.unit})
-  </option>
-  ))}
-  </select>
+  <Select value={selectedItemId}
+  onChange={(val) => setSelectedItemId(val)}
+  options={poskoInventory.map((item) => ({
+    value: item.id,
+    label: `${item.itemName} (Tersedia: ${item.currentQuantity} ${item.unit})`
+  }))}
+  />
   </div>
 
   <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
