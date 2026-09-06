@@ -101,7 +101,7 @@ Unduh paket binary sesuai sistem operasi perangkat posko atau ponsel relawan:
 ---
 *Dibangun otomatis oleh GitHub Actions Pipeline (Multi-Runner: Ubuntu, Windows, macOS).*`,
               draft: true,
-              prerelease: false
+              prerelease: tag.includes('-') || tag.startsWith('v0.') || tag.startsWith('0.')
             });
             return release.id;
 
