@@ -13,6 +13,8 @@ import {
   compressManifestV4,
   decompressManifestV4,
   DisasterManifestV4,
+  vulnerabilitiesToBitmask,
+  bitmaskToVulnerabilities,
 } from "@/core/codecs/bitpacker-v4";
 import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
@@ -57,28 +59,18 @@ export default function ParityPosterSyncPage() {
   try {
   // 1. Build disaster manifest
   const manifestPersons = refugees.map((r) => ({
-  id: r.id,
-  poskoId: r.postId || session.poskoId,
-  fullName: r.fullName,
-  nationalId: r.nik || undefined,
-  gender: r.gender,
-  age: r.age,
-  vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
-    switch (v) {
-      case "BALITA": return mask | 0x01;
-      case "IBU_HAMIL": return mask | 0x02;
-      case "LANSIA": return mask | 0x04;
-      case "DISABILITAS": return mask | 0x08;
-      case "LUKA_BERAT": return mask | 0x10;
-      case "PENYAKIT_KRONIS": return mask | 0x20;
-      default: return mask;
-    }
-  }, 0),
-  urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
-  domicileOrigin: r.domicileOrigin || undefined,
-  shelterLocation: r.shelterLocation || undefined,
-  missingKinName: r.missingKinName || undefined,
-  triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
+    id: r.id,
+    poskoId: r.postId || session.poskoId,
+    fullName: r.fullName,
+    nationalId: r.nik || undefined,
+    gender: r.gender,
+    age: r.age,
+    vulnerabilities: vulnerabilitiesToBitmask(r.vulnerabilities),
+    urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
+    domicileOrigin: r.domicileOrigin || undefined,
+    shelterLocation: r.shelterLocation || undefined,
+    missingKinName: r.missingKinName || undefined,
+    triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
   }));
 
   const manifestInventory = inventory.map((i) => ({
@@ -238,14 +230,7 @@ export default function ParityPosterSyncPage() {
         nik: p.nationalId || null,
         gender: p.gender,
         age: p.age,
-        vulnerabilities: ([
-          (p.vulnerabilities & 0x01) ? "BALITA" : null,
-          (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
-          (p.vulnerabilities & 0x04) ? "LANSIA" : null,
-          (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
-          (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
-          (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
-        ].filter((v): v is VulnerabilityCategory => Boolean(v))),
+        vulnerabilities: bitmaskToVulnerabilities(p.vulnerabilities),
         urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
         domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
         shelterLocation: p.shelterLocation || "Tenda Pengungsian",

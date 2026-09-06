@@ -98,9 +98,8 @@ export class VectorClockGossipService {
 
       // 1. Check if we have events that the remote peer is missing
       const ourClocks = this.getClockSnapshot();
-      let weAreBehind = false;
 
-      // Check all poskos we know about
+      // Check all poskos we know about to send what they miss
       for (const [poskoId, ourMaxSeq] of Object.entries(ourClocks)) {
         const remoteSeq = remoteClocks[poskoId] || 0;
         if (ourMaxSeq > remoteSeq) {
@@ -117,21 +116,12 @@ export class VectorClockGossipService {
               console.error("[VectorClockGossipService] Delta batch send error:", err);
             });
           }
-        } else if (remoteSeq > ourMaxSeq) {
-          weAreBehind = true;
         }
       }
 
-      // Also check if remote has poskos we don't know about at all
-      for (const [poskoId, remoteSeq] of Object.entries(remoteClocks)) {
-        const ourMaxSeq = ourClocks[poskoId] || 0;
-        if (remoteSeq > ourMaxSeq) {
-          weAreBehind = true;
-        }
-      }
-
-      // 2. If remote peer has newer events that we need, reply with our vector probe
-      if (weAreBehind) {
+      // 2. Use computeDeltaRequirements to check if we are behind on any posko
+      const neededDeltas = this.clockTracker.computeDeltaRequirements(remoteClocks);
+      if (neededDeltas.length > 0) {
         this.broadcastVectorProbe().catch((err) => {
           console.error("[VectorClockGossipService] Probe reply error:", err);
         });

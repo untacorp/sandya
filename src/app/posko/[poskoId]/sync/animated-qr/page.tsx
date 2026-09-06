@@ -13,6 +13,8 @@ import {
   compressManifestV4,
   decompressManifestV4,
   DisasterManifestV4,
+  vulnerabilitiesToBitmask,
+  bitmaskToVulnerabilities,
 } from "@/core/codecs/bitpacker-v4";
 import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
@@ -47,7 +49,13 @@ export default function AnimatedQRPage() {
   const [fps, setFps] = React.useState<number>(ANIMATED_QR_PAGE_CONSTANTS.DEFAULT_FPS); // Default 6 FPS
 
   // Receive State
-  const assemblerRef = React.useRef<OutOfOrderFrameAssembler>(new OutOfOrderFrameAssembler());
+  const assemblerRef = React.useRef<OutOfOrderFrameAssembler | null>(null);
+  const getAssembler = React.useCallback(() => {
+    if (!assemblerRef.current) {
+      assemblerRef.current = new OutOfOrderFrameAssembler();
+    }
+    return assemblerRef.current;
+  }, []);
   const [capturedIndices, setCapturedIndices] = React.useState<number[]>([]);
   const [totalExpectedParts, setTotalExpectedParts] = React.useState<number>(0);
   const [progressPercent, setProgressPercent] = React.useState<number>(0);
@@ -72,17 +80,7 @@ export default function AnimatedQRPage() {
         nationalId: r.nik || undefined,
         gender: r.gender,
         age: r.age,
-        vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
-          switch (v) {
-            case "BALITA": return mask | 0x01;
-            case "IBU_HAMIL": return mask | 0x02;
-            case "LANSIA": return mask | 0x04;
-            case "DISABILITAS": return mask | 0x08;
-            case "LUKA_BERAT": return mask | 0x10;
-            case "PENYAKIT_KRONIS": return mask | 0x20;
-            default: return mask;
-          }
-        }, 0),
+        vulnerabilities: vulnerabilitiesToBitmask(r.vulnerabilities),
         urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
         domicileOrigin: r.domicileOrigin || undefined,
         shelterLocation: r.shelterLocation || undefined,
@@ -192,7 +190,7 @@ export default function AnimatedQRPage() {
   // Handle incoming optical frame from camera
   const handleScanFrame = React.useCallback(
     async (qrText: string) => {
-      const assembler = assemblerRef.current;
+      const assembler = getAssembler();
       const res = assembler.ingestFrame(qrText);
 
       if (res.totalParts > 0) {
@@ -225,14 +223,7 @@ export default function AnimatedQRPage() {
         nik: p.nationalId || null,
         gender: p.gender,
         age: p.age,
-        vulnerabilities: ([
-          (p.vulnerabilities & 0x01) ? "BALITA" : null,
-          (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
-          (p.vulnerabilities & 0x04) ? "LANSIA" : null,
-          (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
-          (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
-          (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
-        ].filter((v): v is VulnerabilityCategory => Boolean(v))),
+        vulnerabilities: bitmaskToVulnerabilities(p.vulnerabilities),
         urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
         domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
         shelterLocation: p.shelterLocation || "Tenda Pengungsian",
@@ -344,31 +335,31 @@ export default function AnimatedQRPage() {
 
   // Fast optical simulation drill
   const handleFastReceiveSimulation = () => {
-  if (frames.length === 0) return;
-  const assembler = assemblerRef.current;
-  assembler.reset();
-  setRecoveredManifest(null);
-  setCapturedIndices([]);
-  setProgressPercent(0);
-  setReceiveMessage("Memulai penangkapan frame out-of-order...");
+    if (frames.length === 0) return;
+    const assembler = getAssembler();
+    assembler.reset();
+    setRecoveredManifest(null);
+    setCapturedIndices([]);
+    setProgressPercent(0);
+    setReceiveMessage("Memulai penangkapan frame out-of-order...");
 
-  // Simulate capturing frames out of order (e.g. 2, 0, 3, 1)
-  const shuffled = [...frames].sort(() => Math.random() - 0.5);
+    // Simulate capturing frames out of order (e.g. 2, 0, 3, 1)
+    const shuffled = [...frames].sort(() => Math.random() - 0.5);
 
-  shuffled.forEach((frame, idx) => {
-  setTimeout(() => {
-  handleScanFrame(frame.frameString);
-  }, (idx + 1) * ANIMATED_QR_PAGE_CONSTANTS.SIMULATED_FRAME_DELAY_MS);
-  });
+    shuffled.forEach((frame, idx) => {
+      setTimeout(() => {
+        handleScanFrame(frame.frameString);
+      }, (idx + 1) * ANIMATED_QR_PAGE_CONSTANTS.SIMULATED_FRAME_DELAY_MS);
+    });
   };
 
   const handleResetReceiver = () => {
-  assemblerRef.current.reset();
-  setCapturedIndices([]);
-  setTotalExpectedParts(0);
-  setProgressPercent(0);
-  setRecoveredManifest(null);
-  setReceiveMessage(null);
+    getAssembler().reset();
+    setCapturedIndices([]);
+    setTotalExpectedParts(0);
+    setProgressPercent(0);
+    setRecoveredManifest(null);
+    setReceiveMessage(null);
   };
 
   const activeFrame = frames[currentFrameIdx];

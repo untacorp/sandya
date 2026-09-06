@@ -1,5 +1,5 @@
 import { BleTransport } from "./transport/ble-transport";
-import { SmpPacketCodec, SmpPacketType, SmpPacket } from "./smp-packet";
+import { SmpPacketCodec, SmpPacketType, SmpPacket, SMP_PACKET_CONSTANTS } from "./smp-packet";
 import { LruSeenCache } from "./seen-cache";
 import { Ed25519Signer, KeyPairResult } from "@/core/crypto/ed25519-signer";
 import { MeshPeer, UserRole } from "@/shared/types";
@@ -134,7 +134,7 @@ export class BleMeshEngine {
       seq,
       packetType
     );
-    this.seenCache.isDuplicate(packetHash);
+    this.seenCache.checkAndMarkSeen(packetHash);
 
     return this.transport.broadcastPacket(rawBuffer);
   }
@@ -162,8 +162,17 @@ export class BleMeshEngine {
       packet.packetType
     );
 
-    if (this.seenCache.isDuplicate(packetHash)) {
+    if (this.seenCache.checkAndMarkSeen(packetHash)) {
       return;
+    }
+
+    // Multi-Hop Relay: If packet has hops left and is broadcast or relayed, re-broadcast with decremented TTL
+    if (packet.ttl > 1 && packet.senderPeerId !== this.config.peerId) {
+      const relayedBuffer = Buffer.from(buffer);
+      relayedBuffer.writeUInt8(packet.ttl - 1, SMP_PACKET_CONSTANTS.TTL_OFFSET);
+      this.transport.broadcastPacket(relayedBuffer).catch((err) => {
+        console.error(`[BleMeshEngine ${this.config.peerId}] Relay error:`, err);
+      });
     }
 
     // Handle MESH_ANNOUNCE

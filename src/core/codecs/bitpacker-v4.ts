@@ -155,7 +155,34 @@ export const BITPACKER_CONSTANTS = {
     LOW: 2,
   } as Record<string, number>,
   TICKET_URGENCY_ARRAY: ["HIGH", "MEDIUM", "LOW"] as const,
+  VULNERABILITY_BITMASK_MAP: {
+    BALITA: 0x01,
+    IBU_HAMIL: 0x02,
+    LANSIA: 0x04,
+    DISABILITAS: 0x08,
+    LUKA_BERAT: 0x10,
+    PENYAKIT_KRONIS: 0x20,
+  } as const,
 } as const;
+
+export function vulnerabilitiesToBitmask(vulnerabilities: readonly string[]): number {
+  let mask = 0;
+  for (const v of vulnerabilities) {
+    const bit = BITPACKER_CONSTANTS.VULNERABILITY_BITMASK_MAP[v as keyof typeof BITPACKER_CONSTANTS.VULNERABILITY_BITMASK_MAP];
+    if (bit) mask |= bit;
+  }
+  return mask;
+}
+
+export function bitmaskToVulnerabilities(mask: number): ("BALITA" | "IBU_HAMIL" | "LANSIA" | "DISABILITAS" | "LUKA_BERAT" | "PENYAKIT_KRONIS")[] {
+  const result: ("BALITA" | "IBU_HAMIL" | "LANSIA" | "DISABILITAS" | "LUKA_BERAT" | "PENYAKIT_KRONIS")[] = [];
+  for (const [name, bit] of Object.entries(BITPACKER_CONSTANTS.VULNERABILITY_BITMASK_MAP)) {
+    if ((mask & bit) !== 0) {
+      result.push(name as "BALITA" | "IBU_HAMIL" | "LANSIA" | "DISABILITAS" | "LUKA_BERAT" | "PENYAKIT_KRONIS");
+    }
+  }
+  return result;
+}
 
 /**
  * Serializer Ultra-Dense v4 dengan Dynamic Null-Field Bypass

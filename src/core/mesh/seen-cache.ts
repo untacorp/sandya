@@ -30,13 +30,17 @@ export class LruSeenCache {
   }
 
   /**
-  * Memeriksa apakah paket sudah pernah dilihat sebelumnya.
-  * Mengembalikan `true` jika paket sudah pernah diterima (duplikat), `false` jika baru.
-  */
-  public isDuplicate(packetHash: string): boolean {
-  if (this.seenHashes.has(packetHash)) {
-  return true;
+   * Memeriksa apakah paket sudah pernah dilihat sebelumnya dan mencatatnya ke cache.
+   * Mengembalikan `true` jika paket sudah pernah diterima (duplikat), `false` jika baru.
+   */
+  public checkAndMarkSeen(packetHash: string): boolean {
+    return this.isDuplicate(packetHash);
   }
+
+  public isDuplicate(packetHash: string): boolean {
+    if (this.seenHashes.has(packetHash)) {
+      return true;
+    }
 
   // Jika slot ring buffer sebelumnya berisi hash lama, buang dari Set
   const oldHash = this.ringBuffer[this.pointer];

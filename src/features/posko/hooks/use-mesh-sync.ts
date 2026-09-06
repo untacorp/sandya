@@ -30,7 +30,18 @@ export function useMeshSync() {
   React.useEffect(() => {
     let isMounted = true;
 
-    meshRuntime.initialize().then(() => {
+    meshRuntime.initialize({
+      session,
+      onPeersUpdated: (updatedPeers) => {
+        usePoskoStore.getState().setPeers(updatedPeers);
+      },
+      onMessageReceived: (msg) => {
+        usePoskoStore.getState().addIncomingMessage(msg);
+      },
+      onEventsApplied: () => {
+        usePoskoStore.getState().simulateSync();
+      },
+    }).then(() => {
       if (!isMounted) return;
       const rawState = meshRuntime.getRadioState();
       if (rawState === "OFF") {
@@ -62,7 +73,7 @@ export function useMeshSync() {
       isMounted = false;
       unsubscribeRadio();
     };
-  }, []);
+  }, [session]);
 
   // Sync mesh active toggle with runtime radio state
   React.useEffect(() => {
@@ -88,6 +99,8 @@ export function useMeshSync() {
       return;
     }
 
+    let syncTimeout: NodeJS.Timeout | null = null;
+
     const gossipInterval = setInterval(() => {
       const now = Date.now();
       setLastGossipTimestamp(now);
@@ -100,7 +113,7 @@ export function useMeshSync() {
       // If there are pending outbox items, clear them upon gossip
       if (pendingOutboxCount > 0) {
         setMeshRadioStatus("SCANNING");
-        setTimeout(() => {
+        syncTimeout = setTimeout(() => {
           simulateSync();
           if (usePoskoStore.getState().peers.length > 0) {
             setMeshRadioStatus("CONNECTED");
@@ -113,6 +126,9 @@ export function useMeshSync() {
 
     return () => {
       clearInterval(gossipInterval);
+      if (syncTimeout) {
+        clearTimeout(syncTimeout);
+      }
     };
   }, [isMeshActive, meshRadioStatus, pendingOutboxCount, simulateSync]);
 

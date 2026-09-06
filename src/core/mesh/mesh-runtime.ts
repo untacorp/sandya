@@ -1,16 +1,19 @@
 import { BleMeshEngine } from "./ble-mesh-engine";
 import { TacticalIntercomService } from "./tactical-intercom-service";
-import { VectorClockGossipService } from "./vector-clock-gossip-service";
+import { VectorClockGossipService, GossipEventRecord } from "./vector-clock-gossip-service";
 import { BleTransport, BleRadioState } from "./transport/ble-transport";
 import { WebBleTransport } from "./transport/web-ble-transport";
 import { SimulatedMeshBridge } from "./transport/simulated-mesh-bridge";
 import { Ed25519Signer } from "@/core/crypto/ed25519-signer";
-import { usePoskoStore } from "@/features/posko/store/use-posko-store";
-import { TacticalMessage, TacticalChannel } from "@/shared/types";
+import { TacticalMessage, TacticalChannel, ActiveSession, MeshPeer } from "@/shared/types";
 
 export interface MeshRuntimeOptions {
   transport?: BleTransport;
   simulatedBridge?: SimulatedMeshBridge;
+  session?: Partial<ActiveSession>;
+  onPeersUpdated?: (peers: MeshPeer[]) => void;
+  onMessageReceived?: (msg: TacticalMessage) => void;
+  onEventsApplied?: (events: GossipEventRecord[]) => void;
 }
 
 class MeshRuntime {
@@ -35,7 +38,7 @@ class MeshRuntime {
       return;
     }
 
-    const session = usePoskoStore.getState().session;
+    const session = options?.session || {};
     const cleanUserId = (session.userId || "usr-anon").replace(/[^a-zA-Z0-9]/g, "");
     const peerId = cleanUserId.padEnd(16, "0").slice(0, 16);
 
@@ -53,7 +56,7 @@ class MeshRuntime {
       {
         peerId,
         aliasName: session.userName || "Relawan Sandya",
-        role: session.userRole,
+        role: session.userRole || "RELAWAN_LAPANGAN",
         poskoId: session.poskoId,
         keypair,
       },
@@ -63,15 +66,18 @@ class MeshRuntime {
     this.intercom = new TacticalIntercomService(this.engine);
     this.gossip = new VectorClockGossipService(this.engine, session.poskoId || "POS-01");
 
-    // Connect peers update directly to zustand store
-    this.engine.onPeersUpdated((peers) => {
-      usePoskoStore.getState().setPeers(peers);
-    });
+    // Hook listeners passed from application/store layer
+    if (options?.onPeersUpdated) {
+      this.engine.onPeersUpdated(options.onPeersUpdated);
+    }
 
-    // Connect incoming messages from intercom to zustand store
-    this.intercom.onMessageReceived((msg: TacticalMessage) => {
-      usePoskoStore.getState().addIncomingMessage(msg);
-    });
+    if (options?.onMessageReceived) {
+      this.intercom.onMessageReceived(options.onMessageReceived);
+    }
+
+    if (options?.onEventsApplied) {
+      this.gossip.onEventsApplied(options.onEventsApplied);
+    }
 
     await this.engine.start();
     this.radioState = this.transport.getRadioState();
