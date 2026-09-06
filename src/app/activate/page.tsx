@@ -16,7 +16,7 @@ import { StaffRole } from "@/core/shared/roles";
 
 export default function ActivatePassPage() {
   const router = useRouter();
-  const { session, setSessionRole, setSessionPosko, setSessionMission, setSessionOrg } = usePoskoStore();
+  const { session, setFullSession } = usePoskoStore();
 
   const [mode, setMode] = React.useState<"SCAN" | "MANUAL">("SCAN");
   const [manualCode, setManualCode] = React.useState("");
@@ -45,28 +45,30 @@ export default function ActivatePassPage() {
   };
 
   const handleConfirmActivation = () => {
-  if (verifiedPass) {
-  // Map to UserRole
-  const role = verifiedPass.role as UserRole;
-  setSessionRole(role);
-  setSessionPosko(verifiedPass.poskoId, verifiedPass.poskoName || `Posko ${verifiedPass.poskoId}`);
-  if (verifiedPass.missionId) {
-  setSessionMission(verifiedPass.missionId, verifiedPass.missionName || `Misi ${verifiedPass.missionId}`);
-  }
-  if (verifiedPass.orgId) {
-  setSessionOrg(verifiedPass.orgId, verifiedPass.orgName || `Organisasi ${verifiedPass.orgId}`);
-  }
+    if (verifiedPass) {
+      const role = verifiedPass.role as UserRole;
+      setFullSession({
+        userId: verifiedPass.userId || `USR-${Math.floor(100 + Math.random() * 900)}`,
+        userName: verifiedPass.userName || `Petugas (${role})`,
+        userRole: role,
+        poskoId: verifiedPass.poskoId,
+        poskoName: verifiedPass.poskoName || `Posko ${verifiedPass.poskoId}`,
+        missionId: verifiedPass.missionId || session.missionId,
+        missionName: verifiedPass.missionName || session.missionName || `Misi ${verifiedPass.missionId}`,
+        orgId: verifiedPass.orgId || session.orgId,
+        orgName: verifiedPass.orgName || session.orgName || `Organisasi ${verifiedPass.orgId}`,
+      });
 
-  if (role === "PEMIMPIN_ORGANISASI") {
-  router.push("/org");
-  } else if (role === "KOMANDAN_MISI") {
-  router.push(`/missions/${verifiedPass.missionId || session.missionId}`);
-  } else {
-  router.push(`/posko/${verifiedPass.poskoId || session.poskoId}`);
-  }
-  } else {
-  router.push(`/posko/${session.poskoId}`);
-  }
+      if (role === "PEMIMPIN_ORGANISASI") {
+        router.push("/org");
+      } else if (role === "KOMANDAN_MISI") {
+        router.push(`/missions/${verifiedPass.missionId || session.missionId}`);
+      } else {
+        router.push(`/posko/${verifiedPass.poskoId || session.poskoId}`);
+      }
+    } else {
+      router.push(`/posko/${session.poskoId}`);
+    }
   };
 
   const getRoleDisplayName = (role: StaffRole | UserRole) => {
