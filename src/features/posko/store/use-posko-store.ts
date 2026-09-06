@@ -19,6 +19,47 @@ import {
   type Posko,
   type PostStatus,
 } from "@/shared/types";
+import {
+  extractDemographicBreakdown,
+  calculateItemResilience,
+  type ResilienceCalculation,
+  type DemographicBreakdown,
+} from "@/core/domain/logistics/consumption-resilience";
+
+export function calculatePoskoInventoryResilience(
+  item: { itemName: string; category: string; currentQuantity: number; unit: string },
+  refugees: DisasterPerson[]
+): ResilienceCalculation {
+  const demographics = extractDemographicBreakdown(refugees);
+  return calculateItemResilience(item, demographics);
+}
+
+export function syncInventoryBurnRates(
+  inventory: InventoryItem[],
+  refugees: DisasterPerson[]
+): InventoryItem[] {
+  const refugeesByPosko = new Map<string, DisasterPerson[]>();
+  for (const r of refugees) {
+    const list = refugeesByPosko.get(r.postId) || [];
+    list.push(r);
+    refugeesByPosko.set(r.postId, list);
+  }
+
+  const demoCache = new Map<string, DemographicBreakdown>();
+
+  return inventory.map((item) => {
+    let demo = demoCache.get(item.postId);
+    if (!demo) {
+      demo = extractDemographicBreakdown(refugeesByPosko.get(item.postId) || []);
+      demoCache.set(item.postId, demo);
+    }
+    const res = calculateItemResilience(item, demo);
+    return {
+      ...item,
+      burnRateDays: res.daysRemaining,
+    };
+  });
+}
 
 export const POSKO_STORE_CONSTANTS = {
   SIMULATED_CLOUD_LATENCY_MS: 800,
@@ -250,6 +291,8 @@ export interface PoskoState {
   updateInventoryItem: (itemId: string, data: Partial<Omit<InventoryItem, "id">>) => void;
   deleteInventoryItem: (itemId: string) => void;
   allocateStock: (ticketId: string, itemId: string, qty: number) => boolean;
+  recalculateAllBurnRates: () => void;
+  getItemResilience: (itemId: string) => ResilienceCalculation;
 
   // Level 3: Needs Requests & Distribution
   needsTickets: NeedsTicket[];
@@ -266,6 +309,18 @@ export interface PoskoState {
     issueMortuaryKit?: boolean;
     mortuaryItemName?: string;
   }) => void;
+  recordDirectDistribution: (data: {
+    refugeeId: string;
+    refugeeName: string;
+    shelterLocation?: string;
+    itemId: string;
+    itemName: string;
+    quantity: number;
+    unit: string;
+    officerId?: string;
+    officerName?: string;
+    notes?: string;
+  }) => NeedsTicket;
 
   // Level 3: Tactical Chat & PTT Radio
   activeChannel: TacticalChannel;
@@ -564,7 +619,6 @@ export const usePoskoStore = create<PoskoState>()(
   }
   get().addRestock(wb.itemName, cat, wb.quantity, wb.unit, undefined, wb.targetPoskoId);
   },
-
       // Level 3: Refugees (Pristine - Zero Mock Data)
       refugees: [],
       refugeeEvents: [],
@@ -574,10 +628,12 @@ export const usePoskoStore = create<PoskoState>()(
         if (refugee.nik) {
           const existing = state.refugees.find((r) => r.nik && r.nik === refugee.nik);
           if (existing) {
+            const updatedRefugees = state.refugees.map((r) =>
+              r.id === existing.id ? { ...r, ...refugee } : r
+            );
             set((s) => ({
-              refugees: s.refugees.map((r) =>
-                r.id === existing.id ? { ...r, ...refugee } : r
-              ),
+              refugees: updatedRefugees,
+              inventory: syncInventoryBurnRates(s.inventory, updatedRefugees),
               pendingOutboxCount: s.pendingOutboxCount + 1,
             }));
             return;
@@ -629,15 +685,17 @@ export const usePoskoStore = create<PoskoState>()(
           });
         }
 
+        const updatedRefugees = [newPerson, ...state.refugees];
         set((s) => ({
-          refugees: [newPerson, ...s.refugees],
+          refugees: updatedRefugees,
           refugeeEvents: [intakeEvent, ...s.refugeeEvents],
+          needsTickets: [...generatedTickets, ...s.needsTickets],
+          inventory: syncInventoryBurnRates(s.inventory, updatedRefugees),
           poskos: s.poskos.map((p) =>
             p.id === newPerson.postId
               ? { ...p, currentRefugees: (p.currentRefugees || 0) + 1 }
               : p
           ),
-          needsTickets: [...generatedTickets, ...s.needsTickets],
           pendingOutboxCount: s.pendingOutboxCount + 1 + generatedTickets.length,
         }));
 
@@ -659,6 +717,7 @@ export const usePoskoStore = create<PoskoState>()(
         const target = updated.find((r) => r.id === refugeeId);
         set((s) => ({
           refugees: updated,
+          inventory: syncInventoryBurnRates(s.inventory, updated),
           pendingOutboxCount: s.pendingOutboxCount + 1,
         }));
 
@@ -671,9 +730,11 @@ export const usePoskoStore = create<PoskoState>()(
 
       deleteRefugee: (refugeeId) => {
         const target = get().refugees.find((r) => r.id === refugeeId);
+        const updated = get().refugees.filter((r) => r.id !== refugeeId);
         set((state) => ({
-          refugees: state.refugees.filter((r) => r.id !== refugeeId),
+          refugees: updated,
           refugeeEvents: state.refugeeEvents.filter((e) => e.refugeeId !== refugeeId),
+          inventory: syncInventoryBurnRates(state.inventory, updated),
           poskos: target
             ? state.poskos.map((p) =>
                 p.id === target.postId
@@ -774,6 +835,7 @@ export const usePoskoStore = create<PoskoState>()(
           refugees: currentList,
           refugeeEvents: currentEvents,
           needsTickets: [...newTickets, ...s.needsTickets],
+          inventory: syncInventoryBurnRates(s.inventory, currentList),
           pendingOutboxCount: s.pendingOutboxCount + newAddedCount + newTickets.length,
         }));
 
@@ -813,6 +875,7 @@ export const usePoskoStore = create<PoskoState>()(
         set((s) => ({
           refugees: updatedRefugees,
           refugeeEvents: [triageEvent, ...s.refugeeEvents],
+          inventory: syncInventoryBurnRates(s.inventory, updatedRefugees),
           pendingOutboxCount: s.pendingOutboxCount + 1,
         }));
 
@@ -878,7 +941,7 @@ export const usePoskoStore = create<PoskoState>()(
       }
 
       return {
-        inventory: currentList,
+        inventory: syncInventoryBurnRates(currentList, state.refugees),
         pendingOutboxCount: state.pendingOutboxCount + newAddedCount,
       };
     });
@@ -961,7 +1024,7 @@ export const usePoskoStore = create<PoskoState>()(
     };
 
     set({
-      inventory: updatedInventory,
+      inventory: syncInventoryBurnRates(updatedInventory, state.refugees),
       transactions: [tx, ...state.transactions],
       pendingOutboxCount: state.pendingOutboxCount + 1,
     });
@@ -1000,59 +1063,81 @@ export const usePoskoStore = create<PoskoState>()(
   },
 
   updateInventoryItem: (itemId, data) => {
-  set((state) => ({
-  inventory: state.inventory.map((i) =>
-  i.id === itemId ? { ...i, ...data, lastUpdatedAt: Date.now() } : i
-  ),
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
+    set((state) => {
+      const updatedInventory = state.inventory.map((i) =>
+        i.id === itemId ? { ...i, ...data, lastUpdatedAt: Date.now() } : i
+      );
+      return {
+        inventory: syncInventoryBurnRates(updatedInventory, state.refugees),
+        pendingOutboxCount: state.pendingOutboxCount + 1,
+      };
+    });
   },
 
   deleteInventoryItem: (itemId) => {
-  set((state) => ({
-  inventory: state.inventory.filter((i) => i.id !== itemId),
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
+    set((state) => ({
+      inventory: state.inventory.filter((i) => i.id !== itemId),
+      pendingOutboxCount: state.pendingOutboxCount + 1,
+    }));
   },
 
   allocateStock: (ticketId, itemId, qty) => {
-  const state = get();
-  const item = state.inventory.find((i) => i.id === itemId);
-  if (!item || item.currentQuantity < qty) return false;
+    const state = get();
+    const item = state.inventory.find((i) => i.id === itemId);
+    if (!item || item.currentQuantity < qty) return false;
 
-  const updatedInventory = state.inventory.map((i) =>
-  i.id === itemId
-  ? { ...i, currentQuantity: i.currentQuantity - qty, lastUpdatedAt: Date.now() }
-  : i
-  );
+    const updatedInventory = state.inventory.map((i) =>
+      i.id === itemId
+        ? { ...i, currentQuantity: i.currentQuantity - qty, lastUpdatedAt: Date.now() }
+        : i
+    );
 
-  const updatedTickets = state.needsTickets.map((t) =>
-  t.id === ticketId
-  ? { ...t, status: "ALLOCATED" as const, allocatedByUserId: state.session.userId }
-  : t
-  );
+    const updatedTickets = state.needsTickets.map((t) =>
+      t.id === ticketId
+        ? { ...t, status: "ALLOCATED" as const, allocatedByUserId: state.session.userId }
+        : t
+    );
 
-  const tx: InventoryTransaction = {
-  id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
-  itemId,
-  postId: state.session.poskoId,
-  officerId: state.session.userId,
-  officerName: state.session.userName,
-  txType: "DISTRIBUTION",
-  quantityChange: -qty,
-  referenceTicketId: ticketId,
-  note: "Alokasi tiket kebutuhan warga",
-  deviceTimestamp: Date.now(),
-  };
+    const tx: InventoryTransaction = {
+      id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
+      itemId,
+      postId: state.session.poskoId,
+      officerId: state.session.userId,
+      officerName: state.session.userName,
+      txType: "DISTRIBUTION",
+      quantityChange: -qty,
+      referenceTicketId: ticketId,
+      note: "Alokasi tiket kebutuhan warga",
+      deviceTimestamp: Date.now(),
+    };
 
-  set({
-  inventory: updatedInventory,
-  needsTickets: updatedTickets,
-  transactions: [tx, ...state.transactions],
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  });
+    set({
+      inventory: syncInventoryBurnRates(updatedInventory, state.refugees),
+      needsTickets: updatedTickets,
+      transactions: [tx, ...state.transactions],
+      pendingOutboxCount: state.pendingOutboxCount + 1,
+    });
 
-  return true;
+    return true;
+  },
+
+  recalculateAllBurnRates: () => {
+    set((state) => ({
+      inventory: syncInventoryBurnRates(state.inventory, state.refugees),
+    }));
+  },
+
+  getItemResilience: (itemId: string) => {
+    const state = get();
+    const item = state.inventory.find((i) => i.id === itemId);
+    if (!item) {
+      return calculateItemResilience(
+        { itemName: "", category: "GENERAL", currentQuantity: 0, unit: "UNIT" },
+        { totalRefugees: 0, infantsCount: 0, reproductiveWomenCount: 0, elderlyCount: 0, injuredOrChronicCount: 0 }
+      );
+    }
+    const poskoRefugees = state.refugees.filter((r) => r.postId === item.postId);
+    return calculatePoskoInventoryResilience(item, poskoRefugees);
   },
 
   // Needs Tickets (Pristine - Zero Mock Data)
@@ -1281,11 +1366,66 @@ export const usePoskoStore = create<PoskoState>()(
 
     set({
       refugees: updatedRefugees,
-      inventory: currentInventory,
+      inventory: syncInventoryBurnRates(currentInventory, updatedRefugees),
       transactions: [...newTransactions, ...state.transactions],
       needsTickets: updatedTickets,
       pendingOutboxCount: state.pendingOutboxCount + 1 + newTransactions.length,
     });
+  },
+
+  recordDirectDistribution: (data) => {
+    const state = get();
+    const targetItem = state.inventory.find((i) => i.id === data.itemId);
+    const poskoId = targetItem?.postId || state.session.poskoId;
+    const ticketId = `TKT-DIR-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`;
+    const now = Date.now();
+
+    const newTicket: NeedsTicket = {
+      id: ticketId,
+      refugeeId: data.refugeeId,
+      refugeeName: data.refugeeName,
+      shelterLocation: data.shelterLocation || "Tenda Pengungsian",
+      postId: poskoId,
+      itemName: data.itemName,
+      quantity: data.quantity,
+      unit: data.unit,
+      status: "COMPLETED",
+      urgency: "HIGH",
+      createdByUserId: data.officerId || state.session.userId,
+      createdByUserName: data.officerName || state.session.userName,
+      allocatedByUserId: data.officerId || state.session.userId,
+      distributedByUserId: data.officerId || state.session.userId,
+      createdAt: now,
+      completedAt: now,
+    };
+
+    const updatedInventory = state.inventory.map((i) =>
+      i.id === data.itemId
+        ? { ...i, currentQuantity: Math.max(0, i.currentQuantity - data.quantity), lastUpdatedAt: now }
+        : i
+    );
+
+    const tx: InventoryTransaction = {
+      id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
+      itemId: data.itemId,
+      postId: poskoId,
+      officerId: data.officerId || state.session.userId,
+      officerName: data.officerName || state.session.userName,
+      txType: "DISTRIBUTION",
+      quantityChange: -data.quantity,
+      referenceTicketId: ticketId,
+      note: data.notes || `Serah langsung di meja logistik untuk ${data.refugeeName}`,
+      deviceTimestamp: now,
+    };
+
+    set({
+      inventory: syncInventoryBurnRates(updatedInventory, state.refugees),
+      needsTickets: [newTicket, ...state.needsTickets],
+      transactions: [tx, ...state.transactions],
+      pendingOutboxCount: state.pendingOutboxCount + 2,
+    });
+
+    return newTicket;
   },
 
   // Tactical Chat & PTT (Pristine - Zero Mock Data)
@@ -1671,9 +1811,11 @@ export const usePoskoStore = create<PoskoState>()(
             }
           }
 
+          const rawInv = Array.from(existingInvMap.values());
+          const rawRef = Array.from(existingRefMap.values());
           return {
-            inventory: Array.from(existingInvMap.values()),
-            refugees: Array.from(existingRefMap.values()),
+            inventory: syncInventoryBurnRates(rawInv, rawRef),
+            refugees: rawRef,
             refugeeEvents: Array.from(existingEvtMap.values()),
             needsTickets: Array.from(existingTktMap.values()),
           };
@@ -1722,6 +1864,9 @@ export const usePoskoStore = create<PoskoState>()(
         // Ephemeral mesh radio signals must never persist across reloads
         if (state) {
           state.peers = [];
+          if (state.inventory && state.refugees) {
+            state.inventory = syncInventoryBurnRates(state.inventory, state.refugees);
+          }
         }
       },
     }

@@ -1,6 +1,10 @@
 import { IRefugeeRepository } from '@/core/domain/refugees/refugee.repository.interface';
 import { IInventoryRepository } from '@/core/domain/logistics/inventory.repository.interface';
 import { asPoskoId } from '@/core/shared/branded-types';
+import {
+  extractDemographicBreakdown,
+  calculateItemResilience,
+} from '@/core/domain/logistics/consumption-resilience';
 
 export interface PoskoTriageSummary {
   poskoId: string;
@@ -21,7 +25,7 @@ export interface ItemBurnRateSummary {
   unit: string;
   dailyBurnRate: number;
   daysRemaining: number;
-  status: 'CRITICAL' | 'WARNING' | 'HEALTHY';
+  status: 'CRITICAL' | 'WARNING' | 'HEALTHY' | 'STANDBY';
 }
 
 export interface FamilyReunionMatchSummary {
@@ -91,52 +95,57 @@ export class DisasterAnalyticsService {
   }
 
   /**
-  * Menghitung proyeksi burn-rate dan estimasi sisa hari stok logistik
-  */
+   * Menghitung proyeksi burn-rate dan estimasi sisa hari stok logistik
+   * mengadopsi standar kemanusiaan SPHERE Project & BNPB berdasarkan populasi pengungsi.
+   */
   public async getInventoryBurnRate(poskoId: string): Promise<ItemBurnRateSummary[]> {
-  const itemsResult = await this.inventoryRepo.findByPoskoId(asPoskoId(poskoId));
-  const items = itemsResult.ok ? itemsResult.value : [];
-  const summaries: ItemBurnRateSummary[] = [];
+    const targetPoskoId = asPoskoId(poskoId);
+    const [itemsResult, refugeesResult] = await Promise.all([
+      this.inventoryRepo.findByPoskoId(targetPoskoId),
+      this.refugeeRepo.findByPoskoId(targetPoskoId),
+    ]);
 
-  for (const item of items) {
-  const snap = item.toSnapshot();
-  const txResult = await this.inventoryRepo.getTransactionsByItemId(snap.id);
-  const txs = txResult.ok ? txResult.value : [];
+    const items = itemsResult.ok ? itemsResult.value : [];
+    const refugees = refugeesResult.ok ? refugeesResult.value : [];
 
-  // Hitung total pemakaian distribusi 3 hari terakhir
-  let totalDistributed = 0;
-  for (const tx of txs) {
-  if (tx.txType === 'DISTRIBUTION' && tx.quantityChange < 0) {
-  totalDistributed += Math.abs(tx.quantityChange);
-  }
-  }
+    const demographics = extractDemographicBreakdown(
+      refugees.map((r) => {
+        const snap = r.toSnapshot();
+        return {
+          age: snap.age,
+          gender: snap.gender,
+        };
+      })
+    );
 
-  const dailyBurnRate = totalDistributed > 0
-  ? Math.round((totalDistributed / ANALYTICS_CONSTANTS.BURN_RATE_LOOKBACK_DAYS) * ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR) / ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR
-  : 0;
-  const daysRemaining =
-  dailyBurnRate > 0
-  ? Math.round((snap.currentQuantity / dailyBurnRate) * ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR) / ANALYTICS_CONSTANTS.DECIMAL_PRECISION_FACTOR
-  : ANALYTICS_CONSTANTS.INFINITE_DAYS_REMAINING;
+    const summaries: ItemBurnRateSummary[] = [];
 
-  let status: 'CRITICAL' | 'WARNING' | 'HEALTHY' = 'HEALTHY';
-  if (daysRemaining <= ANALYTICS_CONSTANTS.CRITICAL_DAYS_THRESHOLD) status = 'CRITICAL';
-  else if (daysRemaining <= ANALYTICS_CONSTANTS.WARNING_DAYS_THRESHOLD) status = 'WARNING';
+    for (const item of items) {
+      const snap = item.toSnapshot();
+      const resilience = calculateItemResilience(
+        {
+          itemName: snap.itemName,
+          category: snap.category,
+          currentQuantity: snap.currentQuantity,
+          unit: snap.unit,
+        },
+        demographics
+      );
 
-  summaries.push({
-  itemId: snap.id,
-  itemName: snap.itemName,
-  category: snap.category,
-  currentQuantity: snap.currentQuantity,
-  unit: snap.unit,
-  dailyBurnRate,
-  daysRemaining,
-  status,
-  });
-  }
+      summaries.push({
+        itemId: snap.id,
+        itemName: snap.itemName,
+        category: snap.category,
+        currentQuantity: snap.currentQuantity,
+        unit: snap.unit,
+        dailyBurnRate: resilience.dailyDemand,
+        daysRemaining: resilience.daysRemaining,
+        status: resilience.status,
+      });
+    }
 
-  summaries.sort((a, b) => a.daysRemaining - b.daysRemaining);
-  return summaries;
+    summaries.sort((a, b) => a.daysRemaining - b.daysRemaining);
+    return summaries;
   }
 
   /**

@@ -25,6 +25,7 @@ import { Dialog } from "@/shared/ui/dialog";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { type NeedsTicket } from "@/shared/types";
 import { canApproveDistribution, canDeliverAid } from "@/core/permissions/posko-permissions";
+import { AdHocDistributionModal } from "@/features/logistics/components/adhoc-distribution-modal";
 
 export default function LogisticsDistributePage() {
   const params = useParams();
@@ -46,6 +47,7 @@ export default function LogisticsDistributePage() {
   const [selectedTicketForAllocation, setSelectedTicketForAllocation] = React.useState<NeedsTicket | null>(null);
   const [selectedItemId, setSelectedItemId] = React.useState<string>("");
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [adHocModalOpen, setAdHocModalOpen] = React.useState(false);
 
   const isLogisticsOfficer = canApproveDistribution(session.userRole);
   const isDeliveryAuthorized = canDeliverAid(session.userRole);
@@ -243,10 +245,20 @@ export default function LogisticsDistributePage() {
   />
   </div>
   <div className="flex items-center gap-2">
-  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-subtle border border-border text-xs font-semibold text-text-main">
-  <Icon name="delivery" variant="bold" size={14} className="text-primary" />
-  <span>Total Tiket: {needsTickets.length}</span>
-  </div>
+    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-subtle border border-border text-xs font-semibold text-text-main">
+      <Icon name="delivery" variant="bold" size={14} className="text-primary" />
+      <span>Total Tiket: {needsTickets.length}</span>
+    </div>
+    <Button
+      variant="primary"
+      size="sm"
+      icon="add-circle"
+      iconVariant="bold"
+      onClick={() => setAdHocModalOpen(true)}
+      className="h-10 text-xs font-bold shrink-0 shadow-2xs"
+    >
+      + Penyaluran Warga (Ad-hoc)
+    </Button>
   </div>
   </div>
 
@@ -499,7 +511,17 @@ export default function LogisticsDistributePage() {
   </div>
   </form>
   )}
-  </Dialog>
+    </Dialog>
+
+    {/* Ad-Hoc Refugee Logistics Distribution Modal */}
+    <AdHocDistributionModal
+      open={adHocModalOpen}
+      onOpenChange={setAdHocModalOpen}
+      onSuccess={(msg) => {
+        setSuccessToast(msg);
+        setTimeout(() => setSuccessToast(null), 5000);
+      }}
+    />
   </div>
   );
 }
