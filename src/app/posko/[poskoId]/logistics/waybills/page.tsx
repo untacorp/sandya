@@ -196,11 +196,11 @@ export default function WaybillsPage() {
   </p>
   </div>
 
-  <div className="flex sm:flex-col gap-2 shrink-0">
+  <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 w-full sm:w-auto">
   <Button
   variant="secondary"
   size="sm"
-  className="text-xs font-bold"
+  className="text-xs font-bold w-full sm:w-auto justify-center"
   onClick={() => setWaybillModal(wb)}
   >
   <Icon name="qr-code" variant="bold" size={14} className="mr-1" />
@@ -211,7 +211,7 @@ export default function WaybillsPage() {
   <Button
   variant="primary"
   size="sm"
-  className="text-xs font-bold"
+  className="text-xs font-bold w-full sm:w-auto justify-center"
   onClick={() => handleConfirmArrival(wb)}
   >
   <Icon name="check" variant="bold" size={14} className="mr-1" />
@@ -238,7 +238,7 @@ export default function WaybillsPage() {
   <label className="font-semibold text-text-main block">Posko / Hub Sasaran Suplai</label>
   <select value={targetPoskoId}
   onChange={(e) => setTargetPoskoId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {poskos.map((p) => (
   <option key={p.id} value={p.id}>
@@ -252,7 +252,7 @@ export default function WaybillsPage() {
   <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
   <select value={selectedCatalogId}
   onChange={(e) => setSelectedCatalogId(parseInt(e.target.value))}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {Object.values(DISASTER_NEEDS_CATALOG).map((c) => (
   <option key={c.id} value={c.id}>
@@ -277,7 +277,7 @@ export default function WaybillsPage() {
   <label className="font-semibold text-text-main block">Satuan</label>
   <select value={unit}
   onChange={(e) => setUnit(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   <option value="KG">KG</option>
   <option value="LITER">LITER</option>
@@ -302,12 +302,12 @@ export default function WaybillsPage() {
   />
   </div>
 
-  <div className="pt-2 flex items-center gap-2">
+  <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
   <Button
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1"
+  className="w-full sm:flex-1"
   onClick={() => setCreateOpen(false)}
   >
   Batal
@@ -316,7 +316,7 @@ export default function WaybillsPage() {
   type="submit"
   variant="primary"
   size="md"
-  className="flex-1 justify-center font-bold"
+  className="w-full sm:flex-1 justify-center font-bold"
   >
   Terbitkan Surat Jalan
   </Button>

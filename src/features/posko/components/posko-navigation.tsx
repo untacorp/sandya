@@ -52,34 +52,34 @@ export function PoskoBottomNav() {
   ];
 
   return (
-  <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:hidden shadow-sm safe-area-bottom">
-  <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
-  {navItems.map((item) => {
-  const isActive = item.exact
-  ? pathname === item.href
-  : pathname.startsWith(item.href);
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:hidden shadow-sm safe-area-bottom pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
+        {navItems.map((item) => {
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
 
-  return (
-  <Link
-  key={item.href}
-  href={item.href}
-  aria-label={item.label}
-  title={item.label}
-  className={cn(
-  "flex items-center justify-center flex-1 h-full transition-colors select-none",
-  isActive
-  ? "text-primary"
-  : "text-text-muted hover:text-text-main"
-  )}
-  >
-  <div
-  className={cn(
-  "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-  isActive
-  ? "bg-primary/10 text-primary"
-  : "hover:bg-surface-muted"
-  )}
-  >
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-label={item.label}
+              title={item.label}
+              className={cn(
+                "flex items-center justify-center flex-1 h-full min-h-[44px] transition-colors select-none",
+                isActive
+                  ? "text-primary"
+                  : "text-text-muted hover:text-text-main"
+              )}
+            >
+              <div
+                className={cn(
+                  "w-11 h-11 rounded-xl flex items-center justify-center transition-all",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-surface-muted"
+                )}
+              >
   <Icon
   name={item.icon}
   variant={isActive ? "bold" : "linear"}

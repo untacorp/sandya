@@ -55,7 +55,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   type={type}
   className={cn(
   "flex w-full rounded-lg bg-surface transition-colors duration-150",
-  "h-10 px-3 text-xs font-semibold text-text-main border border-border",
+  "h-10 px-3 text-base sm:text-xs font-semibold text-text-main border border-border",
   "placeholder:text-text-subtle",
   "focus:outline-none focus:ring-2 focus:ring-primary focus:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-border-strong",
   "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-subtle",

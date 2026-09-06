@@ -369,7 +369,7 @@ export default function TriagePage() {
   className="pl-9 text-xs h-10"
   />
   </div>
-  <div className="flex items-center gap-2">
+  <div className="flex flex-wrap items-center gap-2">
   <button 
   onClick={() => setIsCompact(!isCompact)}
   className="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-xs font-semibold hover:bg-surface-subtle transition-colors text-text-main"
@@ -410,7 +410,7 @@ export default function TriagePage() {
   return (
   <div
   key={cat.color}
-  className="rounded-xl border border-border bg-surface flex flex-col min-h-[480px] shadow-2xs overflow-hidden"
+  className="rounded-xl border border-border bg-surface flex flex-col min-h-[280px] md:min-h-[480px] shadow-2xs overflow-hidden"
   >
   {/* Header Kolom */}
   <div className={`p-3 border-b flex items-center justify-between ${cat.headerCls}`}>
@@ -434,7 +434,7 @@ export default function TriagePage() {
   </div>
 
   {/* Daftar Pasien */}
-  <div className="p-2.5 flex-1 space-y-2 overflow-y-auto max-h-[640px]">
+  <div className="p-2.5 flex-1 space-y-2 overflow-y-auto max-h-[460px] md:max-h-[640px]">
   {patientList.length === 0 ? (
   <div className="flex flex-col items-center justify-center py-12 text-center text-text-subtle space-y-1">
   <Icon name="health" variant="linear" size={24} className="text-border" />
@@ -816,12 +816,12 @@ export default function TriagePage() {
   </div>
 
   {/* Tombol Simpan */}
-  <div className="pt-2 flex items-center gap-2">
+  <div className="pt-2 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center gap-2">
   <Button
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1"
+  className="w-full sm:flex-1"
   onClick={() => setExamOpen(false)}
   >
   Batal
@@ -831,7 +831,7 @@ export default function TriagePage() {
   variant="primary"
   size="md"
   disabled={!isAuthorized || isSubmitting}
-  className="flex-1 justify-center"
+  className="w-full sm:flex-1 justify-center"
   >
   {isSubmitting
   ? "Menyimpan Rekam..."

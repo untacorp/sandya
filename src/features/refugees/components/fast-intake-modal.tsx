@@ -373,8 +373,8 @@ export function FastIntakeModal({ open, onOpenChange, poskoId }: FastIntakeModal
   </div>
 
   {/* Action Buttons */}
-  <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-  <Button type="button" variant="outline" size="md" onClick={handleClose}>
+  <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t border-border">
+  <Button type="button" variant="outline" size="md" onClick={handleClose} className="w-full sm:w-auto">
   Batal
   </Button>
   <Button
@@ -384,6 +384,7 @@ export function FastIntakeModal({ open, onOpenChange, poskoId }: FastIntakeModal
   icon="check"
   iconVariant="bold"
   disabled={isSubmitting}
+  className="w-full sm:w-auto"
   >
   {isSubmitting ? "Menyimpan..." : "Simpan Warga (30s)"}
   </Button>
@@ -403,7 +404,7 @@ export function FastIntakeFAB() {
   type="button"
   onClick={() => setOpen(true)}
   aria-label="Pendaftaran Cepat Pengungsi"
-  className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 h-13 px-4 rounded-full bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-2 hover:bg-primary/90 active:scale-95 transition-all cursor-pointer border border-white/20"
+  className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 md:right-6 z-40 h-12 sm:h-13 px-3.5 sm:px-4 rounded-full bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-2 hover:bg-primary/90 active:scale-95 transition-all cursor-pointer border border-white/20"
   >
   <Icon name="user" variant="bold" size={20} />
   <span className="text-xs sm:text-sm font-bold tracking-tight">Daftar Cepat (30s)</span>

@@ -66,31 +66,31 @@ export function QRCodeSVG({
   }, [value, size, level, includeMargin]);
 
   if (error) {
-  return (
-  <div
-  className={`flex items-center justify-center p-4 rounded-lg bg-status-danger-bg text-status-danger border border-status-danger-border text-xs text-center ${className}`}
-  style={{ width: size, height: size }}
-  >
-  <span>Error QR: {error}</span>
-  </div>
-  );
+    return (
+      <div
+        className={`flex items-center justify-center max-w-full p-4 rounded-lg bg-status-danger-bg text-status-danger border border-status-danger-border text-xs text-center ${className}`}
+        style={{ width: size, maxWidth: "100%", height: size }}
+      >
+        <span>Error QR: {error}</span>
+      </div>
+    );
   }
 
   if (!svgString) {
-  return (
-  <div
-  className={`flex items-center justify-center p-4 rounded-lg bg-surface-subtle border border-border animate-pulse ${className}`}
-  style={{ width: size, height: size }}
-  >
-  <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-  </div>
-  );
+    return (
+      <div
+        className={`flex items-center justify-center max-w-full p-4 rounded-lg bg-surface-subtle border border-border animate-pulse ${className}`}
+        style={{ width: size, maxWidth: "100%", height: size }}
+      >
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
   }
 
   return (
-  <div
-  className={`inline-block overflow-hidden rounded-lg bg-white p-1 border border-border shadow-2xs ${className}`}
-  dangerouslySetInnerHTML={{ __html: svgString }}
-  />
+    <div
+      className={`inline-block max-w-full overflow-hidden rounded-lg bg-white p-1 border border-border shadow-2xs [&>svg]:max-w-full [&>svg]:h-auto ${className}`}
+      dangerouslySetInnerHTML={{ __html: svgString }}
+    />
   );
 }

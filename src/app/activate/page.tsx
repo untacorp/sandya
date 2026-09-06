@@ -72,9 +72,9 @@ export default function ActivatePassPage() {
   };
 
   return (
-  <div className="min-h-screen bg-canvas text-text-main flex flex-col justify-between">
+  <div className="min-h-[100dvh] bg-canvas text-text-main flex flex-col justify-between">
   {/* Header */}
-  <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
+  <header className="border-b border-border bg-surface px-4 py-3 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
   <div className="max-w-xl mx-auto w-full flex items-center justify-between">
   <Link href="/">
   <Button variant="ghost" size="sm" icon="arrow-left" iconVariant="linear">
@@ -184,12 +184,12 @@ export default function ActivatePassPage() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-border flex items-center gap-2">
+            <div className="pt-2 border-t border-border flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
               <Button
                 variant="secondary"
                 size="md"
                 onClick={() => setVerifiedPass(null)}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Pindai Ulang
               </Button>
@@ -199,7 +199,7 @@ export default function ActivatePassPage() {
                 onClick={handleConfirmActivation}
                 icon="arrow-right"
                 iconVariant="bold"
-                className="flex-1 justify-center"
+                className="w-full sm:flex-1 justify-center"
               >
                 Mulai Bekerja
               </Button>
@@ -221,7 +221,7 @@ export default function ActivatePassPage() {
   <Input placeholder="Contoh: SAN-MED-001-0001 atau tempel QR string"
   value={manualCode}
   onChange={(e) => setManualCode(e.target.value)}
-  className="text-xs font-mono"
+  className="text-base sm:text-xs font-mono"
   required
   />
   <p className="text-[11px] text-text-muted">
@@ -244,7 +244,7 @@ export default function ActivatePassPage() {
   </main>
 
   {/* Footer */}
-  <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
+  <footer className="border-t border-border bg-surface px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center text-xs text-text-muted">
   Jika kartu tugas belum dicetak, minta Koordinator Posko Anda membuka menu anggota posko.
   </footer>
   </div>

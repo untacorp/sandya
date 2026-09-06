@@ -77,9 +77,9 @@ export default function PublicGuestPage() {
   };
 
   return (
-  <div className="min-h-screen bg-canvas text-text-main flex flex-col justify-between">
+  <div className="min-h-[100dvh] bg-canvas text-text-main flex flex-col justify-between">
   {/* Header */}
-  <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
+  <header className="border-b border-border bg-surface px-4 py-3 sm:px-6 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
   <div className="max-w-xl mx-auto w-full flex items-center justify-between">
   <Link href="/">
   <Button variant="ghost" size="sm" icon="arrow-left" iconVariant="linear">
@@ -116,7 +116,7 @@ export default function PublicGuestPage() {
   onChange={(e) => setSearchName(e.target.value)}
   icon="search"
   required
-  className="text-xs"
+  className="text-base sm:text-xs"
   />
   </div>
 
@@ -128,16 +128,16 @@ export default function PublicGuestPage() {
   value={searchOrigin}
   onChange={(e) => setSearchOrigin(e.target.value)}
   icon="pin"
-  className="text-xs"
+  className="text-base sm:text-xs"
   />
   </div>
 
-  <div className="pt-1 flex items-center gap-2">
+  <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
   <Button
   type="submit"
   variant="primary"
   size="md"
-  className="flex-1 justify-center"
+  className="w-full sm:flex-1 justify-center"
   icon="search"
   iconVariant="bold"
   disabled={isSearching}
@@ -148,7 +148,7 @@ export default function PublicGuestPage() {
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1 justify-center"
+  className="w-full sm:flex-1 justify-center"
   icon="qr-code"
   iconVariant="bold"
   onClick={() => setScanModalOpen(true)}
@@ -230,7 +230,7 @@ export default function PublicGuestPage() {
   </main>
 
   {/* Footer */}
-  <footer className="border-t border-border bg-surface px-4 py-3 text-center">
+  <footer className="border-t border-border bg-surface px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center">
   <p className="text-[11px] text-text-muted">
   Sandya Disaster Management • Standar RFL (Restoring Family Links) ICRC
   </p>

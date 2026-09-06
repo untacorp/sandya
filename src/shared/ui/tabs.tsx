@@ -66,10 +66,10 @@ export function Tabs({
   );
 
   const baseClass = cn(
-  "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs transition-all select-none cursor-pointer whitespace-nowrap min-w-max",
-  isActive
-  ? "bg-surface text-text-main shadow-2xs font-bold"
-  : "text-text-muted hover:text-text-main hover:bg-surface/60 font-medium"
+    "flex-1 flex items-center justify-center gap-2 py-2 sm:py-1.5 px-3 min-h-[38px] sm:min-h-0 rounded-lg text-xs transition-all select-none cursor-pointer whitespace-nowrap min-w-max",
+    isActive
+      ? "bg-surface text-text-main shadow-2xs font-bold"
+      : "text-text-muted hover:text-text-main hover:bg-surface/60 font-medium"
   );
 
   if (tab.href) {
@@ -132,10 +132,10 @@ export function Tabs({
   );
 
   const baseClass = cn(
-  "flex items-center gap-2 py-2 px-1 text-xs transition-all select-none cursor-pointer whitespace-nowrap border-b-2 -mb-[2px]",
-  isActive
-  ? "border-primary text-text-main font-bold"
-  : "border-transparent text-text-muted hover:text-text-main font-medium"
+    "flex items-center gap-2 py-2.5 sm:py-2 px-2 sm:px-1 min-h-[40px] sm:min-h-0 text-xs transition-all select-none cursor-pointer whitespace-nowrap border-b-2 -mb-[2px]",
+    isActive
+      ? "border-primary text-text-main font-bold"
+      : "border-transparent text-text-muted hover:text-text-main font-medium"
   );
 
   if (tab.href) {
