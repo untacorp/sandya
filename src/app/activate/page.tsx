@@ -28,20 +28,41 @@ function ActivatePassContent() {
   const [verifyError, setVerifyError] = React.useState<string | null>(null);
 
   const handleBack = () => {
+    // Turn off camera hardware immediately before starting route transition
+    setMode("MANUAL");
+
+    // 1. Explicit returnUrl query parameter
     if (returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//")) {
       router.push(returnUrl);
+      return;
+    }
+
+    // 2. Browser history from same origin
+    if (
+      typeof window !== "undefined" &&
+      window.history.length > 1 &&
+      document.referrer &&
+      document.referrer.includes(window.location.host)
+    ) {
+      router.back();
+      return;
+    }
+
+    // 3. Contextual fallback based on active role & hierarchy level
+    if (session.userRole === "PEMIMPIN_ORGANISASI" || (!session.missionId && !session.poskoId && session.orgId)) {
+      router.push("/org");
+      return;
+    }
+    if (session.userRole === "KOMANDAN_MISI" || (session.missionId && !session.poskoId)) {
+      router.push(`/missions/${session.missionId || "MSN-2026-01"}`);
       return;
     }
     if (session.poskoId && session.poskoId !== "POS-LOCAL") {
       router.push(`/posko/${session.poskoId}`);
       return;
     }
-    if (session.missionId && session.missionId !== "MIS-01") {
+    if (session.missionId) {
       router.push(`/missions/${session.missionId}`);
-      return;
-    }
-    if (session.userRole === "PEMIMPIN_ORGANISASI") {
-      router.push("/org");
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -239,6 +260,7 @@ function ActivatePassContent() {
           <Card className="overflow-hidden p-0 border-border">
             <div className="aspect-square w-full max-w-[320px] mx-auto relative bg-black flex items-center justify-center">
               <QRCameraScanner
+                active={mode === "SCAN" && !verifiedPass && !verifying}
                 onScan={handleScanPass}
                 onError={(err) => setVerifyError(err)}
                 viewfinderText="Arahkan ke QR Kartu Tugas"

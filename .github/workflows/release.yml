@@ -1,0 +1,314 @@
+name: "Release Multi-Platform"
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag versi untuk rilis (contoh: v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # 1. CREATE DRAFT RELEASE
+  create-release:
+    name: "Initialize Release"
+    runs-on: ubuntu-22.04
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+      tag_name: ${{ steps.determine-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine Release Tag
+        id: determine-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using release tag: $TAG"
+
+      - name: Create Draft Release
+        id: create-release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.determine-tag.outputs.tag }}';
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Sandya Platform ${tag}`,
+              body: `### 🌟 Sandya Humanitarian Platform Release ${tag}
+
+Sistem Operasi Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-Mesh Ecosystem).
+
+---
+
+### 📦 Paket Instalasi Resmi Lintas-Platform
+Unduh paket binary sesuai sistem operasi perangkat posko atau ponsel relawan:
+- 🐧 **Linux**: Berkas \`.AppImage\` (siap pakai tanpa root) & \`.deb\` (Debian / Ubuntu)
+- 🪟 **Windows**: Berkas \`sandya_x64-setup.exe\` (NSIS Installer) & installer \`.msi\`
+- 🍎 **macOS**: Berkas \`.dmg\` (Universal Binary: Apple Silicon M1/M2/M3/M4 & Intel)
+- 🤖 **Android**: Berkas \`.apk\` mandiri (arsitektur ARM64, ARMv7, x86_64)
+- 📱 **iOS**: Paket bundle aplikasi iOS mandiri (\`sandya-ios-build.zip\`)
+
+---
+
+### 📋 Ringkasan Perubahan & Fitur (Changelog v1.0.0)
+
+#### 🏛️ Arsitektur Inti & Local-First
+- **Local-First SQLite & Event Sourcing**: Arsitektur persistensi lokal dengan rantai audit kausal yang tidak dapat diubah (*immutable*).
+- **Pembersihan Zero-Mock**: Pembersihan data tiruan/mock di seluruh store dan repositori untuk integritas produksi lapangan.
+- **Sinkronisasi Multi-Level**: Pipa sinkronisasi Local SQLite ke Cloud Supabase dengan deduplikasi 4 lapis.
+
+#### 📡 Tactical Mesh & Transpor Sinkronisasi Tanpa Internet
+- **BLE Mesh SMP v1**: Transpor Bluetooth Low Energy offline dengan frame Ed25519 dan deduplikasi LRU cache $O(1)$.
+- **Dynamic Parity Poster**: Rekonstruksi data utuh meskipun kertas cetak QR robek atau kotor berbasis kode Reed-Solomon/Paritas.
+- **Animated QR Codec**: Streaming transfer data layar-ke-layar dengan verifikasi integritas CRC16.
+- **Intercom Taktis & PTT**: Transmisi audio Push-to-Talk 5 detik, 4 kanal operasi darurat, dan tombol sirene darurat SOS.
+
+#### 📦 Manajemen Logistik Posko & Resiliensi Bantuan
+- **Single-Writer Inventory**: Pencegahan konflik stok gudang darurat dan pencatatan audit logistik per posko.
+- **Distribusi Ad-Hoc & Anti-Penimbunan**: Proteksi pembagian bantuan dengan aturan verifikasi jeda 72 jam.
+- **Kalkulator Ketahanan SPHERE / BNPB**: Peringatan otomatis estimasi habis stok logistik berbasis demografi pengungsi.
+
+#### 🏥 Triase Medis & Reuni Keluarga Terpisah
+- **Triase START 4-Warna**: Klasifikasi klinis darurat (Hijau, Kuning, Merah, Hitam) dan pencatatan riwayat penanganan.
+- **Pencarian Kerabat Terpisah**: Indeks nama fonetik dan pencarian cepat warga antar-posko pengungsian.
+- **Resolusi Jenazah**: Tata kelola khusus pengungsi berstatus wafat untuk administrasi kepolisian dan pemakaman.
+
+#### 🛡️ Keamanan & Akses Terkontrol
+- **RBAC Bertingkat (7 Peran)**: Pengawalan ketat berbasis izin peran (Pimpinan Lembaga, Koordinator Misi, Kepala Posko, Dokter, Logistik, Relawan Lapangan, Warga/Tamu).
+- **Kredensial Kartu Tugas**: Penerbitan Kartu Peran QR terenkripsi dengan seed phrase BIP-39 12 kata sandi.
+
+#### 🌐 Landing Page & Hub Unduhan Cerdas
+- **Web Landing Page & App Gateway**: Pemisahan otomatis antara antarmuka web informasi publik dengan gerbang operasional posko di dalam Tauri runtime.
+- **Smart Download Hub**: Deteksi otomatis sistem operasi pengunjung dan tautan unduhan langsung ke rilis GitHub.
+
+---
+*Dibangun otomatis oleh GitHub Actions Pipeline (Multi-Runner: Ubuntu, Windows, macOS).*`,
+              draft: true,
+              prerelease: false
+            });
+            return release.id;
+
+  # 2. COMPILE DESKTOP (Linux, Windows, macOS)
+  build-desktop:
+    name: "Build Desktop (${{ matrix.platform }})"
+    needs: create-release
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+            args: ''
+            targets: ''
+          - platform: 'windows-latest'
+            args: ''
+            targets: ''
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+            targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+
+      - name: Install Linux Build Dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Install Project Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and Upload Tauri Desktop Bundles
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+
+  # 3. COMPILE ANDROID (.apk)
+  build-android:
+    name: "Build Android (.apk)"
+    needs: create-release
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK & CMake
+        run: |
+          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" "cmake;3.22.1"
+
+      - name: Install Rust & Android Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Project Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize Android Target (if needed)
+        run: |
+          pnpm tauri android init --ci --skip-targets-install
+
+      - name: Build Android APK
+        env:
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/26.1.10909125
+        run: |
+          pnpm tauri android build --apk --target aarch64,armv7,x86_64
+
+      - name: Collect and Rename Android APKs
+        id: collect-apk
+        run: |
+          mkdir -p dist-android
+          find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -exec cp {} dist-android/ \;
+          ls -la dist-android/
+
+      - name: Upload Android APK to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.create-release.outputs.tag_name }}"
+          for file in dist-android/*.apk; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file to release $TAG..."
+              gh release upload "$TAG" "$file" --clobber
+            fi
+          done
+
+  # 4. COMPILE IOS (.app zip)
+  build-ios:
+    name: "Build iOS"
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust & iOS Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Project Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize iOS Target (if needed)
+        run: |
+          pnpm tauri ios init --ci
+
+      - name: Build iOS Application
+        run: |
+          # Build target tanpa butuh sertifikat Apple berbayar di CI
+          pnpm tauri ios build --debug --no-bundling || true
+
+      - name: Package iOS Bundle
+        run: |
+          mkdir -p dist-ios
+          # Cari hasil kompilasi iOS (.app / build folder) dan kompres ke zip
+          if [ -d "src-tauri/gen/apple/build" ]; then
+            cd src-tauri/gen/apple/build
+            zip -r ../../../../dist-ios/sandya-ios-build.zip .
+            cd ../../../..
+          fi
+
+      - name: Upload iOS Asset to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.create-release.outputs.tag_name }}"
+          if [ -f "dist-ios/sandya-ios-build.zip" ]; then
+            echo "Uploading iOS build zip to release $TAG..."
+            gh release upload "$TAG" "dist-ios/sandya-ios-build.zip" --clobber
+          fi
+
+  # 5. PUBLISH RELEASE
+  publish-release:
+    name: "Publish Official Release"
+    needs: [create-release, build-desktop, build-android, build-ios]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Undraft Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release_id = '${{ needs.create-release.outputs.release_id }}';
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release_id,
+              draft: false
+            });
+            console.log(`Release ${release_id} successfully published!`);

@@ -135,37 +135,47 @@ export function RolePassModal({
   };
 
   const getRoleBadge = (r: StaffRole) => {
-  switch (r) {
-  case "PETUGAS_MEDIS":
-  return <Badge variant="triage-yellow" size="sm">Petugas Medis</Badge>;
-  case "PETUGAS_LOGISTIK":
-  return <Badge variant="primary" size="sm">Petugas Logistik</Badge>;
-  case "RELAWAN_LAPANGAN":
-  return <Badge variant="neutral" size="sm">Relawan Lapangan</Badge>;
-  case "KOORDINATOR_POSKO":
-  return <Badge variant="danger" size="sm">Koordinator Posko</Badge>;
-  default:
-  return <Badge variant="neutral" size="sm">{r}</Badge>;
-  }
+    switch (r) {
+      case "PEMIMPIN_ORGANISASI":
+        return <Badge variant="primary" size="sm">Pimpinan Lembaga Induk</Badge>;
+      case "KOMANDAN_MISI":
+        return <Badge variant="warning" size="sm">Komandan Misi Wilayah</Badge>;
+      case "KOORDINATOR_POSKO":
+        return <Badge variant="danger" size="sm">Koordinator Posko Lapangan</Badge>;
+      case "PETUGAS_MEDIS":
+        return <Badge variant="triage-yellow" size="sm">Petugas Medis Lapangan</Badge>;
+      case "PETUGAS_LOGISTIK":
+        return <Badge variant="primary" size="sm">Petugas Logistik & Gudang</Badge>;
+      case "RELAWAN_LAPANGAN":
+        return <Badge variant="neutral" size="sm">Relawan Lapangan</Badge>;
+      default:
+        return <Badge variant="neutral" size="sm">{r}</Badge>;
+    }
   };
 
+  const scopeDescription =
+    poskoName ||
+    (role === "PEMIMPIN_ORGANISASI"
+      ? orgName || "Markas Lembaga Induk"
+      : missionName || "Markas Wilayah Operasi");
+
   return (
-  <Dialog
-  open={open}
-  onOpenChange={onOpenChange}
-  title="Kartu Tugas Resmi Lapangan"
-  description="Arahkan kamera HP petugas ke QR Code ini untuk aktivasi hak akses posko."
-  maxWidth="sm"
-  >
-  <div className="space-y-4 text-center">
-  {/* Role & Name Header */}
-  <div className="space-y-1">
-  <div className="flex justify-center">{getRoleBadge(role)}</div>
-  <h3 className="text-base font-bold text-text-main">{officerName}</h3>
-  <p className="text-xs text-text-muted">
-  {poskoName} • Berlaku 14 Hari
-  </p>
-  </div>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Kartu Tugas Resmi Lapangan"
+      description="Arahkan kamera HP petugas ke QR Code ini untuk aktivasi hak akses operasional."
+      maxWidth="sm"
+    >
+      <div className="space-y-4 text-center">
+        {/* Role & Name Header */}
+        <div className="space-y-1">
+          <div className="flex justify-center">{getRoleBadge(role)}</div>
+          <h3 className="text-base font-bold text-text-main">{officerName}</h3>
+          <p className="text-xs text-text-muted">
+            {scopeDescription} • Berlaku 14 Hari
+          </p>
+        </div>
 
   {/* Real Authentic QR Code */}
   <div className="flex justify-center p-3 rounded-xl bg-surface border border-border shadow-xs">

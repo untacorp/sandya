@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { type Posko } from "@/shared/types";
 import { DashboardCharts } from "./dashboard-charts";
+import { getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 export default function PoskoDashboardPage() {
   const params = useParams();
@@ -192,7 +193,7 @@ export default function PoskoDashboardPage() {
                 {peer.aliasName}
               </span>
               <span className="text-[11px] text-text-muted">
-                {peer.role.replace(/_/g, " ")}
+                {getRoleBadgeLabel(peer.role)}
               </span>
             </div>
             <span className="text-[11px] text-text-muted">

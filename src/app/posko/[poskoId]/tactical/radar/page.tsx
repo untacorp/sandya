@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
+import { getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 export const RADAR_CONSTANTS = {
   RSSI_VERY_CLOSE_THRESHOLD: -50,
@@ -141,7 +142,7 @@ export default function MeshRadarPage() {
   {session.userName} (Perangkat Anda)
   </h4>
   <p className="text-xs text-text-muted">
-  Peran: {session.userRole.replace(/_/g, " ")} • Posko: {session.poskoName}
+  Peran: {getRoleBadgeLabel(session.userRole)} • Posko: {session.poskoName}
   </p>
   </div>
   </div>
@@ -185,7 +186,7 @@ export default function MeshRadarPage() {
                     {peer.aliasName}
                   </h4>
                   <p className="text-xs text-text-muted font-semibold mt-0.5">
-                    {peer.role.replace(/_/g, " ")}
+                    {getRoleBadgeLabel(peer.role)}
                   </p>
                 </div>
 

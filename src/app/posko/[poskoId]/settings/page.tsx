@@ -3,6 +3,7 @@ import { Select } from "@/shared/ui/select";
 
 import * as React from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -22,40 +23,51 @@ interface OfficerPassTarget {
 }
 
 export default function PoskoSettingsPage() {
+  const params = useParams();
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, poskos, updatePosko, updatePoskoStatus, deletePosko } = usePoskoStore();
   const [selectedTarget, setSelectedTarget] = React.useState<OfficerPassTarget | null>(null);
+  const [coordinatorPassOpen, setCoordinatorPassOpen] = React.useState(false);
 
-  const currentPosko = poskos.find((p) => p.id === session.poskoId) || null;
+  const activePoskoId = routePoskoId || session.poskoId || "POS-01";
+  const currentPosko =
+    poskos.find((p) => p.id === activePoskoId) ||
+    poskos.find((p) => p.id === session.poskoId) ||
+    null;
 
-  const [poskoName, setPoskoName] = React.useState(currentPosko?.name || session.poskoName || "");
-  const [locationName, setLocationName] = React.useState(currentPosko?.locationName || "");
-  const [capacity, setCapacity] = React.useState(currentPosko?.capacity || 0);
+  const [poskoName, setPoskoName] = React.useState(
+    currentPosko?.name || session.poskoName || `Posko ${activePoskoId}`
+  );
+  const [locationName, setLocationName] = React.useState(
+    currentPosko?.locationName || "Area Operasi Lapangan"
+  );
+  const [capacity, setCapacity] = React.useState(currentPosko?.capacity || 500);
   const [postType, setPostType] = React.useState<PostType>(currentPosko?.postType || "FIELD_SHELTER");
   const [status, setStatus] = React.useState<PostStatus>(currentPosko?.status || "OPERATIONAL_NORMAL");
   const [isSaved, setIsSaved] = React.useState(false);
 
   React.useEffect(() => {
-  if (currentPosko) {
-  setPoskoName(currentPosko.name);
-  setLocationName(currentPosko.locationName);
-  setCapacity(currentPosko.capacity);
-  setPostType(currentPosko.postType);
-  setStatus(currentPosko.status);
-  }
+    if (currentPosko) {
+      setPoskoName(currentPosko.name);
+      setLocationName(currentPosko.locationName);
+      setCapacity(currentPosko.capacity);
+      setPostType(currentPosko.postType);
+      setStatus(currentPosko.status);
+    }
   }, [currentPosko]);
 
   const handleSavePosko = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!currentPosko) return;
-  updatePosko(currentPosko.id, {
-  name: poskoName.trim(),
-  locationName: locationName.trim(),
-  capacity: Number(capacity) || 0,
-  postType,
-  status,
-  });
-  setIsSaved(true);
-  setTimeout(() => setIsSaved(false), 2000);
+    e.preventDefault();
+    const targetId = currentPosko?.id || activePoskoId;
+    updatePosko(targetId, {
+      name: poskoName.trim(),
+      locationName: locationName.trim(),
+      capacity: Number(capacity) || 0,
+      postType,
+      status,
+    });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   const teamRoles: { role: StaffRole; title: string; desc: string; icon: SolarIconName }[] = [
@@ -218,6 +230,31 @@ export default function PoskoSettingsPage() {
   </CardContent>
   </Card>
 
+  {/* Kartu Tugas Koordinator Posko Lapangan */}
+  <Card>
+    <CardHeader>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <CardTitle>Kartu Tugas Koordinator Posko Lapangan</CardTitle>
+          <p className="text-xs text-text-muted mt-0.5">
+            Terbitkan atau buka kode QR akses bertanda tangan digital Ed25519 untuk koordinator yang memimpin posko ini.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          icon="qr-code"
+          iconVariant="bold"
+          onClick={() => setCoordinatorPassOpen(true)}
+          className="shrink-0"
+        >
+          Tampilkan QR Koordinator
+        </Button>
+      </div>
+    </CardHeader>
+  </Card>
+
   {/* Team Role Pass Delegation */}
   <Card>
   <CardHeader>
@@ -254,10 +291,10 @@ export default function PoskoSettingsPage() {
   setSelectedTarget({
   name: `Petugas ${r.title}`,
   role: r.role,
-  poskoId: currentPosko?.id || session.poskoId || "POSKO-01",
-  poskoName: poskoName || currentPosko?.name || session.poskoName || "Posko Lapangan",
-  missionId: session.missionId,
-  missionName: session.missionName,
+  poskoId: currentPosko?.id || activePoskoId,
+  poskoName: poskoName || currentPosko?.name || `Posko ${activePoskoId}`,
+  missionId: currentPosko?.missionId || session.missionId || "MSN-2026-01",
+  missionName: session.missionName || "Misi Operasi Lapangan",
   })
   }
   className="w-full sm:w-auto"
@@ -270,7 +307,7 @@ export default function PoskoSettingsPage() {
   </CardContent>
   </Card>
 
-  {/* Role Pass Modal */}
+  {/* Role Pass Modal for Delegated Roles */}
   {selectedTarget && (
   <RolePassModal
   open={Boolean(selectedTarget)}
@@ -281,9 +318,22 @@ export default function PoskoSettingsPage() {
   poskoName={selectedTarget.poskoName}
   missionId={selectedTarget.missionId}
   missionName={selectedTarget.missionName}
-  orgId={session.orgId}
+  orgId={session.orgId || "ORG-01"}
   />
   )}
+
+  {/* Role Pass Modal for Posko Coordinator */}
+  <RolePassModal
+  open={coordinatorPassOpen}
+  onOpenChange={setCoordinatorPassOpen}
+  role="KOORDINATOR_POSKO"
+  officerName={session.userName || "Koordinator Posko"}
+  poskoId={currentPosko?.id || activePoskoId}
+  poskoName={poskoName || currentPosko?.name || `Posko ${activePoskoId}`}
+  missionId={currentPosko?.missionId || session.missionId || "MSN-2026-01"}
+  missionName={session.missionName || "Misi Operasi Lapangan"}
+  orgId={session.orgId || "ORG-01"}
+  />
   </div>
   );
 }

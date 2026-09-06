@@ -16,6 +16,7 @@ import { type TacticalChannel, type TacticalMessage } from "@/shared/types";
 import { TIME_CONSTANTS } from "@/core/shared/constants";
 import { useTacticalChatSync } from "@/features/posko/hooks/use-tactical-chat-sync";
 import { useAudioRecorder } from "@/features/posko/hooks/use-audio-recorder";
+import { getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 export const TACTICAL_PAGE_CONSTANTS = {
   MAX_RECORDING_SECONDS: 5,
@@ -428,7 +429,7 @@ export default function TacticalChatPage() {
   {msg.senderName}
   </span>
   <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface-subtle border border-border font-semibold">
-  {msg.senderRole.replace(/_/g, " ")}
+  {getRoleBadgeLabel(msg.senderRole)}
   </span>
   </div>
   <span className="font-mono text-[10px]">
@@ -599,7 +600,7 @@ export default function TacticalChatPage() {
   </span>
   </div>
   <Badge variant="primary" size="sm">
-  {session.userRole.replace(/_/g, " ")}
+  {getRoleBadgeLabel(session.userRole)}
   </Badge>
   </div>
   </div>
@@ -624,7 +625,7 @@ export default function TacticalChatPage() {
   {peer.aliasName}
   </h4>
   <span className="text-[11px] font-semibold text-text-muted block">
-  {peer.role.replace(/_/g, " ")}
+  {getRoleBadgeLabel(peer.role)}
   </span>
   </div>
   <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${proximity.bgBadge} shrink-0`}>

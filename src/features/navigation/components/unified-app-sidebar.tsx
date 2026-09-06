@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { SandyaLogo } from "@/shared/ui/sandya-logo";
@@ -11,6 +11,7 @@ import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { useHierarchicalNav, type HierarchyLevel } from "../hooks/use-hierarchical-nav";
 import { HierarchySwitcherModal } from "./hierarchy-switcher-modal";
 import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
+import { getRoleDefaultPath, getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 interface NavItem {
   label: string;
@@ -56,6 +57,7 @@ const LEVEL_THEME: Record<
 };
 
 export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: HierarchyLevel }) {
+  const router = useRouter();
   const pathname = usePathname() || "/";
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
   const [roleActivationOpen, setRoleActivationOpen] = React.useState(false);
@@ -491,7 +493,7 @@ export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: Hierarchy
                   type="button"
                   onClick={() => setRoleActivationOpen(true)}
                   className="w-10 h-10 rounded-xl bg-surface hover:bg-surface-muted border border-border text-text-main flex items-center justify-center transition-colors cursor-pointer"
-                  title={`Petugas: ${session.userName || "Petugas"} (${session.userRole}) - Klik untuk ganti kartu`}
+                  title={`Petugas: ${session.userName || "Petugas"} (${getRoleBadgeLabel(session.userRole)}) - Klik untuk ganti kartu`}
                 >
                   <Icon name="qr-code" variant="linear" size={16} />
                 </button>
@@ -504,7 +506,7 @@ export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: Hierarchy
                       {session.userName || "Petugas Lapangan"}
                     </p>
                     <p className="text-[10px] text-text-muted truncate mt-0.5 font-medium">
-                      {session.userRole.replace(/_/g, " ")}
+                      {getRoleBadgeLabel(session.userRole)}
                     </p>
                   </div>
                   <button
@@ -533,6 +535,13 @@ export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: Hierarchy
       <RoleActivationModal
         open={roleActivationOpen}
         onOpenChange={setRoleActivationOpen}
+        onActivated={(payload) => {
+          const target = getRoleDefaultPath(payload.role, {
+            missionId: payload.missionId,
+            poskoId: payload.poskoId,
+          });
+          router.push(target);
+        }}
       />
     </>
   );

@@ -12,6 +12,7 @@ import { Icon } from "@/shared/ui/icon";
 import { PageHeader } from "@/shared/ui/page-header";
 import { type Organization } from "@/shared/types";
 import { AIExtractorService } from "@/core/services/ai-extractor.service";
+import { RolePassModal } from "@/features/auth/components/role-pass-modal";
 
 export default function OrgSettingsPage() {
   const {
@@ -71,6 +72,7 @@ export default function OrgSettingsPage() {
 
   const [showSeed, setShowSeed] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
+  const [leaderPassOpen, setLeaderPassOpen] = React.useState(false);
 
   const seedWords = [
     "mountain", "rescue", "anchor", "signal", "shelter", "water",
@@ -648,6 +650,45 @@ export default function OrgSettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Kartu Tugas Pimpinan Lembaga (Ketua Pengurus) */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle>Kartu Tugas Pimpinan Lembaga (Ketua Pengurus)</CardTitle>
+              <p className="text-xs text-text-muted mt-0.5">
+                Terbitkan atau buka kode QR akses bertanda tangan digital Ed25519 untuk pimpinan tertinggi instansi ini.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon="qr-code"
+              iconVariant="bold"
+              onClick={() => setLeaderPassOpen(true)}
+              className="shrink-0"
+            >
+              Tampilkan QR Pimpinan
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Role Pass Modal for Organization Leader */}
+      <RolePassModal
+        open={leaderPassOpen}
+        onOpenChange={setLeaderPassOpen}
+        role="PEMIMPIN_ORGANISASI"
+        officerName={leadPersonName || session.userName || "Pimpinan Lembaga"}
+        poskoId=""
+        poskoName="Markas Induk Lembaga"
+        missionId=""
+        missionName="Pusat Komando Wilayah"
+        orgId={org?.id || session.orgId || "ORG-01"}
+        orgName={orgName || org?.name || session.orgName || "Organisasi Induk"}
+      />
     </div>
   );
 }

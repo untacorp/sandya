@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { useHierarchicalNav } from "../hooks/use-hierarchical-nav";
 import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
+import { getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 interface HierarchySwitcherModalProps {
   open: boolean;
@@ -227,7 +228,7 @@ export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcher
                 Petugas Aktif
               </span>
               <p className="text-xs font-bold text-text-main truncate">
-                {session.userName || "Petugas Lapangan"} • <span className="font-normal text-text-muted">{session.userRole.replace(/_/g, " ")}</span>
+                {session.userName || "Petugas Lapangan"} • <span className="font-normal text-text-muted">{getRoleBadgeLabel(session.userRole)}</span>
               </p>
             </div>
             <Button

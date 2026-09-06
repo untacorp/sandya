@@ -105,7 +105,7 @@ export default function OrgMembersPage() {
   {leaders.map((ldr) => (
   <div
   key={ldr.id}
-  className="py-3 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
+  className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 first:pt-0 last:pb-0"
   >
   <div className="flex items-center gap-3">
   <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs shrink-0">
@@ -124,6 +124,27 @@ export default function OrgMembersPage() {
   {ldr.role} • {ldr.scope}
   </p>
   </div>
+  </div>
+
+  <div className="flex items-center gap-2">
+  <Button
+  variant="secondary"
+  size="sm"
+  icon="qr-code"
+  iconVariant="bold"
+  onClick={() =>
+  setSelectedTarget({
+  name: ldr.name,
+  role: "PEMIMPIN_ORGANISASI",
+  poskoId: "",
+  poskoName: "Markas Induk Lembaga",
+  missionId: "",
+  missionName: "Pusat Komando Wilayah",
+  })
+  }
+  >
+  Buka QR Kartu Tugas
+  </Button>
   </div>
   </div>
   ))}

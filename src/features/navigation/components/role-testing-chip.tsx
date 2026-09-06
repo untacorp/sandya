@@ -21,7 +21,7 @@ interface RoleConfig {
 const ROLES_CONFIG: RoleConfig[] = [
   {
     role: "PEMIMPIN_ORGANISASI",
-    title: "Pemimpin Organisasi",
+    title: "Pimpinan Lembaga",
     tier: "Tingkat 1 • Lembaga Induk",
     desc: "Pemegang Master Key Ed25519, konfigurasi Cloud AI, dan audit makro seluruh misi.",
     icon: "buildings",

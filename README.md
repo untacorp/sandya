@@ -1,9 +1,9 @@
 <div align="center">
   
   # SANDYA
-  ### Platform Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-Mesh Ecosystem)
+  ### Platform Manajemen Tanggap Darurat Bencana (Local-First & Offline Mesh)
   
-  [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-sandya.id-success?style=for-the-badge)](https://sandya.id)
+  [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-sandya.skensa.web.id-success?style=for-the-badge)](https://sandya.skensa.web.id)
   [![GitHub](https://img.shields.io/badge/GitHub-untacorp%2Fsandya-181717?style=for-the-badge&logo=github)](https://github.com/untacorp/sandya)
   [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE) <br/>
   [![Next.js 16](https://img.shields.io/badge/Next.js-16.3.3_App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
@@ -36,8 +36,8 @@
   - [Alasan Pemilihan Teknologi](#alasan-pemilihan-teknologi)
   - [Dependencies Utama](#dependencies-utama)
 - [Arsitektur Sistem](#-arsitektur-sistem)
-  - [System Architecture Diagram](#system-architecture)
-  - [Database Schema (ERD)](#database-schema)
+  - [System Architecture](#system-architecture)
+  - [Database Schema](#database-schema)
   - [Folder Structure](#folder-structure)
 - [Instalasi & Setup](#-instalasi--setup)
   - [Prerequisites](#prerequisites)
@@ -45,11 +45,11 @@
   - [Opsi Deployment](#opsi-deployment)
 - [Penggunaan](#-penggunaan)
   - [Menjalankan Aplikasi](#menjalankan-aplikasi)
-  - [User Guide per Peran](#user-guide)
+  - [User Guide](#user-guide)
 - [API Documentation](#-api-documentation)
 - [Testing](#-testing)
-  - [Menjalankan Test Suite](#running-tests)
-  - [Hasil Pengujian Unit](#test-coverage)
+  - [Running Tests](#running-tests)
+  - [Hasil Pengujian Unit](#hasil-pengujian-unit)
 - [Lisensi](#-lisensi)
 
 ---
@@ -58,9 +58,9 @@
 
 | Foto Profil | Nama Lengkap | Peran & Kontribusi | GitHub |
 | :---: | :--- | :--- | :--- |
-| <a href="https://github.com/auttomus"><img src="https://github.com/auttomus.png" width="60" height="60" style="border-radius:50%;" alt="@auttomus"/></a> | **[@auttomus](https://github.com/auttomus)** | **Project Lead & Product Strategist**<br/>Memimpin perumusan visi kemanusiaan, tata kelola proyek, strategi produk tanggap darurat, dan koordinasi arsitektur umum. | [![GitHub](https://img.shields.io/badge/GitHub-auttomus-181717?style=flat-square&logo=github)](https://github.com/auttomus) |
-| <a href="https://github.com/Oktazz"><img src="https://github.com/Oktazz.png" width="60" height="60" style="border-radius:50%;" alt="@Oktazz"/></a> | **[@Oktazz](https://github.com/Oktazz)** | **Full Stack & Systems Developer**<br/>Mengembangkan antarmuka responsif Next.js 16, pipeline state management Zustand, integrasi Single-Writer logistik, dan rekayasa end-to-end fitur. | [![GitHub](https://img.shields.io/badge/GitHub-Oktazz-181717?style=flat-square&logo=github)](https://github.com/Oktazz) |
-| <a href="https://github.com/kasumadana"><img src="https://github.com/kasumadana.png" width="60" height="60" style="border-radius:50%;" alt="@kasumadana"/></a> | **[@kasumadana](https://github.com/kasumadana)** | **Core System Architect & Security Lead**<br/>Merancang protokol jaringan *offline-mesh* (SMP v1), algoritma pemulihan Poster Paritas XOR, skema kriptografi Ed25519, dan audit performa biner. | [![GitHub](https://img.shields.io/badge/GitHub-kasumadana-181717?style=flat-square&logo=github)](https://github.com/kasumadana) |
+| <a href="https://github.com/auttomus"><img src="https://github.com/auttomus.png" width="60" height="60" style="border-radius:50%;" alt="@auttomus"/></a> | **[@auttomus](https://github.com/auttomus)** | **Project Lead & Product Strategist**<br/>Perencanaan produk, perumusan kebutuhan sistem tanggap darurat, dan koordinasi arsitektur umum. | [![GitHub](https://img.shields.io/badge/GitHub-auttomus-181717?style=flat-square&logo=github)](https://github.com/auttomus) |
+| <a href="https://github.com/Oktazz"><img src="https://github.com/Oktazz.png" width="60" height="60" style="border-radius:50%;" alt="@Oktazz"/></a> | **[@Oktazz](https://github.com/Oktazz)** | **Full Stack & Systems Developer**<br/>Pengembangan antarmuka responsif Next.js 16, state management Zustand, modul logistik single-writer, dan implementasi fitur end-to-end. | [![GitHub](https://img.shields.io/badge/GitHub-Oktazz-181717?style=flat-square&logo=github)](https://github.com/Oktazz) |
+| <a href="https://github.com/kasumadana"><img src="https://github.com/kasumadana.png" width="60" height="60" style="border-radius:50%;" alt="@kasumadana"/></a> | **[@kasumadana](https://github.com/kasumadana)** | **Core System Architect & Security Lead**<br/>Perancangan sinkronisasi jaringan offline via BLE mesh, pemulihan poster QR paritas XOR, skema autentikasi Ed25519, dan pengujian performa sistem. | [![GitHub](https://img.shields.io/badge/GitHub-kasumadana-181717?style=flat-square&logo=github)](https://github.com/kasumadana) |
 
 ---
 
@@ -68,41 +68,47 @@
 
 ### Latar Belakang
 
-Indonesia terletak pada kawasan cincin api pasifik (*Pacific Ring of Fire*) dan pertemuan tiga lempeng tektonik aktif dunia. Berdasarkan data Badan Nasional Penanggulangan Bencana (BNPB), Indonesia mengalami lebih dari **3.000 bencana alam setiap tahunnya**, mulai dari gempa bumi dangkal, tsunami, banjir bandang, hingga erupsi gunung berapi.
+Indonesia berada pada kawasan cincin api pasifik (*Pacific Ring of Fire*) dan zona pertemuan lempeng tektonik aktif dunia (Indo-Australia, Eurasia, dan Pasifik), dengan lebih dari 295 sesar aktif yang teridentifikasi (Pusat Studi Gempa Nasional/Pusgen). Data Informasi Bencana Indonesia (DIBI) Badan Nasional Penanggulangan Bencana (BNPB) mencatat Indonesia mengalami **lebih dari 3.000 hingga 5.000 kejadian bencana setiap tahunnya**, didominasi oleh bencana hidrometeorologi basah dan kering serta gempa bumi merusak.
 
-Saat bencana katastropik berskala masif menghantam suatu wilayah, terjadi fenomena **Zero-Infrastructure Crisis**:
-1. **Lumpuhnya Jaringan Telekomunikasi & Internet**: Menara BTS seluler roboh, transmisi kabel fiber optik terputus, dan pasokan listrik PLN padam total.
-2. **Pendataan Pengungsi Konvensional Sangat Lambat**: Formulir kertas basah, sobek, mudah hilang, dan membutuhkan waktu rekapitulasi manual berhari-hari.
-3. **Krisis Triase Medis & Kehilangan Riwayat Pasien**: Petugas medis di IGD tenda darurat kewalahan mendata tanda vital korban massal dan sering kali salah memberikan obat karena tidak adanya riwayat resep terstruktur.
-4. ***Phantom Inventory* & Penimbunan Logistik**: Stok bantuan pangan dan obat-obatan tidak terkontrol. Alokasi ganda (*double-allocation*) kerap terjadi di satu posko, sementara posko tetangga mengalami kelaparan ekstrem.
-5. **Keluarga Terpisah Tanpa Informasi**: Ribuan anak terpisah dari orang tuanya tanpa papan informasi yang terhubung antar-kamp pengungsian.
-6. **Ketiadaan Komunikasi Taktis**: Petugas lapangan tidak memiliki saluran komunikasi suara mandiri tanpa pulsa atau sinyal seluler.
+Ketika gempa tektonik dangkal, tsunami, banjir bandang, atau letusan gunung berapi berskala besar melanda suatu kawasan, menit dan jam pertama masa tanggap darurat (*the golden hours*) kerap dihadapkan pada kelumpuhan infrastruktur total:
 
-Aplikasi manajemen bencana konvensional yang beredar saat ini berasumsi bahwa koneksi internet stabil atau cloud server selalu tersedia—sebuah asumsi yang keliru dan fatal pada menit-menit pertama tanggap darurat di garis depan bencana.
+1. **Kelumpuhan Jaringan Telekomunikasi & Pasokan Energi**:
+   - Pada **Gempa Cianjur (2022, M 5.6)**, pasokan listrik PLN terputus bagi ratusan ribu pelanggan dan lebih dari 110 Base Transceiver Station (BTS) seluler *off-air* di jam-jam pertama akibat kerusakan transmisi serat optik dan keterbatasan daya cadangan, mengisolasi komunikasi posko lapangan di wilayah episentrum seperti Cugenang dan Pacet.
+   - Pada **Gempa & Tsunami Palu-Donggala (2018, M 7.4)**, lebih dari 500 site BTS operator seluler padam total dan jalur serat optik darat/bawah laut putus, melumpuhkan koordinasi evakuasi medis dan pemetaan logistik selama lebih dari 48 jam.
+2. **Keterbatasan Pendataan Administratif Konvensional**:
+   - Mayoritas warga terdampak mengungsi secara mendadak tanpa sempat menyelamatkan dokumen fisik kependudukan (KTP/KK). Sistem pendataan yang mensyaratkan NIK secara kaku menimbulkan hambatan birokrasi di meja pendaftaran awal. Di sisi lain, formulir kertas manual rentan rusak, basah oleh hujan, tercecer di tenda darurat, serta membutuhkan waktu rekapitulasi berhari-hari.
+3. **Pencatatan Triase Korban Massal yang Tercecer**:
+   - Di tenda IGD darurat dengan keterbatasan dokter, penanganan korban massal mengandalkan protokol Simple Triage and Rapid Treatment (START) sesuai pedoman penanggulangan krisis Kementerian Kesehatan RI dan WHO. Tanpa sistem pencatatan digital lokal, riwayat tanda vital pasien dan tiket resep farmasi darurat kerap tercecer, meningkatkan risiko kekeliruan pemberian dosis obat saat pergantian shift relawan medis.
+4. **Ketimpangan Rantai Pasok Logistik Kemanusiaan**:
+   - Piagam Kemanusiaan dan Standar Minimum Respon Bencana (**The Sphere Project Handbook**) serta **Peraturan Kepala BNPB No. 7 Tahun 2008** menetapkan standar asupan harian minimum 2.100 kkal dan 15 liter air bersih per jiwa/hari. Namun di lapangan, ketiadaan data stok terpusat memicu ketimpangan distribusi: posko di dekat jalan utama mengalami penumpukan bantuan pangan (*over-supply*), sementara kantong-kantong pengungsian terpencil di perbukitan mengalami krisis pangan dan obat-obatan (*under-supply*).
+5. **Keluarga Terpisah Tanpa Papan Informasi Terkoneksi**:
+   - Berdasarkan prinsip *Restoring Family Links* (RFL) kemanusiaan, penelusuran anggota keluarga yang terpisah di kamp pengungsian berbeda menjadi kebutuhan mendesak. Di lapangan, pencarian terhambat oleh keterbatasan koordinasi antar-posko, perbedaan dialek atau nama panggilan lokal, serta kekeliruan penulisan nama pada papan pengumuman manual.
+
+Sebagian besar aplikasi manajemen bencana mengasumsikan koneksi internet stabil atau server cloud selalu tersedia. Namun ketika infrastruktur telekomunikasi terputus total di garis depan bencana, sistem-sistem berbasis cloud tidak dapat diakses dan kehilangan fungsinya pada momen yang paling krusial.
 
 ### Solusi yang Ditawarkan
 
-**Sandya** (*Sansekerta: Persatuan & Cahaya Senja Pengharapan*) hadir sebagai **Sistem Operasi Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Zero-Infrastructure Offline-Mesh)**. Sandya dirancang dengan filosofi **"Continuity Over Connectivity"**—setiap alur operasional penyelamatan nyawa harus berfungsi 100% tanpa internet.
+**Sandya** hadir sebagai platform manajemen tanggap darurat bencana berbasis *local-first* dan *offline mesh*. Sandya dirancang agar seluruh alur operasional posko penyelamatan—mulai dari pendataan pengungsi, triase medis, pengelolaan logistik, hingga komunikasi taktis—dapat berjalan penuh tanpa koneksi internet.
 
-Pendekatan inovatif yang dihadirkan Sandya:
-- 🛡️ **Penyimpanan Lokal Edge (Device-First SQLite)**: Setiap data warga, triase medis, mutasi logistik sembako, dan pesan taktis langsung tersimpan secara instan di SQLite lokal perangkat tanpa memerlukan server.
-- 📡 **Multi-Transport Air-Gap Synchronization**:
-  - **Tier 1 (Jalur Utama)**: *Zero-Touch* Bluetooth Low Energy (BLE) Mesh (*Sandya Mesh Protocol / SMP v1*) berbasis protokol gossip BitChat berkecepatan tinggi antar-perangkat posko.
-  - **Tier 2 (Cadangan Udara & Fisik)**: *Animated Dynamic Multipart QR* (kamera streaming 6 FPS) dan *Poster Multi-QR Paritas XOR* berteknologi *Erasure Coding* yang tahan sobekan fisik kertas hingga 25–50%.
-- ⚖️ **Single-Writer Ledger & Ketahanan Pangan Standar Internasional**: Mengunci hak mutasi fisik gudang posko ke satu perangkat otoritatif guna mencegah *phantom inventory*, dilengkapi kalkulasi ketahanan konsumsi dinamis mengadopsi standar kemanusiaan **SPHERE Project** dan **BNPB/PMI**.
-- 🔐 **Kriptografi Asimetris Ed25519 & Role Pass QR**: Otoritas relawan dan komandan diverifikasi secara desentralisasi menggunakan tanda tangan kriptografis tanpa *login server*.
-- 👨‍👩‍👧‍👦 **Offline Indonesian Family Reunion**: Mesin pencocokan kerabat hilang offline yang dilengkapi tokenisasi nama suku Indonesia dan jarak Levenshtein toleran salah eja.
-- 🎙️ **Tactical Mesh Intercom (Push-to-Talk Radio)**: Komunikasi suara darurat 3.2 kbps berbasis kompresi audio Opus di 4 kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`).
+Pendekatan utama yang diterapkan Sandya:
+- **Penyimpanan Lokal (Device-First SQLite)**: Seluruh data warga, triase medis, mutasi logistik, dan pesan taktis tersimpan langsung di SQLite lokal perangkat tanpa memerlukan server eksternal.
+- **Sinkronisasi Multi-Jalur (Multi-Transport Sync)**:
+  - **Jalur Nirkabel**: Bluetooth Low Energy (BLE) Mesh berbasis protokol gossip untuk pertukaran data otomatis antar-perangkat posko terdekat.
+  - **Jalur Visual & Fisik**: Animated QR Code (streaming visual kamera) dan poster cetak QR dengan kode paritas XOR (Erasure Coding) yang tetap dapat dibaca meskipun sebagian kertas robek atau kotor.
+- **Pengelolaan Logistik Single-Writer & Acuan Standar Kemanusiaan**: Mengunci hak mutasi fisik gudang posko ke satu perangkat penanggung jawab guna mencegah pencatatan ganda, dilengkapi estimasi ketahanan konsumsi harian berbasis standar kemanusiaan **SPHERE Project** dan acuan BNPB/PMI.
+- **Autentikasi Kriptografis Ed25519 & Role Pass QR**: Verifikasi wewenang relawan dan koordinator dilakukan secara offline menggunakan tanda tangan digital tanpa perlu login server terpusat.
+- **Pencarian Keluarga Terpisah (Offline Family Reunion)**: Mesin pencarian kerabat hilang offline dengan normalisasi nama dan pencocokan fonetik/Levenshtein untuk mentoleransi kesalahan eja nama warga.
+- **Komunikasi Suara Push-to-Talk (PTT)**: Komunikasi suara darurat 3.2 kbps berbasis kompresi Opus melalui jaringan mesh lokal pada 4 kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`).
 
 ### Tujuan Proyek
 
-- 🎯 **Tujuan Utama**: Menghadirkan ekosistem perangkat lunak tanggap darurat bencana yang beroperasi penuh tanpa ketergantungan pada internet publik, dan server terpusat.
-- 📊 **Target Pengguna**: 7 Peran Operasional (Pemimpin Organisasi/BPBD/PMI, Komandan Misi, Koordinator Posko, Petugas Medis, Petugas Logistik, Relawan Lapangan, serta Warga Pengungsi/Tamu).
+- 🎯 **Tujuan Utama**: Menyediakan ekosistem perangkat lunak tanggap darurat bencana yang beroperasi penuh tanpa ketergantungan pada internet publik maupun server terpusat.
+- 📊 **Target Pengguna**: 7 Peran Operasional (Pimpinan Organisasi, Komandan Misi, Koordinator Posko, Petugas Medis, Petugas Logistik, Relawan Lapangan, dan Pengungsi/Tamu).
 - 💡 **Value Proposition**:
-  - *Zero Setup Zero Cloud*: Beroperasi seketika di hari pertama bencana.
-  - *Sub-30s Mobile Intake*: Pendaftaran warga kurang dari 30 detik tanpa syarat NIK wajib.
-  - *Zero Phantom Resources*: Tidak ada stok ganda berkat integritas *Single-Writer*.
-  - *Humanitarian Standard Compliance*: Menjamin kebutuhan kalori 2.100 kkal dan air minum 3L/jiwa/hari terpenuhi secara terukur.
+  - *Siap Pakai Tanpa Cloud*: Beroperasi seketika di lokasi bencana sejak hari pertama.
+  - *Pendaftaran Cepat*: Pendataan warga selesai dalam waktu singkat tanpa mewajibkan kepemilikan NIK.
+  - *Integritas Stok Logistik*: Menghindari duplikasi pencatatan stok bantuan berkat mekanisme single-writer.
+  - *Kepatuhan Standar Kemanusiaan*: Membantu memantau kecukupan kebutuhan kalori dasar (2.100 kkal) dan air bersih (3 liter/jiwa/hari).
 
 ---
 
@@ -110,22 +116,22 @@ Pendekatan inovatif yang dihadirkan Sandya:
 
 ### Fitur Utama
 
-| Fitur | Deskripsi | Keunggulan Inovatif |
+| Fitur | Deskripsi | Keunggulan |
 | :--- | :--- | :--- |
-| **Fast Mobile Intake & Event Sourcing** | Pendaftaran pengungsi instan di garis depan dengan pencatatan *immutable append-only* riwayat hidup warga (INTAKE, HEALTH_CHECK, NEED_REPORTED, AID_RECEIVED). | Pendaftaran rampung dalam <30 detik. Mendukung *dynamic null-bypass* untuk warga yang kehilangan KTP saat bencana, dengan monotonic sequence anti-konflik. |
-| **Triase Medis START 4-Warna & E-Resep** | Protokol klasifikasi darurat Simple Triage and Rapid Treatment (Merah/Gawat Darurat, Kuning/Mendesak, Hijau/Ringan, Hitam/Meninggal) terintegrasi catatan tanda vital dan farmasi. | Penerbitan tiket resep obat otomatis yang langsung terhubung ke Kamus Bencana uint8 dan sistem inventaris logistik medis posko. |
-| **Single-Writer Ledger & Ketahanan SPHERE** | Pengelolaan stok gudang posko dengan hak penulisan tunggal (*Single-Writer invariant*) dan proyeksi sisa hari konsumsi pangan/air dinamis berbasis populasi pengungsi. | Mencegah *double-allocation* secara absolut. Menghitung laju konsumsi harian beras, air galon, popok balita, dan sanitasi wanita berdasarkan standar internasional SPHERE Project & BNPB. |
-| **Offline Family Reunion Matcher** | Mesin pencarian kerabat hilang yang beroperasi secara offline antar-posko tanpa membutuhkan sinkronisasi internet ke server pusat. | Mengadopsi tokenisasi nama Indonesia, penanganan nama panggilan (*nicknames*), dan pencocokan fonetik/Levenshtein toleran salah eja nama warga. |
-| **Tactical Mesh Intercom & PTT Radio** | Komunikasi walkie-talkie Push-to-Talk (PTT) suara berkecepatan 3.2 kbps via BLE Mesh terbagi ke 4 kanal taktis (`#all`, `#medis`, `#logistik`, `#sos`). | Dilengkapi sirene SOS darurat *slide-to-confirm* dengan atribusi identitas kriptografis dan indikator kedekatan hop (*proximity radar*). |
-| **Multi-Transport Sync (BLE & QR Paritas)** | Sinkronisasi data antar-posko melalui gelombang radio Bluetooth Low Energy atau media visual kamera streaming dan cetak kertas. | Mampu memulihkan paket data manifes bencana 100% utuh meskipun 1 lembar kotak QR pada poster sobek atau terkena lumpur (*XOR Erasure Recovery*). |
+| **Pendaftaran Pengungsi Cepat & Riwayat Terstruktur** | Pendaftaran warga di garis depan dengan pencatatan riwayat terstruktur (intake, pemeriksaan kesehatan, kebutuhan bantuan, dan penyaluran logistik). | Proses pendataan cepat, mendukung pendaftaran tanpa syarat NIK wajib bagi warga yang kehilangan dokumen, dengan urutan data yang konsisten. |
+| **Triase Medis START & E-Resep** | Protokol klasifikasi darurat Simple Triage and Rapid Treatment (Merah, Kuning, Hijau, Hitam) terintegrasi catatan tanda vital dan farmasi. | Penerbitan tiket resep obat otomatis yang langsung terhubung ke inventaris logistik medis posko. |
+| **Pengelolaan Logistik Single-Writer & Standar SPHERE** | Pengelolaan stok gudang posko dengan hak penulisan tunggal untuk mencegah duplikasi alokasi, dilengkapi proyeksi ketahanan konsumsi. | Menjaga konsistensi pencatatan stok dan menghitung estimasi sisa hari konsumsi pangan/air sesuai standar SPHERE dan BNPB. |
+| **Pencarian Keluarga Terpisah (Offline)** | Pencarian anggota keluarga yang terpisah antar-posko tanpa membutuhkan koneksi internet ke server pusat. | Mendukung normalisasi nama, variasi panggilan, dan pencocokan fonetik/Levenshtein untuk mentoleransi perbedaan ejaan. |
+| **Komunikasi Radio Push-to-Talk (PTT)** | Komunikasi walkie-talkie suara darurat via BLE mesh pada 4 kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`). | Dilengkapi sirene darurat SOS dengan atribusi identitas pengirim dan indikator kedekatan hop. |
+| **Sinkronisasi Multi-Transport (BLE & QR Paritas)** | Pertukaran data antar-posko melalui radio Bluetooth Low Energy atau media visual kode QR (streaming dan poster cetak). | Kode paritas XOR memungkinkan pemulihan paket data secara utuh meskipun sebagian kotak QR pada poster rusak atau terpotong. |
 
 ### Fitur Tambahan
 
-- **Ad-Hoc Distribution & Anti-Hoarding**: Serah terima sembako langsung di meja logistik untuk warga terdaftar, dilengkapi pengaman anti-penimbunan otomatis (blokir klaim ganda < 72 jam).
-- **Inter-Posko Transit Waybill**: Surat jalan digital pengiriman armada truk bantuan antar-gudang posko dengan validasi tanda tangan penerima.
-- **Cryptographic Role Pass (Ed25519)**: Kartu tanda pengenal relawan berbasis QR Code berstempel digital asimetris yang dapat diverifikasi secara offline oleh posko manapun.
-- **Upstream Transactional Outbox**: Antrean pengunggahan data otomatis ke cloud (Supabase atau PostgreSQL mandiri) secara idempoten saat internet kembali menyala.
-- **Kios Publik Survivor (Guest Portal)**: Mode pencarian mandiri ramah privasi untuk warga yang mencari anggota keluarganya di papan pengumuman digital posko.
+- **Distribusi Bantuan Langsung & Pencegahan Penimbunan**: Penyaluran sembako langsung di meja logistik untuk warga terdaftar, dilengkapi pengaman otomatis (jeda klaim berulang) guna mencegah distribusi ganda.
+- **Surat Jalan Antar-Posko (Transit Waybill)**: Surat jalan digital untuk pelacakan distribusi armada bantuan antar-gudang posko dengan validasi tanda tangan penerima.
+- **Kartu Identitas Petugas (Role Pass Ed25519)**: Kartu tanda pengenal relawan berbasis kode QR dengan tanda tangan digital asimetris yang dapat diverifikasi secara offline oleh posko mana pun.
+- **Sinkronisasi Bertahap ke Server (Transactional Outbox)**: Antrean pengunggahan data otomatis ke database cloud (Supabase atau PostgreSQL) secara idempoten saat koneksi internet kembali aktif.
+- **Kios Mandiri Pengungsi (Guest Portal)**: Mode pencarian mandiri yang ramah privasi untuk warga yang mencari anggota keluarganya di papan pengumuman digital posko.
 
 ---
 
@@ -133,7 +139,7 @@ Pendekatan inovatif yang dihadirkan Sandya:
 
 ### Live Demo
 
-🔗 **[Kunjungi Aplikasi Web Sandya](https://sandya.id)**  
+🔗 **[Kunjungi Website](https://sandya.skensa.web.id)**  
 *(Mode demo web menyediakan simulasi in-memory SQLite dan antarmuka operasional 7 peran).*
 
 ### Screenshot Aplikasi
@@ -144,19 +150,19 @@ Pendekatan inovatif yang dihadirkan Sandya:
   <p><em>1. Situational Awareness & Posko Dashboard - Pemantauan triase, hunian pengungsi, dan ketersediaan logistik secara real-time.</em></p>
 
   <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-refugees-intake.png" alt="Fast Mobile Intake" width="850"/>
-  <p><em>2. Fast Mobile Intake - Pendaftaran warga pengungsi sub-30 detik dengan pemilahan demografi kelompok rentan.</em></p>
+  <p><em>2. Pendaftaran Cepat Pengungsi - Pendaftaran warga pengungsi dengan pemilahan demografi kelompok rentan.</em></p>
 
   <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-medical-triage.png" alt="START Medical Triage" width="850"/>
-  <p><em>3. Triase Medis START 4-Warna - Klasifikasi pasien IGD darurat, pencatatan tanda vital, dan e-resep farmasi bencana.</em></p>
+  <p><em>3. Triase Medis START - Klasifikasi pasien IGD darurat, pencatatan tanda vital, dan e-resep farmasi bencana.</em></p>
 
   <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-logistics-resilience.png" alt="Logistics Warehouse & Resilience" width="850"/>
-  <p><em>4. Gudang Logistik & Ketahanan SPHERE - Pelacakan stok fisik Single-Writer dan proyeksi sisa hari konsumsi per komoditas.</em></p>
+  <p><em>4. Gudang Logistik & Ketahanan SPHERE - Pelacakan stok fisik single-writer dan proyeksi sisa hari konsumsi per komoditas.</em></p>
 
   <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-family-reunion.png" alt="Offline Family Reunion" width="850"/>
-  <p><em>5. Offline Family Reunion - Rekonsiliasi graf kerabat hilang dengan algoritma fonetik toleran salah ketik.</em></p>
+  <p><em>5. Pencarian Keluarga Terpisah - Rekonsiliasi kerabat hilang dengan algoritma toleran kesalahan eja.</em></p>
 
   <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-tactical-intercom.png" alt="Tactical Intercom PTT" width="850"/>
-  <p><em>6. Tactical Mesh Intercom - Push-to-Talk (PTT) suara darurat 4 kanal dan tombol sirene darurat SOS.</em></p>
+  <p><em>6. Komunikasi Push-to-Talk - Push-to-Talk (PTT) suara darurat 4 kanal dan tombol sirene darurat SOS.</em></p>
 
 </div>
 
@@ -170,10 +176,10 @@ Pendekatan inovatif yang dihadirkan Sandya:
 ```text
 Framework    : Next.js 16.3.3 (App Router, React 19 Server/Client Components, Turbopack)
 Styling      : Tailwind CSS v4 & Tailwind Merge
-Icons        : Solar Icons (@iconify-json/solar) - Crisp 1.5px Stroke Design
-Data Viz     : Recharts v3 (Visualisasi Komposisi Stok & Peringatan Kritis)
+Icons        : Solar Icons (@iconify-json/solar)
+Data Viz     : Recharts v3 (Visualisasi Komposisi Stok & Indikator Peringatan)
 State Mgmt   : Zustand v5 (Persist Middleware Offline-First)
-Validation   : Zod v4 (Skema Kontrak Domain & Payload Biner)
+Validation   : Zod v4 (Validasi Skema & Kontrak Data)
 ```
 
 #### Native Desktop, Mobile, & Runtime
@@ -181,8 +187,8 @@ Validation   : Zod v4 (Skema Kontrak Domain & Payload Biner)
 Native Layer : Tauri v2.11.1 (Rust Toolchain >= 1.78)
 Target OS    : Linux (.deb, .AppImage), Windows (.msi), Android (.apk)
 Plugins      : @tauri-apps/plugin-barcode-scanner, @tauri-apps/plugin-notification
-Native Audio : Pipeline PTT Opus 3.2 kbps Audio Frame Splitter
-Native Mesh  : Rust BLE Peripheral & Central Stack (Sandya Mesh Protocol v1)
+Native Audio : Pipeline PTT Audio Frame Splitter (Opus 3.2 kbps)
+Native Mesh  : Rust BLE Peripheral & Central Stack
 ```
 
 #### Database & Penyimpanan
@@ -190,30 +196,30 @@ Native Mesh  : Rust BLE Peripheral & Central Stack (Sandya Mesh Protocol v1)
 Edge Database: SQLite 3 (rusqlite pada desktop/Android, in-memory engine pada web test)
 Cloud DB     : PostgreSQL 16+ (Supabase Managed atau Self-Hosted VPS)
 API Gateway  : PostgREST 12+ (Penyedia RESTful otomatis dari skema relasional)
-Pattern      : Transactional Outbox Pattern (Penyimpanan idempoten sebelum sinkronisasi)
+Pola Desain  : Transactional Outbox Pattern (Penyimpanan idempoten sebelum sinkronisasi)
 ```
 
-#### Kriptografi & Kompresi Jaringan
+#### Kriptografi & Kompresi Data
 ```text
-Signatures   : Ed25519 Asymmetric Cryptographic Signatures
+Tanda Tangan : Ed25519 Asymmetric Signatures
 Handshake    : Noise Protocol Framework (XX Pattern)
-Binary Codec : Ultra-Dense v4 Bit-Packing (Kamus Bencana uint8)
-Erasure Code : Multi-QR XOR Parity Matrix (Dynamic N+1 Recovery System)
+Binary Codec : Encoding Biner Ringkas (Kamus Bencana uint8)
+Parity Codec : Multi-QR XOR Parity (Erasure Coding N+1)
 ```
 
 ### Alasan Pemilihan Teknologi
 
-| Teknologi | Alasan Pemilihan & Keunggulan bagi Operasi Bencana |
+| Teknologi | Alasan Pemilihan & Manfaat Operasional |
 | :--- | :--- |
-| **Next.js 16 (React 19)** | Menghadirkan *Server & Client Component boundaries* yang jelas, performa kompilasi instan dengan Turbopack, serta kemampuan perenderan antarmuka tangguh lintas perangkat tanpa ketergantungan server runtime eksternal. |
-| **Tauri v2 (Rust Backend)** | Berbeda dengan Electron yang memboroskan RAM ratusan megabyte, Tauri v2 berbasis Rust hanya berukuran <15 MB, menggunakan WebKit/Blink bawaan OS, serta memberikan akses native langsung ke chip Bluetooth Low Energy (BLE) dan SQLite lokal tanpa overhead. |
-| **SQLite (Device-First)** | Mesin basis data *in-process* paling teruji di dunia. Transaksi ACID menjamin integritas rekam medis dan saldo logistik tidak akan korup meskipun daya baterai ponsel habis tiba-tiba saat gempa susulan. |
-| **Tailwind CSS v4** | Menghasilkan bundel CSS ultra-ringan dengan variabel CSS token semantik yang memastikan kontras tinggi (WCAG AAA) agar antarmuka terbaca jelas di bawah terik matahari tenda pengungsian. |
-| **Zustand v5** | State manager berbobot <2 KB yang fleksibel, mendukung sinkronisasi reaktif real-time ke penyimpanan lokal browser tanpa boilerplate berlebih, sangat ideal untuk sistem *offline-first*. |
+| **Next.js 16 (React 19)** | Pemisahan komponen server dan klien yang jelas, performa kompilasi cepat dengan Turbopack, serta fleksibilitas render antarmuka tangguh lintas perangkat tanpa ketergantungan runtime eksternal. |
+| **Tauri v2 (Rust Backend)** | Berukuran ringan (<15 MB) dan hemat memori dibandingkan alternatif berbasis Chromium, memanfaatkan webview bawaan sistem operasi serta menyediakan akses native langsung ke modul Bluetooth Low Energy (BLE) dan SQLite lokal. |
+| **SQLite (Device-First)** | Basis data in-process yang tangguh dan teruji. Transaksi ACID menjamin integritas rekam medis dan data logistik tetap aman meskipun perangkat mati tiba-tiba akibat kehabisan baterai. |
+| **Tailwind CSS v4** | Menghasilkan ukuran berkas CSS yang efisien dengan variabel semantik yang menjaga kontras visual tinggi agar antarmuka tetap mudah terbaca di lingkungan lapangan. |
+| **Zustand v5** | Manajemen state berukuran ringkas (<2 KB) yang mendukung persistensi ke penyimpanan lokal secara efisien, cocok untuk arsitektur aplikasi offline-first. |
 
 ### Dependencies Utama
 
-Dikutip langsung dari konfigurasi produksi [`package.json`](file:///home/okuta/Documents/sandya/package.json):
+Dikutip langsung dari konfigurasi [`package.json`](package.json):
 
 ```json
 {
@@ -250,38 +256,38 @@ Dikutip langsung dari konfigurasi produksi [`package.json`](file:///home/okuta/D
 
 ### System Architecture
 
-Sandya mengadopsi arsitektur desentralisasi berbasis *Domain-Driven Design (DDD)* dan *Event Sourcing*:
+Sandya mengadopsi arsitektur terdesentralisasi berbasis Domain-Driven Design (DDD) dan Event Sourcing:
 
 ```mermaid
 flowchart TD
-    subgraph Frontline["Frontline Emergency Zone (100% Offline)"]
-        D1["Perangkat Relawan Lapangan<br/>(Fast Mobile Intake)"]
-        D2["Perangkat Medis Posko<br/>(Triase START 4-Warna)"]
-        D3["Perangkat Gudang Logistik<br/>(Single-Writer Ledger)"]
+    subgraph Frontline["Zona Lapangan Posko (Offline)"]
+        D1["Perangkat Relawan Lapangan<br/>(Pendaftaran Warga)"]
+        D2["Perangkat Medis Posko<br/>(Triase START)"]
+        D3["Perangkat Gudang Logistik<br/>(Pencatatan Stok Single-Writer)"]
         
-        D1 & D2 & D3 -->|Tersimpan Seketika| DB_LOCAL[("Basis Data Lokal SQLite<br/>(Transactional Outbox)")]
+        D1 & D2 & D3 -->|Tersimpan Langsung| DB_LOCAL[("Basis Data Lokal SQLite<br/>(Transactional Outbox)")]
     end
 
-    subgraph MeshSync["Multi-Transport Air-Gap Sync"]
-        DB_LOCAL -->|Tier 1: Radio Nirkabel| BLE["BLE Mesh (SMP v1)<br/>BitChat Gossip & LRU Drop"]
-        DB_LOCAL -->|Tier 2: Visual Kamera| QR_ANIM["Animated Multipart QR<br/>(Streaming 6 FPS)"]
-        DB_LOCAL -->|Tier 2: Kertas Fisik| QR_POSTER["Poster Paritas XOR<br/>(Tahan Robek / Erasure Coding)"]
+    subgraph MeshSync["Sinkronisasi Multi-Jalur (Air-Gap)"]
+        DB_LOCAL -->|Jalur Nirkabel| BLE["BLE Mesh<br/>Protokol Gossip"]
+        DB_LOCAL -->|Jalur Visual Kamera| QR_ANIM["Animated QR<br/>(Streaming Kamera)"]
+        DB_LOCAL -->|Jalur Fisik Kertas| QR_POSTER["Poster QR Paritas XOR<br/>(Tahan Kerusakan Kertas)"]
     end
 
-    subgraph DataMule["Universal Data Mule Courier"]
-        BLE & QR_ANIM & QR_POSTER --> MULE["Kurir Relawan / Ambulans Bergerak<br/>(Membawa Manifes Biner Terkompresi)"]
+    subgraph DataMule["Mekanisme Data Mule (Kurir Fisik)"]
+        BLE & QR_ANIM & QR_POSTER --> MULE["Relawan / Petugas Lapangan<br/>(Membawa Manifes Data)"]
     end
 
-    subgraph Upstream["Command Center (Saat Internet Tersedia)"]
-        MULE -->|Tiba di Posko Induk| GATEWAY["API Sync Ingest Gateway<br/>(/api/v1/sync/ingest-packet)"]
-        GATEWAY --> CLOUD_DB[("PostgreSQL 16 / Supabase<br/>(Idempotent Merkle Upsert)")]
-        CLOUD_DB --> DASHBOARD["Pusat Komando Makro BPBD / PMI"]
+    subgraph Upstream["Pusat Komando (Saat Ada Internet)"]
+        MULE -->|Tiba di Posko Induk| GATEWAY["API Ingest Gateway<br/>(/api/v1/sync/ingest-packet)"]
+        GATEWAY --> CLOUD_DB[("PostgreSQL 16 / Supabase<br/>(Sinkronisasi Idempoten)")]
+        CLOUD_DB --> DASHBOARD["Dashboard Pusat Komando"]
     end
 ```
 
 ### Database Schema
 
-Skema basis data relasional Sandya dirancang untuk mendukung integritas audit *append-only event sourcing* dan *transactional outbox*:
+Skema basis data relasional Sandya dirancang untuk mendukung integritas audit riwayat data dan penyimpanan lokal sebelum sinkronisasi:
 
 ```mermaid
 erDiagram
@@ -380,55 +386,55 @@ erDiagram
     }
 ```
 
-### Folder Structure
+### Struktur Direktori
 
-Struktur kode diorganisasikan menggunakan pola **Domain-Driven Design (DDD)** modular dan bersih:
+Struktur kode diorganisasikan menggunakan pola arsitektur modular yang rapi:
 
 ```text
 sandya/
 ├── src/
 │   ├── app/                               # Next.js 16 App Router Pages & API Routes
 │   │   ├── api/v1/                        # Endpoint REST & SSE Bencana
-│   │   │   ├── analytics/                 # Triage heatmap, burn rate, & reunion matches
+│   │   │   ├── analytics/                 # Ringkasan triase, ketahanan stok, & pencarian keluarga
 │   │   │   ├── logistics/                 # Mutasi stok Single-Writer
-│   │   │   ├── refugees/                  # Fast intake & event timeline
+│   │   │   ├── refugees/                  # Pendaftaran pengungsi & timeline data
 │   │   │   ├── sync/                      # Ingest paket biner & vector probe
 │   │   │   └── tactical/                  # Broadcast pesan & SSE streaming
 │   │   ├── missions/                      # Manajemen misi makro & command center
-│   │   ├── posko/[poskoId]/               # Antarmuka lapangan 5-Tab Posko
-│   │   │   ├── logistics/                 # Gudang logistik, charts, & waybills
+│   │   ├── posko/[poskoId]/               # Antarmuka operasional 5-Tab Posko
+│   │   │   ├── logistics/                 # Gudang logistik, visualisasi stok, & waybill
 │   │   │   ├── refugees/                  # Direktori warga, triase medis, & temu keluarga
-│   │   │   ├── sync/                      # Animated QR scanner & cetak poster paritas
-│   │   │   └── tactical/                  # PTT Walkie-Talkie & radar proximity
+│   │   │   ├── sync/                      # Pemindai Animated QR & cetak poster paritas
+│   │   │   └── tactical/                  # Komunikasi PTT & indikator radar kedekatan
 │   │   └── guest/                         # Kios publik mandiri pencarian keluarga
-│   ├── core/                              # Lapisan Domain Murni & Use Cases (Zero Dependency)
-│   │   ├── domain/                        # Agregat, Entities, & Value Objects
-│   │   │   ├── logistics/                 # InventoryAggregate & Consumption Resilience
-│   │   │   ├── refugees/                  # RefugeeAggregate & Event Sourcing
-│   │   │   └── tactical/                  # TacticalMessage & Channel invariants
-│   │   ├── codecs/                        # Kamus Bencana uint8, Paritas XOR, & Role Pass
-│   │   └── use-cases/                     # Logika bisnis use cases teruji
-│   ├── features/                          # Fitur UI Spesifik Domain & State Management
-│   │   ├── auth/                          # Scanner & verifikasi Role Pass Ed25519
-│   │   ├── logistics/                     # Modal Ad-hoc distribution & inventaris
-│   │   ├── posko/store/                   # Zustand posko store & offline persistence
-│   │   ├── refugees/                      # Formulir intake cepat & START triage board
-│   │   └── tactical/                      # PTT voice recorder & kanal radio
-│   ├── infrastructure/                    # Implementasi Database, Driver, & Repositories
-│   │   ├── db/sqlite/                     # SQLite driver & repositories
-│   │   ├── db/supabase-postgres-schema.sql# DDL relasional Cloud PostgreSQL
-│   │   ├── network/ble/                   # Sandya Mesh Protocol (SMP v1) engine
-│   │   └── services/                      # DisasterAnalyticsService & ServiceContainer
-│   └── shared/                            # Komponen UI Reusable & Utilitas Primitif
-│       ├── types/                         # Kontrak tipe TypeScript domain bersama
-│       └── ui/                            # Button, Card, Badge, Dialog, Solar Icon, dll.
-├── src-tauri/                             # Rust Native Backend (Tauri v2)
-│   ├── src/main.rs                        # Inisialisasi plugin native & command handlers
-│   └── tauri.conf.json                    # Konfigurasi perizinan native BLE, audio, & file
-├── tests/                                 # Rangkaian 17 Suite Pengujian Otomatis
-│   ├── unit/                              # Pengujian unit domain, codecs, & algoritma
-│   └── integration/                       # Pengujian integrasi API & sinkronisasi SQLite
-└── docs/                                  # Spesifikasi Teknis & Panduan Desain Lengkap
+│   ├── core/                              # Lapisan Domain Murni & Logika Bisnis
+│   │   ├── domain/                        # Agregat, Entities, & Nilai Objek
+│   │   │   ├── logistics/                 # Logika inventaris & estimasi konsumsi
+│   │   │   ├── refugees/                  # Agregat pengungsi & catatan riwayat data
+│   │   │   └── tactical/                  # Model pesan taktis & aturan kanal
+│   │   ├── codecs/                        # Kamus bencana uint8, paritas XOR, & Role Pass
+│   │   └── use-cases/                     # Logika alur kerja utama aplikasi
+│   ├── features/                          # Fitur UI Domain & State Management
+│   │   ├── auth/                          # Pemindaian & verifikasi Role Pass Ed25519
+│   │   ├── logistics/                     # Antarmuka mutasi & distribusi bantuan
+│   │   ├── posko/store/                   # Zustand store & persistensi data posko
+│   │   ├── refugees/                      # Formulir pendaftaran cepat & papan triase START
+│   │   └── tactical/                      # Perekam audio PTT & antarmuka radio
+│   ├── infrastructure/                    # Implementasi Database, Driver, & Komunikasi
+│   │   ├── db/sqlite/                     # Driver SQLite & implementasi repositori
+│   │   ├── db/supabase-postgres-schema.sql# DDL skema relasional Cloud PostgreSQL
+│   │   ├── network/ble/                   # Modul jaringan BLE Mesh & protokol sinkronisasi
+│   │   └── services/                      # Layanan analisis bencana & kontainer service
+│   └── shared/                            # Komponen UI Reusable & Utilitas
+│       ├── types/                         # Definisi tipe TypeScript
+│       └── ui/                            # Komponen tombol, kartu, badge, modal, ikon, dll.
+├── src-tauri/                             # Runtime Desktop Native (Tauri v2)
+│   ├── src/main.rs                        # Inisialisasi plugin native & command handler
+│   └── tauri.conf.json                    # Konfigurasi native BLE, audio, & file system
+├── tests/                                 # Rangkaian Pengujian Otomatis
+│   ├── unit/                              # Pengujian unit domain, codec, & algoritma
+│   └── integration/                       # Pengujian integrasi API & sinkronisasi database
+└── docs/                                  # Dokumentasi Teknis & Panduan Desain
 ```
 
 ---
@@ -438,9 +444,9 @@ sandya/
 ### Prerequisites
 
 Pastikan perangkat pengembang Anda telah terpasang:
-- **Node.js**: `v20.x` atau lebih tinggi
+- **Node.js**: `v20.x` atau lebih baru
 - **Package Manager**: `pnpm` (disarankan, v9+) atau `npm` (v10+)
-- **Rust Toolchain**: `rustc` dan `cargo` >= 1.78 (diperlukan jika mengompilasi Tauri v2)
+- **Rust Toolchain**: `rustc` dan `cargo` >= 1.78 (diperlukan jika mengompilasi aplikasi desktop Tauri v2)
 - **Dependensi Sistem Linux (Ubuntu / Debian)**:
   ```bash
   sudo apt update
@@ -455,12 +461,12 @@ git clone https://github.com/untacorp/sandya.git
 cd sandya
 ```
 
-#### 2️⃣ Pasang Dependensi
+#### 2️⃣ Install Dependencies
 ```bash
 pnpm install
 ```
 
-#### 3️⃣ Konfigurasi Environment Variables
+#### 3️⃣ Setup Environment Variables
 Buat berkas `.env.local` pada direktori root proyek:
 ```env
 # Mode Driver Sinkronisasi Cloud: 'NONE' | 'SUPABASE' | 'POSTGRES_VPS'
@@ -481,12 +487,12 @@ VPS_SYNC_API_KEY=kunci-rahasia-api-vps-anda
 
 ### Opsi Deployment
 
-Sandya mendukung 4 opsi skenario deployment sesuai kebutuhan lapangan:
+Sandya mendukung beberapa skenario deployment sesuai kondisi infrastruktur lapangan:
 
-#### 🟢 Opsi 1: Mode Offline Murni / Local SQLite (Bawaan Tanpa Setup)
-Mode ini adalah konfigurasi standar garis depan bencana. Aplikasi berjalan 100% di perangkat lokal tanpa memerlukan internet, instalasi database eksternal, ataupun registrasi cloud.
+#### 🟢 Opsi 1: Mode Offline Lokal / SQLite (Bawaan Tanpa Setup)
+Mode standar untuk operasi di lokasi bencana. Aplikasi berjalan langsung di perangkat lokal tanpa memerlukan koneksi internet, instalasi database eksternal, atau akun cloud.
 ```bash
-# Jalankan langsung di browser
+# Jalankan pada peramban web
 pnpm dev
 
 # Atau jalankan sebagai aplikasi desktop native Tauri v2
@@ -494,29 +500,29 @@ pnpm tauri dev
 ```
 
 #### 🔵 Opsi 2: Mode Supabase Cloud (Managed Online)
-Digunakan saat posko induk memiliki sambungan internet satelit (Starlink) atau seluler untuk mengonsolidasikan data secara otomatis:
+Digunakan saat posko induk memiliki sambungan internet (misalnya melalui koneksi satelit atau seluler darurat) untuk mengonsolidasikan data secara terpusat:
 1. Buat proyek baru di [Supabase Dashboard](https://supabase.com).
 2. Buka menu **SQL Editor**, salin dan jalankan file `src/infrastructure/db/supabase-postgres-schema.sql`.
-3. Set `NEXT_PUBLIC_CLOUD_DRIVER=SUPABASE` pada `.env.local`.
+3. Atur `NEXT_PUBLIC_CLOUD_DRIVER=SUPABASE` pada berkas `.env.local`.
 4. Jalankan `pnpm dev` atau `pnpm tauri dev`.
 
 #### 🟡 Opsi 3: Mode Local Docker PostgreSQL (Uji Coba Pengembang)
-Digunakan untuk menguji alur sinkronisasi PostgreSQL + PostgREST secara lokal via container:
+Digunakan untuk menguji alur sinkronisasi PostgreSQL secara lokal via container:
 ```bash
-# Nyalakan container PostgreSQL 16 & PostgREST
+# Menyalakan container PostgreSQL 16 & PostgREST
 npm run db:up
 
-# Jalankan aplikasi web
+# Menjalankan aplikasi web
 pnpm dev
 
 # Mematikan container setelah selesai
 npm run db:down
 ```
 
-#### 🟣 Opsi 4: Mode Self-Hosted VPS (BYOC untuk Pemerintah / Instansi)
-Digunakan untuk instansi (BPBD, PMI, Basarnas) yang ingin meng-host server data bencana mandiri di data center lokal:
+#### 🟣 Opsi 4: Mode Self-Hosted VPS (BYOC untuk Instansi)
+Digunakan oleh instansi (BPBD, PMI, Basarnas) yang mengelola server basis data bencana mandiri di pusat data internal:
 ```bash
-# Migrasi skema database ke server VPS target
+# Migrasi skema database ke server VPS tujuan
 DATABASE_URL="postgresql://user:password@ip-vps:5432/sandya_db" npm run db:migrate
 ```
 
@@ -546,41 +552,41 @@ pnpm test:unit
 
 ### User Guide
 
-#### Untuk Petugas Garis Depan (Frontliners)
-1. **Pendaftaran Warga Cepat (<30 Detik)**:
+#### Untuk Petugas Lapangan (Frontliners)
+1. **Pendaftaran Warga Cepat**:
    - Masuk ke tab **Warga & Triase** -> Klik tombol **+ Intake Cepat**.
    - Masukkan Nama, Usia, Jenis Kelamin, dan Lokasi Tenda (NIK bersifat opsional).
-   - Sistem secara otomatis mencatat *event* `INTAKE`, menetapkan tanda pengenal, dan mengalkulasi kebutuhan logistik.
+   - Sistem secara otomatis mencatat data pengungsi dan memperbarui rekapitulasi kebutuhan bantuan.
 2. **Pemeriksaan Pasien Tenda Medis (START Triage)**:
    - Pilih pengungsi dari daftar -> Klik **Periksa Triase**.
-   - Tetapkan warna triase (Merah, Kuning, Hijau, Hitam), isi tanda vital pasien (tensi, nadi, SpO2, suhu), dan resepkan obat.
-   - Tiket resep farmasi otomatis diterbitkan ke gudang logistik.
+   - Tetapkan kategori triase (Merah, Kuning, Hijau, Hitam), isi tanda vital pasien (tensi, nadi, SpO2, suhu), dan resepkan obat yang dibutuhkan.
+   - Tiket resep farmasi otomatis diteruskan ke inventaris logistik.
 3. **Serah Terima Logistik di Gudang (Single-Writer)**:
-   - Buka tab **Logistik Gudang** -> Klik **Catat Barang Masuk (Restock)** untuk bantuan truk yang baru tiba.
-   - Untuk serah terima warga: Buka detail warga -> Klik **Serahkan Bantuan Langsung** (Sistem memvalidasi batas anti-penimbunan 72 jam).
+   - Buka tab **Logistik Gudang** -> Klik **Catat Barang Masuk (Restock)** untuk bantuan logistik yang baru tiba.
+   - Untuk serah terima warga: Buka detail warga -> Klik **Serahkan Bantuan Langsung** (Sistem memvalidasi jeda pengambilan guna mencegah distribusi ganda).
 4. **Komunikasi Radio Taktis (Push-to-Talk)**:
    - Buka tab **Komunikasi Taktis** -> Pilih kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`).
-   - Tahan tombol mikrofon untuk mengirim rekaman suara darurat 3.2 kbps, atau geser tombol SOS saat terjadi situasi darurat.
+   - Tahan tombol mikrofon untuk mengirim pesan suara darurat, atau gunakan tombol SOS saat menghadapi bahaya mendesak.
 5. **Pertukaran Data Antar-Posko Tanpa Internet**:
    - Buka tab **Sinkronisasi**.
-   - Gunakan **Animated QR** untuk transfer cepat layar-ke-kamera (6 FPS).
-   - Atau cetak **Poster Multi-QR Paritas** untuk ditempel di papan pengumuman posko, yang dapat dipindai oleh relawan bermobil (*Data Mule*).
+   - Gunakan **Animated QR** untuk transfer data langsung layar-ke-kamera.
+   - Atau cetak **Poster Multi-QR Paritas** untuk dipasang di posko, yang dapat dipindai oleh petugas lapangan bermobil (*Data Mule*).
 
 #### Untuk Pimpinan & Koordinator Posko
 1. **Inisialisasi Organisasi & Misi**:
    - Buka menu **Setup Organisasi** -> Masukkan nama lembaga dan generate pasangan kunci induk Ed25519.
-   - Terbitkan misi bencana baru beserta titik-titik posko koordinasi lapangan.
-2. **Penerbitan Role Pass Relawan**:
-   - Terbitkan QR Role Pass untuk setiap petugas lapangan sesuai perannya (*Medis, Logistik, Relawan*).
-   - Petugas memindai QR Role Pass untuk mengaktifkan sesi kerja tanpa memerlukan kata sandi.
-3. **Pemantauan Ketahanan Konsumsi**:
-   - Pantau indikator hari ketahanan pangan (*Burn Rate*) pada kartu inventaris dan grafik logistik. Bila komoditas berstatus *Kritis (<24 Jam)*, segera ajukan bantuan pasokan ke posko pusat.
+   - Buat misi bencana baru beserta posko-posko koordinasi lapangan.
+2. **Penerbitan Kartu Identitas Petugas (Role Pass)**:
+   - Terbitkan kode QR Role Pass untuk setiap petugas sesuai fungsinya (*Medis, Logistik, Relawan*).
+   - Petugas memindai kode QR Role Pass untuk mengaktifkan sesi kerja di posko tanpa perlu kata sandi.
+3. **Pemantauan Ketahanan Logistik**:
+   - Pantau indikator hari ketahanan barang (*Burn Rate*) pada kartu inventaris dan grafik logistik. Bila komoditas berstatus kritis (<24 Jam), segera ajukan permohonan pasokan tambahan ke posko induk.
 
 ---
 
 ## 📚 API Documentation
 
-Sandya menyediakan antarmuka REST API dan Server-Sent Events (SSE) berkinerja tinggi yang mematuhi standar **RFC 7807 Problem Details** untuk penanganan galat terstandarisasi.
+Sandya menyediakan antarmuka REST API dan Server-Sent Events (SSE) yang mematuhi standar **RFC 7807 Problem Details** untuk penanganan galat terstandarisasi.
 
 ### Base URL
 ```text
@@ -622,16 +628,16 @@ Production  : https://sandya.id/api/v1
 
 #### 2. Analisis & Ketahanan Bencana
 - **`GET /api/v1/analytics?poskoId=POS-01`**
-  - *Deskripsi*: Mengambil ringkasan heatmap triase pasien, proyeksi ketahanan stok (*burn-rate forecast*) standar SPHERE, dan rekonsiliasi temu keluarga.
+  - *Deskripsi*: Mengambil ringkasan distribusi triase pasien, proyeksi ketahanan stok standar SPHERE, dan hasil pencocokan kerabat keluarga.
   - *Response (200 OK)*: Menyajikan objek `triageHeatmap`, `burnRateForecast`, dan `reunionMatches`.
 
-#### 3. Manajemen Pengungsi & Event Sourcing
+#### 3. Manajemen Pengungsi
 - **`GET /api/v1/refugees?poskoId=POS-01`**: Mengambil daftar pengungsi terdaftar di posko.
-- **`POST /api/v1/refugees`**: Mendaftarkan warga baru via Fast Intake.
-- **`GET /api/v1/refugees/[refugeeId]/timeline`**: Mengambil kronologis riwayat hidup (*event timeline*) pengungsi.
+- **`POST /api/v1/refugees`**: Mendaftarkan warga baru via formulir cepat.
+- **`GET /api/v1/refugees/[refugeeId]/timeline`**: Mengambil kronologis riwayat catatan pengungsi.
 
 #### 4. Sinkronisasi Data Mule & Vector Probe
-- **`POST /api/v1/sync/ingest-packet`**: Menerima manifes biner terkompresi dari kurir pembawa data offline.
+- **`POST /api/v1/sync/ingest-packet`**: Menerima manifes paket data dari kurir pembawa data offline.
 - **`GET /api/v1/sync/vector-probe?poskoId=POS-01`**: Memeriksa status interval vector clock untuk sinkronisasi delta.
 
 #### 5. Komunikasi Taktis
@@ -642,15 +648,15 @@ Production  : https://sandya.id/api/v1
 
 ## 🧪 Testing
 
-Sandya dibangun dengan metodologi **Test-Driven Rigor**. Seluruh algoritma biner, codec QR paritas, protokol BLE mesh, tata kelola logistik, dan rekam medis diverifikasi menggunakan 17 suite pengujian otomatis mandiri tanpa mock palsu (*zero dummy lifecycle*).
+Sandya dilengkapi rangkaian 17 suite pengujian otomatis untuk memverifikasi fungsionalitas domain, codec data biner, protokol sinkronisasi BLE mesh, pengelolaan logistik, dan alur triase medis.
 
-### Menjalankan Test Suite
+### Running Tests
 
 ```bash
 # 1. Menjalankan seluruh 17 suite unit test
 pnpm test:unit
 
-# 2. Menjalankan pengujian integrasi API dan sinkronisasi SQLite-Cloud
+# 2. Menjalankan pengujian integrasi API dan sinkronisasi database
 pnpm test:integration
 
 # 3. Menjalankan seluruh rangkaian tes (Unit + Integrasi)
@@ -666,7 +672,7 @@ Eksekusi perintah `pnpm test:unit` mencakup verifikasi menyeluruh terhadap 17 su
 
 | No | Suite Pengujian | Berkas Uji | Status |
 | :---: | :--- | :--- | :---: |
-| 1 | **Siklus Hidup Data Bersih (Zero-Dummy)** | `tests/unit/zero-dummy-lifecycle.test.ts` | **PASS (100%)** |
+| 1 | **Siklus Hidup Data Posko** | `tests/unit/zero-dummy-lifecycle.test.ts` | **PASS (100%)** |
 | 2 | **Jembatan Transportasi Native BLE** | `tests/unit/ble-transport-bridge.test.ts` | **PASS (100%)** |
 | 3 | **Mesin Jaringan BLE Mesh** | `tests/unit/ble-mesh-engine.test.ts` | **PASS (100%)** |
 | 4 | **Relay Intercom Taktis Lapangan** | `tests/unit/tactical-intercom-relay.test.ts` | **PASS (100%)** |
@@ -676,24 +682,24 @@ Eksekusi perintah `pnpm test:unit` mencakup verifikasi menyeluruh terhadap 17 su
 | 8 | **Autentikasi Kriptografis Role Pass** | `tests/unit/role-pass-auth.test.ts` | **PASS (100%)** |
 | 9 | **Intake Pengungsi & Temu Keluarga** | `tests/unit/refugees-and-reunion.test.ts` | **PASS (100%)** |
 | 10 | **Triase Medis START & Farmasi** | `tests/unit/triage-medis.test.ts` | **PASS (100%)** |
-| 11 | **Gudang Logistik Single-Writer Ledger** | `tests/unit/logistics-single-writer.test.ts` | **PASS (100%)** |
-| 12 | **Distribusi Ad-Hoc & Anti-Hoarding** | `tests/unit/adhoc-logistics-distribution.test.ts` | **PASS (100%)** |
+| 11 | **Gudang Logistik Single-Writer** | `tests/unit/logistics-single-writer.test.ts` | **PASS (100%)** |
+| 12 | **Distribusi Ad-Hoc & Pencegahan Penimbunan** | `tests/unit/adhoc-logistics-distribution.test.ts` | **PASS (100%)** |
 | 13 | **Ketahanan Konsumsi SPHERE & BNPB** | `tests/unit/consumption-resilience.test.ts` | **PASS (100%)** |
 | 14 | **Intercom Push-to-Talk & Sirene SOS** | `tests/unit/tactical-intercom.test.ts` | **PASS (100%)** |
 | 15 | **Codec QR Teranimasi & Role Pass QR** | `tests/unit/qr-codecs.test.ts` | **PASS (100%)** |
 | 16 | **Transport Dinamis & Paritas XOR** | `tests/unit/dynamic-sync-transports.test.ts` | **PASS (100%)** |
-| 17 | **Framing Protokol Biner SMP v1** | `tests/unit/ble-mesh-protocol.test.ts` | **PASS (100%)** |
+| 17 | **Framing Protokol BLE Mesh** | `tests/unit/ble-mesh-protocol.test.ts` | **PASS (100%)** |
 
 ---
 
 ## 📄 Lisensi
 
-Proyek **Sandya** dilisensikan di bawah lisensi ganda [MIT License](LICENSE) dan Apache-2.0. Dikembangkan untuk mendukung operasi tanggap darurat kemanusiaan, penanganan krisis bencana, dan perlindungan masyarakat di seluruh pelosok tanah air.
+Proyek ini dilisensikan di bawah [MIT License](LICENSE) - lihat file [LICENSE](LICENSE) untuk detail lebih lanjut.
 
 ---
 
 <div align="center">
 
-  **Made with dedication & humanity by Skensa Jaya for ITECHNO CUP 2026**
+  **Made with ❤️ by SkensaJaya for ITECHNO CUP 2026**
 
 </div>

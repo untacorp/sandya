@@ -345,7 +345,7 @@ export default function MissionSettingsPage() {
   role="KOMANDAN_MISI"
   officerName={session.userName || "Komandan Misi Wilayah"}
   poskoId=""
-  poskoName="Markas Wilayah Operasi"
+  poskoName={`Pusdalops ${mission.name}`}
   missionId={mission.id}
   missionName={mission.name}
   orgId={session.orgId}

@@ -8,6 +8,10 @@ import { Badge } from "@/shared/ui/badge";
 import { useHierarchicalNav } from "../hooks/use-hierarchical-nav";
 import { HierarchySwitcherModal } from "./hierarchy-switcher-modal";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import {
+  getRoleBadgeLabel,
+  getRoleBadgeVariant,
+} from "@/features/auth/utils/role-routing";
 
 export interface UnifiedAppHeaderProps {
   customTitle?: string;
@@ -52,7 +56,7 @@ export function UnifiedAppHeader({
     return "shield";
   };
 
-  const roleLabel = session.userRole.replace(/_/g, " ");
+  const roleLabel = getRoleBadgeLabel(session.userRole);
 
   return (
     <>
@@ -172,7 +176,11 @@ export function UnifiedAppHeader({
 
             {/* Desktop Role Badge */}
             <div className="hidden lg:flex items-center gap-1.5 pl-1">
-              <Badge variant="neutral" size="sm" className="text-[11px] font-medium">
+              <Badge
+                variant={getRoleBadgeVariant(session.userRole)}
+                size="sm"
+                className="text-[11px] font-semibold"
+              >
                 {roleLabel}
               </Badge>
             </div>

@@ -20,6 +20,32 @@ export const QR_SCANNER_CONSTANTS = {
   CAMERA_IDEAL_HEIGHT: 720,
 } as const;
 
+/**
+ * Completely releases hardware access for a MediaStream: disables tracks, stops tracks,
+ * and removes them from the stream to ensure camera LED turns off in all browsers.
+ */
+function releaseMediaStream(stream: MediaStream | null | undefined) {
+  if (!stream) return;
+  try {
+    const tracks = stream.getTracks();
+    for (const track of tracks) {
+      try {
+        track.enabled = false;
+        track.stop();
+      } catch {
+        // ignore
+      }
+      try {
+        stream.removeTrack(track);
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function QRCameraScanner({
   onScan,
   onError,
@@ -31,6 +57,7 @@ export function QRCameraScanner({
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
+  const activeStreamsRef = React.useRef<Set<MediaStream>>(new Set());
   const animationFrameId = React.useRef<number | null>(null);
   const lastScannedTextRef = React.useRef<string>("");
   const lastScanTimestampRef = React.useRef<number>(0);
@@ -67,17 +94,17 @@ export function QRCameraScanner({
       animationFrameId.current = null;
     }
 
-    // Stop and release MediaStream tracks immediately
+    // Stop and release primary MediaStream tracks immediately
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => {
-        try {
-          track.stop();
-        } catch {
-          // ignore
-        }
-      });
+      releaseMediaStream(streamRef.current);
       streamRef.current = null;
     }
+
+    // Stop and release any active streams in the tracker (guards against async race conditions)
+    activeStreamsRef.current.forEach((stream) => {
+      releaseMediaStream(stream);
+    });
+    activeStreamsRef.current.clear();
 
     if (videoRef.current) {
       try {
@@ -86,15 +113,14 @@ export function QRCameraScanner({
         // ignore
       }
       if (videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {
-            // ignore
-          }
-        });
+        releaseMediaStream(videoRef.current.srcObject as MediaStream);
         videoRef.current.srcObject = null;
+      }
+      try {
+        videoRef.current.removeAttribute("src");
+        videoRef.current.load();
+      } catch {
+        // ignore
       }
     }
 
@@ -161,7 +187,7 @@ export function QRCameraScanner({
   }, [scanFrame]);
 
   const startCamera = React.useCallback(async () => {
-    if (!active) return;
+    if (!active || !isMountedRef.current) return;
     stopCamera();
 
     const currentEpoch = ++sessionEpochRef.current;
@@ -173,7 +199,7 @@ export function QRCameraScanner({
     if (isTauriMobile()) {
       try {
         const barcodePlugin = await import("@tauri-apps/plugin-barcode-scanner");
-        if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current) {
+        if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current || !active) {
           barcodePlugin.cancel().catch(() => {});
           return;
         }
@@ -183,7 +209,7 @@ export function QRCameraScanner({
           formats: [barcodePlugin.Format.QRCode],
         });
 
-        if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current) {
+        if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current || !active) {
           barcodePlugin.cancel().catch(() => {});
           return;
         }
@@ -215,15 +241,18 @@ export function QRCameraScanner({
         audio: false,
       });
 
-      // Guard against race conditions: stopped or unmounted while awaiting stream
-      if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current || !isScanningRef.current) {
-        stream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {
-            // ignore
-          }
-        });
+      // Register stream into tracker
+      activeStreamsRef.current.add(stream);
+
+      // Guard against race conditions: stopped or unmounted or deactivated while awaiting stream
+      if (
+        sessionEpochRef.current !== currentEpoch ||
+        !isMountedRef.current ||
+        !isScanningRef.current ||
+        !active
+      ) {
+        releaseMediaStream(stream);
+        activeStreamsRef.current.delete(stream);
         return;
       }
 
@@ -234,7 +263,12 @@ export function QRCameraScanner({
         videoRef.current.setAttribute("playsinline", "true");
         await videoRef.current.play();
 
-        if (sessionEpochRef.current !== currentEpoch || !isMountedRef.current || !isScanningRef.current) {
+        if (
+          sessionEpochRef.current !== currentEpoch ||
+          !isMountedRef.current ||
+          !isScanningRef.current ||
+          !active
+        ) {
           stopCamera();
           return;
         }
@@ -242,13 +276,8 @@ export function QRCameraScanner({
         setHasPermission(true);
         animationFrameId.current = requestAnimationFrame(() => scanFrameRef.current());
       } else {
-        stream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {
-            // ignore
-          }
-        });
+        releaseMediaStream(stream);
+        activeStreamsRef.current.delete(stream);
         streamRef.current = null;
       }
     } catch (err) {
@@ -279,18 +308,32 @@ export function QRCameraScanner({
     };
   }, [active, startCamera, stopCamera]);
 
-  // Handle pagehide and beforeunload to release camera hardware immediately
+  // Handle tab visibility changes, page hide, and browser unload to release camera hardware immediately
   React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        stopCamera();
+      } else if (document.visibilityState === "visible" && active && isMountedRef.current) {
+        startCamera();
+      }
+    };
+
     const handleUnload = () => {
       stopCamera();
     };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", handleUnload);
     window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("popstate", handleUnload);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handleUnload);
       window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("popstate", handleUnload);
     };
-  }, [stopCamera]);
+  }, [active, startCamera, stopCamera]);
 
   const toggleFacingMode = () => {
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));

@@ -42,7 +42,12 @@ export type SolarIconName =
   | "volume"
   | "add-circle"
   | "menu"
-  | "sidebar-collapse";
+  | "sidebar-collapse"
+  | "download"
+  | "laptop"
+  | "smartphone"
+  | "server"
+  | "play";
 
 export type SolarIconVariant = "linear" | "bold";
 
@@ -198,6 +203,26 @@ const SOLAR_ICON_MAP: Record<SolarIconName, { linear: string; bold: string }> = 
   "sidebar-collapse": {
     linear: "solar:sidebar-minimalistic-linear",
     bold: "solar:sidebar-minimalistic-bold",
+  },
+  download: {
+    linear: "solar:download-linear",
+    bold: "solar:download-bold",
+  },
+  laptop: {
+    linear: "solar:laptop-linear",
+    bold: "solar:laptop-bold",
+  },
+  smartphone: {
+    linear: "solar:smartphone-linear",
+    bold: "solar:smartphone-bold",
+  },
+  server: {
+    linear: "solar:server-linear",
+    bold: "solar:server-bold",
+  },
+  play: {
+    linear: "solar:play-linear",
+    bold: "solar:play-bold",
   },
 };
 

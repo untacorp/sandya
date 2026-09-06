@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Sandya memerlukan akses Bluetooth untuk pertukaran data darurat antar-posko secara offline tanpa internet.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Sandya memerlukan mode periferal Bluetooth untuk menyiarkan data logistik dan pengungsi ke relawan sekitar.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Sandya memerlukan akses kamera untuk memindai kode QR identitas pengungsi dan distribusi logistik.</string>
+</dict>
+</plist>

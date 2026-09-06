@@ -10,6 +10,7 @@ import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { UnifiedAppHeader, UnifiedAppSidebar } from "@/features/navigation";
 import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
+import { getRoleBadgeLabel } from "@/features/auth/utils/role-routing";
 
 interface NavItem {
   label: string;
@@ -65,11 +66,11 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
 
           <div className="space-y-2">
             <h1 className="text-xl font-bold tracking-tight text-text-main">
-              Akses Khusus Pemimpin Organisasi
+              Akses Khusus Pimpinan Lembaga
             </h1>
             <p className="text-xs text-text-muted leading-relaxed">
               Tingkat Pengelola Lembaga hanya dapat diakses oleh Pemegang Master Authority Key (Ed25519). Peran aktif Anda saat ini:{" "}
-              <strong className="text-text-main">{session.userRole.replace(/_/g, " ")}</strong>.
+              <strong className="text-text-main">{getRoleBadgeLabel(session.userRole)}</strong>.
             </p>
           </div>
 
