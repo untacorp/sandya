@@ -21,18 +21,21 @@ import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { TIME_CONSTANTS } from "@/core/shared/constants";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { asRefugeeId, asPoskoId, asEventId } from "@/core/shared/branded-types";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 
 export const ANIMATED_QR_PAGE_CONSTANTS = {
   DEFAULT_FPS: 6,
   SUPPORTED_FPS: [4, 6, 8] as const,
   CHUNK_BYTE_SIZE: 300,
   SIMULATED_FRAME_DELAY_MS: 350,
-  QR_DISPLAY_SIZE: 230,
+  QR_DISPLAY_SIZE: 210,
   DEFAULT_FRAME_SLOTS_FALLBACK: 4,
 } as const;
 
 export default function AnimatedQRPage() {
-  const { session, refugees, importRefugeeBatch } = usePoskoStore();
+  const { session, refugees, inventory, transactions, needsTickets, importRefugeeBatch, importInventoryBatch, importTransactionBatch, importNeedsTicketsBatch } = usePoskoStore();
 
   const [mode, setMode] = React.useState<"TRANSMIT" | "RECEIVE">("TRANSMIT");
 
@@ -52,22 +55,91 @@ export default function AnimatedQRPage() {
 
   // Generate frames for Transmit
   React.useEffect(() => {
-  if (refugees.length === 0) {
+  if (refugees.length === 0 && inventory.length === 0 && transactions.length === 0 && needsTickets.length === 0) {
   setFrames([]);
   return;
   }
 
+  let isMounted = true;
+
+  const buildManifestAndFrames = async () => {
   try {
   const manifestPersons = refugees.map((r) => ({
+  id: r.id,
   fullName: r.fullName,
   nationalId: r.nik || undefined,
   gender: r.gender,
   age: r.age,
-  vulnerabilities: r.vulnerabilities.length > 0 ? 0x01 : 0x00,
+  vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
+    switch (v) {
+      case "BALITA": return mask | 0x01;
+      case "IBU_HAMIL": return mask | 0x02;
+      case "LANSIA": return mask | 0x04;
+      case "DISABILITAS": return mask | 0x08;
+      case "LUKA_BERAT": return mask | 0x10;
+      case "PENYAKIT_KRONIS": return mask | 0x20;
+      default: return mask;
+    }
+  }, 0),
   urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
   domicileOrigin: r.domicileOrigin || undefined,
   shelterLocation: r.shelterLocation || undefined,
   missingKinName: r.missingKinName || undefined,
+  triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
+  }));
+
+  const manifestInventory = inventory.map((i) => ({
+    itemName: i.itemName,
+    category: i.category as "FOOD" | "CLOTHING" | "MEDICAL" | "HYGIENE" | "SHELTER" | "BABY_SUPPLIES",
+    currentQuantity: i.currentQuantity,
+    unit: i.unit,
+  }));
+
+  const manifestTransactions = transactions
+    .filter((tx) => !tx.postId || tx.postId === session.poskoId)
+    .map((tx) => ({
+      id: tx.id,
+      itemId: tx.itemId,
+      txType: tx.txType,
+      quantityChange: tx.quantityChange,
+      note: tx.note || undefined,
+      officerName: tx.officerName || undefined,
+      deviceTimestamp: tx.deviceTimestamp,
+    }));
+
+  // Ambil rekam peristiwa / timeline warga dari SQLite
+  const container = ServiceContainer.getInstance();
+  const eventsRes = await container.refugeeRepo.getAllEvents();
+  const allEvents = eventsRes.ok ? eventsRes.value : [];
+  const refugeeIdSet = new Set(refugees.map((r) => r.id));
+  const poskoEvents = allEvents.filter((ev) => refugeeIdSet.has(ev.refugeeId));
+  const manifestEvents = poskoEvents.map((ev) => ({
+    id: ev.id,
+    refugeeId: ev.refugeeId,
+    authorName: ev.authorName,
+    authorRole: ev.authorRole,
+    eventType: ev.eventType,
+    eventPayloadJson: typeof ev.eventPayload === "string" ? ev.eventPayload : JSON.stringify(ev.eventPayload),
+    deviceTimestamp: ev.deviceTimestamp,
+    logicalSeq: ev.logicalSeq,
+  }));
+
+  // Ambil tiket kebutuhan / distribusi bantuan
+  const poskoTickets = needsTickets.filter((t) => !t.postId || t.postId === session.poskoId);
+  const manifestTickets = poskoTickets.map((t) => ({
+    id: t.id,
+    refugeeId: t.refugeeId,
+    refugeeName: t.refugeeName,
+    shelterLocation: t.shelterLocation,
+    postId: t.postId,
+    itemName: t.itemName,
+    quantity: t.quantity,
+    unit: t.unit,
+    status: t.status,
+    urgency: t.urgency,
+    createdByUserName: t.createdByUserName,
+    createdAt: t.createdAt,
+    completedAt: t.completedAt,
   }));
 
   const manifest: DisasterManifestV4 = {
@@ -75,18 +147,32 @@ export default function AnimatedQRPage() {
   defaultRegionCode: "320101",
   timestamp: Date.now(),
   persons: manifestPersons,
+  inventory: manifestInventory,
+  transactions: manifestTransactions,
+  personIds: refugees.map((r) => r.id),
+  events: manifestEvents,
+  tickets: manifestTickets,
   };
 
   const packed = packManifestV4(manifest);
   const compressed = compressManifestV4(packed);
   const generatedFrames = splitPayloadToAnimatedFrames(compressed, ANIMATED_QR_PAGE_CONSTANTS.CHUNK_BYTE_SIZE);
 
-  setFrames(generatedFrames);
-  setCurrentFrameIdx(0);
+  if (isMounted) {
+    setFrames(generatedFrames);
+    setCurrentFrameIdx(0);
+  }
   } catch (err) {
   console.error("Gagal membuat frame animasi QR:", err);
   }
-  }, [refugees, session.poskoName]);
+  };
+
+  buildManifestAndFrames();
+
+  return () => {
+    isMounted = false;
+  };
+  }, [refugees, inventory, transactions, needsTickets, session.poskoName, session.poskoId]);
 
   // Transmit Frame Animation Loop
   React.useEffect(() => {
@@ -102,18 +188,19 @@ export default function AnimatedQRPage() {
 
   // Handle incoming optical frame from camera
   const handleScanFrame = React.useCallback(
-  (qrText: string) => {
-  const assembler = assemblerRef.current;
-  const res = assembler.ingestFrame(qrText);
+    async (qrText: string) => {
+      const assembler = assemblerRef.current;
+      const res = assembler.ingestFrame(qrText);
 
-  if (res.totalParts > 0) {
-  setTotalExpectedParts(res.totalParts);
-  setCapturedIndices(assembler.getCapturedPartIndices());
-  setProgressPercent(res.progress);
+      if (res.totalParts > 0) {
+        setTotalExpectedParts(res.totalParts);
+        setCapturedIndices(assembler.getCapturedPartIndices());
+        setProgressPercent(res.progress);
+      }
 
-  if (res.isNewPart) {
-  setReceiveMessage(`Menerima Frame ${res.partIndex + 1}/${res.totalParts} (CRC16 Valid)`);
-  }
+      if (res.isNewPart) {
+        setReceiveMessage(`Menerima Frame ${res.partIndex + 1}/${res.totalParts} (CRC16 Valid)`);
+      }
 
   if (res.completed && !recoveredManifest) {
   try {
@@ -129,31 +216,127 @@ export default function AnimatedQRPage() {
   if (importRefugeeBatch && manifest.persons.length > 0) {
   importRefugeeBatch(
   manifest.persons.map((p) => ({
+  id: p.id,
   postId: session.poskoId,
   fullName: p.fullName,
   nik: p.nationalId || null,
   gender: p.gender,
   age: p.age,
-  vulnerabilities: p.vulnerabilities > 0 ? ["LANSIA"] : [],
+  vulnerabilities: [
+    (p.vulnerabilities & 0x01) ? "BALITA" : null,
+    (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
+    (p.vulnerabilities & 0x04) ? "LANSIA" : null,
+    (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
+    (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
+    (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
+  ].filter(Boolean) as any[],
   urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
   domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
   shelterLocation: p.shelterLocation || "Tenda Pengungsian",
   missingKinName: p.missingKinName,
   registeredByUserId: session.userId,
   registeredByUserName: session.userName,
-  triageStatus: "GREEN",
+  triageStatus: p.triage || "GREEN",
   }))
   );
+
+  // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
+  const container = ServiceContainer.getInstance();
+  for (const p of manifest.persons) {
+    const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
+    const agg = RefugeeAggregate.reconstitute({
+      id: refId,
+      poskoId: asPoskoId(session.poskoId),
+      fullName: p.fullName,
+      nationalId: p.nationalId || null,
+      gender: p.gender,
+      age: p.age,
+      domicileOrigin: p.domicileOrigin || null,
+      shelterLocation: p.shelterLocation || null,
+      missingKinName: p.missingKinName || null,
+      currentTriage: (p.triage as any) || "GREEN",
+      registeredByUserId: session.userId,
+      createdAt: Date.now(),
+      version: 1,
+    }, []);
+    await container.refugeeRepo.save(agg);
   }
-  } catch (err) {
-  console.error("Gagal memproses payload biner utuh:", err);
-  setReceiveMessage(`Error decode: ${(err as Error).message}`);
   }
+
+  if (importInventoryBatch && manifest.inventory && manifest.inventory.length > 0) {
+    importInventoryBatch(
+      manifest.inventory.map((i) => ({
+        itemName: i.itemName,
+        category: i.category,
+        currentQuantity: i.currentQuantity,
+        unit: i.unit,
+      }))
+    );
   }
+
+  if (importTransactionBatch && manifest.transactions && manifest.transactions.length > 0) {
+    importTransactionBatch(
+      manifest.transactions.map((tx) => ({
+        id: tx.id,
+        itemId: tx.itemId || "",
+        postId: session.poskoId,
+        officerId: session.userId,
+        officerName: tx.officerName || "Petugas",
+        txType: tx.txType,
+        quantityChange: tx.quantityChange,
+        note: tx.note,
+        deviceTimestamp: tx.deviceTimestamp || Date.now(),
+      }))
+    );
   }
+
+  // Simpan kronologi & rekam peristiwa ke SQLite repository posko
+  if (manifest.events && manifest.events.length > 0) {
+    const container = ServiceContainer.getInstance();
+    await container.refugeeRepo.saveRawEvents(
+      manifest.events.map((ev) => ({
+        id: asEventId(ev.id),
+        refugeeId: asRefugeeId(ev.refugeeId),
+        authorId: ev.authorId || session.userId,
+        authorName: ev.authorName || "Petugas",
+        authorRole: (ev.authorRole as any) || "RELAWAN",
+        eventType: ev.eventType as any,
+        eventPayload: JSON.parse(ev.eventPayloadJson || "{}"),
+        deviceTimestamp: ev.deviceTimestamp,
+        logicalSeq: ev.logicalSeq,
+      }))
+    );
+  }
+
+  // Impor tiket kebutuhan / data distribusi bantuan ke state posko
+  if (importNeedsTicketsBatch && manifest.tickets && manifest.tickets.length > 0) {
+    importNeedsTicketsBatch(
+      manifest.tickets.map((t) => ({
+        id: t.id,
+        refugeeId: t.refugeeId,
+        refugeeName: t.refugeeName,
+        shelterLocation: t.shelterLocation,
+        postId: session.poskoId,
+        itemName: t.itemName,
+        quantity: t.quantity,
+        unit: t.unit,
+        status: t.status,
+        urgency: t.urgency,
+        createdByUserId: session.userId,
+        createdByUserName: t.createdByUserName || "Petugas",
+        createdAt: t.createdAt || Date.now(),
+        completedAt: t.completedAt,
+      }))
+    );
+  }
+      } catch (err) {
+        console.error("Gagal memproses payload biner utuh:", err);
+        setReceiveMessage(`Error decode: ${(err as Error).message}`);
+      }
+    }
   },
-  [recoveredManifest, session, importRefugeeBatch]
-  );
+  [recoveredManifest, session, importRefugeeBatch, importInventoryBatch, importTransactionBatch, importNeedsTicketsBatch]
+);
 
   // Fast optical simulation drill
   const handleFastReceiveSimulation = () => {
@@ -245,8 +428,8 @@ export default function AnimatedQRPage() {
   <QRCodeSVG
   value={activeFrame.frameString}
   size={ANIMATED_QR_PAGE_CONSTANTS.QR_DISPLAY_SIZE}
-  level="L"
-  includeMargin={false}
+  level="M"
+  includeMargin={true}
   className="border-none shadow-none"
   />
   ) : (
@@ -348,13 +531,16 @@ export default function AnimatedQRPage() {
   <div className="flex justify-between text-xs font-medium">
   <span className="text-text-muted">Progres Penangkapan Frame:</span>
   <span className="font-bold text-primary">
-  {progressPercent}% ({capturedIndices.length}/{totalExpectedParts || frames.length || ANIMATED_QR_PAGE_CONSTANTS.DEFAULT_FRAME_SLOTS_FALLBACK} Frame)
+  {totalExpectedParts > 0
+    ? `${progressPercent}% (${capturedIndices.length}/${totalExpectedParts} Frame)`
+    : "Menunggu deteksi frame QR..."}
   </span>
   </div>
 
   {/* Frame Slots Grid */}
-  <div className="grid grid-cols-4 gap-1.5">
-  {Array.from({ length: totalExpectedParts || frames.length || ANIMATED_QR_PAGE_CONSTANTS.DEFAULT_FRAME_SLOTS_FALLBACK }).map((_, idx) => {
+  {totalExpectedParts > 0 ? (
+  <div className={`grid gap-1.5 ${totalExpectedParts <= 2 ? "grid-cols-2" : totalExpectedParts === 3 ? "grid-cols-3" : "grid-cols-4"}`}>
+  {Array.from({ length: totalExpectedParts }).map((_, idx) => {
   const isCaptured = capturedIndices.includes(idx);
   return (
   <div
@@ -370,6 +556,11 @@ export default function AnimatedQRPage() {
   );
   })}
   </div>
+  ) : (
+  <p className="text-[11px] text-text-muted text-center py-1">
+  Arahkan kamera ke layar HP pengirim. Sistem akan otomatis mendeteksi jumlah frame.
+  </p>
+  )}
   </div>
 
   {/* Success Banner */}

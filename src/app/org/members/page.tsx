@@ -68,8 +68,20 @@ export default function OrgMembersPage() {
   },
   ];
 
-  const currentPosko = poskos.find((p) => p.id === session.poskoId) || null;
   const currentMission = missions.find((m) => m.id === session.missionId) || null;
+
+  // Posko selector — org leader may not have session.poskoId set
+  const [selectedPoskoId, setSelectedPoskoId] = React.useState<string>(
+    session.poskoId || poskos[0]?.id || ""
+  );
+  // Sync if poskos load after render
+  React.useEffect(() => {
+    if (!selectedPoskoId && poskos.length > 0) {
+      setSelectedPoskoId(session.poskoId || poskos[0].id);
+    }
+  }, [poskos, session.poskoId, selectedPoskoId]);
+
+  const selectedPosko = poskos.find((p) => p.id === selectedPoskoId) || null;
 
   return (
   <div className="space-y-6">
@@ -126,7 +138,27 @@ export default function OrgMembersPage() {
   Pilih jenis peran penugasan untuk menghasilkan QR Kartu Tugas resmi bagi relawan/petugas posko.
   </p>
   </CardHeader>
-  <CardContent>
+  <CardContent className="space-y-4">
+  {/* Posko Selector */}
+  <div className="flex items-center gap-2">
+  <label className="text-xs font-semibold text-text-muted shrink-0">Target Posko:</label>
+  {poskos.length === 0 ? (
+  <span className="text-xs text-text-muted italic">Belum ada posko terdaftar</span>
+  ) : (
+  <select
+  value={selectedPoskoId}
+  onChange={(e) => setSelectedPoskoId(e.target.value)}
+  className="flex-1 h-9 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none transition-colors"
+  >
+  {poskos.map((p) => (
+  <option key={p.id} value={p.id}>
+  {p.name} ({p.id})
+  </option>
+  ))}
+  </select>
+  )}
+  </div>
+
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
   {standardFieldRoles.map((item) => (
   <div
@@ -149,14 +181,15 @@ export default function OrgMembersPage() {
   icon="qr-code"
   iconVariant="bold"
   className="w-full justify-center"
+  disabled={!selectedPosko}
   onClick={() =>
   setSelectedTarget({
   name: `Personel ${item.title}`,
   role: item.role,
-  poskoId: currentPosko?.id || session.poskoId || "HQ-POSKO",
-  poskoName: currentPosko?.name || session.poskoName || "Posko Utama",
-  missionId: currentMission?.id || session.missionId || "HQ-MISSION",
-  missionName: currentMission?.name || session.missionName || "Misi Operasi",
+  poskoId: selectedPosko?.id || "",
+  poskoName: selectedPosko?.name || "",
+  missionId: currentMission?.id || session.missionId || "",
+  missionName: currentMission?.name || session.missionName || "",
   })
   }
   >
@@ -167,6 +200,7 @@ export default function OrgMembersPage() {
   </div>
   </CardContent>
   </Card>
+
 
   {/* Mission Coordinators */}
   <Card>
@@ -219,8 +253,8 @@ export default function OrgMembersPage() {
   setSelectedTarget({
   name: cmd.name,
   role: "KOMANDAN_MISI",
-  poskoId: currentPosko?.id || session.poskoId || "HQ-POSKO",
-  poskoName: currentPosko?.name || session.poskoName || "Posko Utama",
+  poskoId: selectedPosko?.id || "",
+  poskoName: selectedPosko?.name || "",
   missionId: cmd.missionId,
   missionName: cmd.missionName,
   })

@@ -26,7 +26,7 @@ export default function PoskoDashboardPage() {
     id: effectivePoskoId,
     orgId: session.orgId || "ORG-01",
     missionId: session.missionId || "MSN-01",
-    name: `Posko ${effectivePoskoId}`,
+    name: session.poskoName || `Posko ${effectivePoskoId}`,
     postType: "FIELD_SHELTER",
     status: "OPERATIONAL_NORMAL",
     capacity: 500,

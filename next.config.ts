@@ -8,9 +8,15 @@ const nextConfig: NextConfig = {
   output: isStaticExport ? "export" : undefined,
   // Next.js Image Optimization requires a server, so we disable it for static export
   images: {
-  unoptimized: true,
+    unoptimized: true,
   },
+  // Izinkan origin dev dari ngrok dan IP lokal
+  allowedDevOrigins: [
+    "192.168.101.15",
+    "*.ngrok-free.dev",
+    "*.ngrok-free.app",
+    "*.ngrok.io",
+  ],
 };
 
 export default nextConfig;
-

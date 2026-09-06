@@ -130,23 +130,35 @@ export function PoskoDesktopSidebar() {
   },
   ];
 
-  const adminNavItems: NavItem[] = [
-  {
-  label: "Pengelola Induk Organisasi",
-  href: `/org`,
-  icon: "buildings",
-  },
-  {
-  label: "Ringkasan Operasi Wilayah",
-  href: `/missions/${session.missionId}`,
-  icon: "radar",
-  },
-  {
-  label: "Pengaturan Posko",
-  href: `/posko/${poskoId}/settings`,
-  icon: "settings",
-  },
-  ];
+  const adminNavItems: NavItem[] = [];
+
+  if (session.userRole === "PEMIMPIN_ORGANISASI") {
+    adminNavItems.push({
+      label: "Pengelola Induk Organisasi",
+      href: `/org`,
+      icon: "buildings",
+    });
+  }
+
+  if (session.missionId) {
+    adminNavItems.push({
+      label: "Ringkasan Operasi Wilayah",
+      href: `/missions/${session.missionId}`,
+      icon: "radar",
+    });
+  }
+
+  if (
+    session.userRole === "PEMIMPIN_ORGANISASI" ||
+    session.userRole === "KOMANDAN_MISI" ||
+    session.userRole === "KOORDINATOR_POSKO"
+  ) {
+    adminNavItems.push({
+      label: "Pengaturan Posko",
+      href: `/posko/${poskoId}/settings`,
+      icon: "settings",
+    });
+  }
 
   return (
   <aside className="hidden md:flex flex-col w-60 border-r border-border bg-surface shrink-0 min-h-screen">
@@ -199,36 +211,38 @@ export function PoskoDesktopSidebar() {
   </div>
   </div>
 
-  <div>
-  <p className="px-3 text-[11px] font-semibold text-text-muted mb-1.5">
-  Tingkat Wilayah & Induk
-  </p>
-  <div className="space-y-0.5">
-  {adminNavItems.map((item) => {
-  const isActive = pathname.startsWith(item.href);
-  return (
-  <Link
-  key={item.href}
-  href={item.href}
-  className={cn(
-  "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors",
-  isActive
-  ? "bg-surface-muted text-text-main font-semibold border border-border/80"
-  : "text-text-muted hover:text-text-main hover:bg-surface-subtle font-medium"
+  {adminNavItems.length > 0 && (
+    <div>
+      <p className="px-3 text-[11px] font-semibold text-text-muted mb-1.5">
+        Tingkat Wilayah & Induk
+      </p>
+      <div className="space-y-0.5">
+        {adminNavItems.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors",
+                isActive
+                  ? "bg-surface-muted text-text-main font-semibold border border-border/80"
+                  : "text-text-muted hover:text-text-main hover:bg-surface-subtle font-medium"
+              )}
+            >
+              <Icon
+                name={item.icon}
+                variant={isActive ? "bold" : "linear"}
+                size={18}
+                className={isActive ? "text-primary" : "text-text-muted"}
+              />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   )}
-  >
-  <Icon
-  name={item.icon}
-  variant={isActive ? "bold" : "linear"}
-  size={18}
-  className={isActive ? "text-primary" : "text-text-muted"}
-  />
-  <span>{item.label}</span>
-  </Link>
-  );
-  })}
-  </div>
-  </div>
   </div>
   </aside>
   );

@@ -253,7 +253,7 @@ export default function PoskoSettingsPage() {
   name: `Petugas ${r.title}`,
   role: r.role,
   poskoId: currentPosko?.id || session.poskoId || "POSKO-01",
-  poskoName: currentPosko?.name || session.poskoName || "Posko Lapangan",
+  poskoName: poskoName || currentPosko?.name || session.poskoName || "Posko Lapangan",
   missionId: session.missionId,
   missionName: session.missionName,
   })
