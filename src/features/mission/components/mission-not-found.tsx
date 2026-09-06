@@ -96,7 +96,7 @@ export function MissionNotFoundState({ missionId }: { missionId: string }) {
 
   {/* Footer */}
   <footer className="max-w-md mx-auto w-full text-center text-[11px] text-text-subtle py-2">
-  Sandya • Sistem Siaga Kebencanaan Tangguh Offline
+  Sandya • Sistem Tanggap Darurat Bencana Mandiri
   </footer>
   </div>
   );

@@ -126,24 +126,20 @@ export class InventoryAggregate {
   referenceTicketId?: TicketId | null,
   notes?: string
   ): Result<InventoryTransactionProps, DomainError> {
-  // 1. Invarian Hak Akses Single-Writer: Petugas Logistik, Koordinator, atau Pimpinan
-  const isAuthorized =
-  officerRole === 'PETUGAS_LOGISTIK' ||
-  officerRole === 'LOGISTIK' ||
-  officerRole === 'KOORDINATOR_POSKO' ||
-  officerRole === 'KOORDINATOR' ||
-  officerRole === 'PEMIMPIN_ORGANISASI' ||
-  officerRole === 'KOMANDAN_MISI';
+    // 1. Invarian Hak Akses Single-Writer: Eksklusif Petugas Logistik
+    const isAuthorized =
+      officerRole === 'PETUGAS_LOGISTIK' ||
+      officerRole === 'LOGISTIK';
 
-  if (!isAuthorized) {
-  return Err(
-  new DomainError(
-  'UNAUTHORIZED_WRITER',
-  `Hanya Petugas Logistik atau Koordinator yang berhak memotong stok fisik. Peran Anda: ${officerRole}`,
-  HTTP_STATUS.FORBIDDEN
-  )
-  );
-  }
+    if (!isAuthorized) {
+      return Err(
+        new DomainError(
+          'UNAUTHORIZED_WRITER',
+          `Hanya Petugas Logistik (Single-Writer) yang berhak memutasi stok fisik posko ini. Peran Anda: ${officerRole}`,
+          HTTP_STATUS.FORBIDDEN
+        )
+      );
+    }
 
   if (quantityChange === 0) {
   return Err(new DomainError('ZERO_CHANGE', 'Perubahan kuantitas tidak boleh 0.', HTTP_STATUS.UNPROCESSABLE_ENTITY));

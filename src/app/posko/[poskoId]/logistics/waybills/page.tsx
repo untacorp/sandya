@@ -15,6 +15,7 @@ import { Icon } from "@/shared/ui/icon";
 import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { canManageWaybills } from "@/core/permissions/posko-permissions";
 
 interface WaybillRecord {
   id: string;
@@ -50,15 +51,7 @@ export default function WaybillsPage() {
   const [waybillModal, setWaybillModal] = React.useState<MacroWaybill | null>(null);
   const [successToast, setSuccessToast] = React.useState<string | null>(null);
 
-  const authorizedRoles = [
-  "PETUGAS_LOGISTIK",
-  "LOGISTIK",
-  "KOORDINATOR_POSKO",
-  "KOORDINATOR",
-  "KOMANDAN_MISI",
-  "PEMIMPIN_ORGANISASI",
-  ];
-  const isLogisticsOfficer = authorizedRoles.includes(session.userRole);
+  const isLogisticsOfficer = canManageWaybills(session.userRole);
 
   const handleCreateWaybill = (e: React.FormEvent) => {
   e.preventDefault();
@@ -136,7 +129,7 @@ export default function WaybillsPage() {
   <div className="flex items-center justify-between">
   <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
   <Icon name="waybill" variant="bold" size={14} className="text-primary" />
-  Daftar Pengiriman Antar-Posko & Truk Suplai
+  Daftar Pengiriman
   </h3>
   <span className="text-xs text-text-muted">
   {poskoWaybills.length} Surat Jalan
@@ -249,14 +242,14 @@ export default function WaybillsPage() {
   </div>
 
   <div className="space-y-1">
-  <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
+  <label className="font-semibold text-text-main block">Komoditas Barang (Katalog Standar)</label>
   <select value={selectedCatalogId}
   onChange={(e) => setSelectedCatalogId(parseInt(e.target.value))}
   className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {Object.values(DISASTER_NEEDS_CATALOG).map((c) => (
   <option key={c.id} value={c.id}>
-  [0x{c.id.toString(16).padStart(2, "0")}] {c.nameId} ({c.cluster})
+  {c.nameId} ({c.nameEn})
   </option>
   ))}
   </select>

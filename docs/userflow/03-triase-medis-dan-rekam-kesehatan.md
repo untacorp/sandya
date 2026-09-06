@@ -71,7 +71,7 @@ flowchart TD
   
   DiagnoseInput --> PrescribeMedCheck{"Perlu Terapi Obat / Farmasi?"}
   
-  PrescribeMedCheck -->|Ya| SelectMedItems["3. Pilih Obat dari Kamus Medis uint8:<br/>• Paracetamol 500mg (0x21)<br/>• Oralit Larutan Diare (0x22)<br/>• Amoxicillin / Salep Luka<br/>+ Input Dosis (3x1 tab)"]
+  PrescribeMedCheck -->|Ya| SelectMedItems["3. Pilih Obat dari Katalog Medis Standar:<br/>• Paracetamol 500mg<br/>• Oralit Larutan Diare<br/>• Amoxicillin / Salep Luka<br/>+ Input Dosis (3x1 tab)"]
   PrescribeMedCheck -->|Tidak| FinalizeExam
   
   SelectMedItems --> FinalizeExam["User Ketuk: 'Simpan Rekam Medis & Resep'"]

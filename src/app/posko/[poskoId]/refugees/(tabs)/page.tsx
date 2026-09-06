@@ -11,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { Dialog } from "@/shared/ui/dialog";
 import { FastIntakeModal } from "@/features/refugees/components/fast-intake-modal";
+import { BulkIntakeModal } from "@/features/refugees/components/bulk-intake-modal";
 import { EmptyState } from "@/shared/ui/empty-state";
 import {
   type VulnerabilityCategory,
@@ -31,6 +32,7 @@ export default function RefugeesPage() {
   const [selectedPerson, setSelectedPerson] = React.useState<DisasterPerson | null>(null);
   const [detailModalOpen, setDetailModalOpen] = React.useState(false);
   const [fastIntakeOpen, setFastIntakeOpen] = React.useState(false);
+  const [bulkIntakeOpen, setBulkIntakeOpen] = React.useState(false);
 
   const poskoRefugees = refugees.filter((r) => r.postId === effectivePoskoId);
 
@@ -92,6 +94,12 @@ export default function RefugeesPage() {
           } else if (v === "DISABILITAS") {
             label = "Disabilitas";
             colorClass = "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20";
+          } else if (v === "LUKA_BERAT") {
+            label = "Luka Berat";
+            colorClass = "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+          } else if (v === "PENYAKIT_KRONIS") {
+            label = "Kronis";
+            colorClass = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
           }
           return (
             <span
@@ -122,7 +130,7 @@ export default function RefugeesPage() {
             />
           </div>
 
-          {/* Filter Dropdowns & Intake Button */}
+          {/* Filter Dropdowns & Intake Buttons */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Filter Triase */}
             <div className="w-36">
@@ -150,9 +158,22 @@ export default function RefugeesPage() {
                   { value: "IBU_HAMIL", label: "Ibu Hamil" },
                   { value: "LANSIA", label: "Lansia" },
                   { value: "DISABILITAS", label: "Disabilitas" },
+                  { value: "LUKA_BERAT", label: "Luka Berat" },
+                  { value: "PENYAKIT_KRONIS", label: "Penyakit Kronis" },
                 ]}
               />
             </div>
+
+            {/* Tombol Bulk / Family Intake */}
+            <Button
+              variant="outline"
+              size="sm"
+              icon="users"
+              onClick={() => setBulkIntakeOpen(true)}
+              className="whitespace-nowrap"
+            >
+              + Rombongan / KK
+            </Button>
 
             {/* Tombol Utama: Intake Cepat */}
             <Button
@@ -163,7 +184,7 @@ export default function RefugeesPage() {
               onClick={() => setFastIntakeOpen(true)}
               className="whitespace-nowrap ml-auto md:ml-0"
             >
-              + Intake Warga
+              + Intake Warga (30s)
             </Button>
           </div>
         </div>
@@ -194,7 +215,7 @@ export default function RefugeesPage() {
         <EmptyState
           icon="users"
           title="Belum Ada Data Warga Terdaftar"
-          description="Belum ada data warga terdaftar di posko ini. Gunakan fitur intake kilat (30 detik) untuk mendaftarkan warga pertama secara offline."
+          description="Belum ada data warga terdaftar di posko ini. Gunakan fitur intake kilat (30 detik) atau pendaftaran rombongan keluarga bertenaga AI OCR."
           actionLabel="+ Intake Warga Cepat"
           actionIcon="user"
           onAction={() => setFastIntakeOpen(true)}
@@ -225,6 +246,7 @@ export default function RefugeesPage() {
                   <th className="py-3 px-4">Hunian & Asal</th>
                   <th className="py-3 px-4">Status Medis</th>
                   <th className="py-3 px-4">Kelompok Rentan</th>
+                  <th className="py-3 px-4">Kebutuhan Awal</th>
                   <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -251,16 +273,16 @@ export default function RefugeesPage() {
                         {person.age} Thn
                       </span>{" "}
                       <span className="text-text-muted">
-                        ({person.gender === "M" ? "Laki-laki" : "Perempuan"})
+                        ({person.gender === "M" ? "L" : "P"})
                       </span>
                     </td>
 
                     {/* Kolom 3: Hunian & Asal */}
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-text-main truncate max-w-[180px]">
+                      <div className="font-semibold text-text-main truncate max-w-[160px]">
                         {person.shelterLocation}
                       </div>
-                      <div className="text-[11px] text-text-muted truncate max-w-[180px]">
+                      <div className="text-[11px] text-text-muted truncate max-w-[160px]">
                         Asal {person.domicileOrigin}
                       </div>
                     </td>
@@ -275,7 +297,25 @@ export default function RefugeesPage() {
                       {getVulnerabilityBadges(person.vulnerabilities)}
                     </td>
 
-                    {/* Kolom 6: Aksi */}
+                    {/* Kolom 6: Kebutuhan Awal */}
+                    <td className="py-3 px-4">
+                      {person.urgentNeeds && person.urgentNeeds.length > 0 ? (
+                        <div className="flex flex-wrap items-center gap-1 max-w-[180px]">
+                          {person.urgentNeeds.map((need) => (
+                            <span
+                              key={need}
+                              className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-warning-bg text-status-warning border border-status-warning-border"
+                            >
+                              {need}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-text-subtle text-xs">-</span>
+                      )}
+                    </td>
+
+                    {/* Kolom 7: Aksi */}
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <div className="inline-flex items-center gap-1 text-text-muted group-hover:text-primary font-semibold text-xs">
                         <span>Detail</span>
@@ -290,7 +330,7 @@ export default function RefugeesPage() {
         </div>
       )}
 
-      {/* 3. Modal Detail Profil Warga (Elegan & Komprehensif) */}
+      {/* 3. Modal Detail Profil Warga */}
       {selectedPerson && (
         <Dialog
           open={detailModalOpen}
@@ -417,6 +457,13 @@ export default function RefugeesPage() {
       <FastIntakeModal
         open={fastIntakeOpen}
         onOpenChange={setFastIntakeOpen}
+        poskoId={effectivePoskoId}
+      />
+
+      {/* 5. Modal Bulk / Family Intake */}
+      <BulkIntakeModal
+        open={bulkIntakeOpen}
+        onOpenChange={setBulkIntakeOpen}
         poskoId={effectivePoskoId}
       />
     </div>

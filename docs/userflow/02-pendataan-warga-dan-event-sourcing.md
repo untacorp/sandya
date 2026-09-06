@@ -12,7 +12,7 @@
 ### Cakupan (In Scope)
 - Pemicu Fast Mobile Intake 30 detik dari Tombol FAB Melayang (`/refugees/intake`) yang tersedia di HP seluruh staf posko.
 - Penanganan NIK Dinamis (*Dynamic Null-Bypass*): 0 Byte jika dokumen KTP hilang/lupa, 5 Byte jika satu wilayah posko.
-- Identifikasi Kelompok Rentan (8-kategori bitmask) & Kebutuhan Mendesak Awal (`uint8` Token Kamus).
+- Identifikasi Kelompok Rentan (Balita, Lansia, Ibu Hamil, Disabilitas) & Kebutuhan Mendesak Awal (Katalog Standar Bencana).
 - Perekaman Relasi Temu Keluarga (`missing_kin_name` & `domicile_origin`).
 - Append-Only Event Timeline: Tambah catatan peristiwa (`HEALTH_CHECK`, `NEED_REPORTED`, `AID_RECEIVED`, `NOTE`).
 - Hybrid Timestamp anti-*clock drift* (`device_timestamp`, `logical_seq`, `causal_parent_id`).

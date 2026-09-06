@@ -40,8 +40,15 @@
   "icons/icon.icns",
   "icons/icon.ico"
   ],
-  "android": {
-  "debugApplicationIdSuffix": ".debug"
-  }
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    },
+    "iOS": {
+      "frameworks": ["CoreBluetooth"],
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "Sandya memerlukan akses Bluetooth untuk pertukaran data darurat antar-posko secara offline tanpa internet.",
+        "NSBluetoothPeripheralUsageDescription": "Sandya memerlukan mode periferal Bluetooth untuk menyiarkan data logistik dan pengungsi ke relawan sekitar."
+      }
+    }
   }
 }

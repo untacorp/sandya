@@ -7,9 +7,24 @@ import {
 } from '@/core/domain/refugees/refugee.aggregate';
 import { RefugeeId, PoskoId, asRefugeeId, asPoskoId, asEventId } from '@/core/shared/branded-types';
 import { InMemorySqliteConnection } from '../sqlite-connection';
+import { type VulnerabilityCategory } from '@/shared/types';
 
 export class SqliteRefugeeRepository implements IRefugeeRepository {
   constructor(private readonly db: InMemorySqliteConnection) {}
+
+  private parseJsonArray<T>(val: unknown): T[] {
+    if (!val) return [];
+    if (Array.isArray(val)) return val as T[];
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
 
   public async findById(id: RefugeeId): Promise<Result<RefugeeAggregate | null>> {
     const table = this.db.getTable('refugees');
@@ -33,6 +48,8 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
         shelterLocation: (row['shelter_location'] as string) || null,
         missingKinName: (row['missing_kin_name'] as string) || null,
         currentTriage: (row['current_triage'] as TriageCategory) || 'GREEN',
+        vulnerabilities: this.parseJsonArray<VulnerabilityCategory>(row['vulnerabilities']),
+        urgentNeeds: this.parseJsonArray<string>(row['urgent_needs']),
         registeredByUserId: row['registered_by_user_id'] as string,
         createdAt: (row['created_at'] as number) || Date.now(),
         version: (row['version'] as number) || 1,
@@ -40,91 +57,95 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
       existingEvents
     );
 
-  return Ok(agg);
+    return Ok(agg);
   }
 
   public async findByPoskoId(poskoId: PoskoId): Promise<Result<RefugeeAggregate[]>> {
-  const table = this.db.getTable('refugees');
-  const list: RefugeeAggregate[] = [];
+    const table = this.db.getTable('refugees');
+    const list: RefugeeAggregate[] = [];
 
-  for (const row of table.values()) {
-  if (poskoId === 'ALL' || poskoId === asPoskoId('ALL') || row['post_id'] === poskoId) {
-  const agg = RefugeeAggregate.reconstitute(
-  {
-  id: asRefugeeId(row['id'] as string),
-  poskoId: asPoskoId(row['post_id'] as string),
-  fullName: row['full_name'] as string,
-  nationalId: (row['national_id'] as string) || null,
-  gender: row['gender'] as 'M' | 'F',
-  age: row['age'] as number,
-  domicileOrigin: (row['domicile_origin'] as string) || null,
-  shelterLocation: (row['shelter_location'] as string) || null,
-  missingKinName: (row['missing_kin_name'] as string) || null,
-        currentTriage: (row['current_triage'] as TriageCategory) || 'GREEN',
-        registeredByUserId: row['registered_by_user_id'] as string,
-        createdAt: (row['created_at'] as number) || Date.now(),
-        version: (row['version'] as number) || 1,
-      },
-      []
-    );
-  list.push(agg);
-  }
-  }
+    for (const row of table.values()) {
+      if (poskoId === 'ALL' || poskoId === asPoskoId('ALL') || row['post_id'] === poskoId) {
+        const agg = RefugeeAggregate.reconstitute(
+          {
+            id: asRefugeeId(row['id'] as string),
+            poskoId: asPoskoId(row['post_id'] as string),
+            fullName: row['full_name'] as string,
+            nationalId: (row['national_id'] as string) || null,
+            gender: row['gender'] as 'M' | 'F',
+            age: row['age'] as number,
+            domicileOrigin: (row['domicile_origin'] as string) || null,
+            shelterLocation: (row['shelter_location'] as string) || null,
+            missingKinName: (row['missing_kin_name'] as string) || null,
+            currentTriage: (row['current_triage'] as TriageCategory) || 'GREEN',
+            vulnerabilities: this.parseJsonArray<VulnerabilityCategory>(row['vulnerabilities']),
+            urgentNeeds: this.parseJsonArray<string>(row['urgent_needs']),
+            registeredByUserId: row['registered_by_user_id'] as string,
+            createdAt: (row['created_at'] as number) || Date.now(),
+            version: (row['version'] as number) || 1,
+          },
+          []
+        );
+        list.push(agg);
+      }
+    }
 
-  return Ok(list);
+    return Ok(list);
   }
 
   public async save(refugee: RefugeeAggregate): Promise<Result<void>> {
-  const snap = refugee.toSnapshot();
-  const table = this.db.getTable('refugees');
-  table.set(snap.id, {
-  id: snap.id,
-  post_id: snap.poskoId,
-  full_name: snap.fullName,
-  national_id: snap.nationalId,
-  gender: snap.gender,
-  age: snap.age,
-  domicile_origin: snap.domicileOrigin,
-  shelter_location: snap.shelterLocation,
-  missing_kin_name: snap.missingKinName,
-  current_triage: snap.currentTriage,
-  registered_by_user_id: snap.registeredByUserId,
-  created_at: snap.createdAt,
-  version: snap.version,
-  });
+    const snap = refugee.toSnapshot();
+    const table = this.db.getTable('refugees');
+    table.set(snap.id, {
+      id: snap.id,
+      post_id: snap.poskoId,
+      full_name: snap.fullName,
+      national_id: snap.nationalId,
+      gender: snap.gender,
+      age: snap.age,
+      domicile_origin: snap.domicileOrigin,
+      shelter_location: snap.shelterLocation,
+      missing_kin_name: snap.missingKinName,
+      current_triage: snap.currentTriage,
+      vulnerabilities: JSON.stringify(snap.vulnerabilities || []),
+      urgent_needs: JSON.stringify(snap.urgentNeeds || []),
+      registered_by_user_id: snap.registeredByUserId,
+      created_at: snap.createdAt,
+      version: snap.version,
+    });
 
-  // Simpan event timeline
-  const eventsTable = this.db.getTable('refugee_events');
-  for (const ev of refugee.getEvents()) {
-  eventsTable.set(ev.id, {
-  id: ev.id,
-  refugee_id: ev.refugeeId,
-  author_id: ev.authorId,
-  author_name: ev.authorName,
-  author_role: ev.authorRole,
-  event_type: ev.eventType,
-  event_payload: JSON.stringify(ev.eventPayload),
-  device_timestamp: ev.deviceTimestamp,
-  logical_seq: ev.logicalSeq,
-  causal_parent_id: ev.causalParentId ?? null,
-  });
-  }
+    // Simpan event timeline
+    const eventsTable = this.db.getTable('refugee_events');
+    for (const ev of refugee.getEvents()) {
+      eventsTable.set(ev.id, {
+        id: ev.id,
+        refugee_id: ev.refugeeId,
+        author_id: ev.authorId,
+        author_name: ev.authorName,
+        author_role: ev.authorRole,
+        event_type: ev.eventType,
+        event_payload: JSON.stringify(ev.eventPayload),
+        device_timestamp: ev.deviceTimestamp,
+        logical_seq: ev.logicalSeq,
+        causal_parent_id: ev.causalParentId ?? null,
+      });
+    }
 
-  return Ok(undefined);
+    return Ok(undefined);
   }
 
   public async saveBatch(refugees: RefugeeAggregate[]): Promise<Result<number>> {
-  for (const r of refugees) {
-  await this.save(r);
-  }
-  return Ok(refugees.length);
+    for (const r of refugees) {
+      await this.save(r);
+    }
+    return Ok(refugees.length);
   }
 
   public async getEventsByRefugeeId(
-  refugeeId: RefugeeId
+    refugeeId: RefugeeId
   ): Promise<Result<RefugeeEventProps[]>> {
-  const table = this.db.getTable('refugee_events');
-  const events: RefugeeEventProps[] = [];
+    const table = this.db.getTable('refugee_events');
+    const events: RefugeeEventProps[] = [];
 
     for (const row of table.values()) {
       if (row['refugee_id'] === refugeeId) {
@@ -170,6 +191,8 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
             shelterLocation: (row['shelter_location'] as string) || null,
             missingKinName: (row['missing_kin_name'] as string) || null,
             currentTriage: (row['current_triage'] as TriageCategory) || 'GREEN',
+            vulnerabilities: this.parseJsonArray<VulnerabilityCategory>(row['vulnerabilities']),
+            urgentNeeds: this.parseJsonArray<string>(row['urgent_needs']),
             registeredByUserId: row['registered_by_user_id'] as string,
             createdAt: (row['created_at'] as number) || Date.now(),
             version: (row['version'] as number) || 1,
@@ -180,7 +203,7 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
       }
     }
 
-  return Ok(matches);
+    return Ok(matches);
   }
 
   public async saveRawEvents(events: RefugeeEventProps[]): Promise<Result<void>> {

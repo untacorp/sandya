@@ -23,11 +23,12 @@ import { AlertBanner } from "@/shared/ui/alert-banner";
 import { Dialog } from "@/shared/ui/dialog";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { type NeedsTicket } from "@/shared/types";
+import { canApproveDistribution, canDeliverAid } from "@/core/permissions/posko-permissions";
 
 export default function LogisticsDistributePage() {
   const params = useParams();
   const routePoskoId = (params?.poskoId as string) || "";
-  const { session, needsTickets, inventory, allocateStock, completeDelivery } = usePoskoStore();
+  const { session, needsTickets, inventory, refugees, allocateStock, completeDelivery } = usePoskoStore();
   const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
 
   const poskoTickets = React.useMemo(() => {
@@ -45,15 +46,8 @@ export default function LogisticsDistributePage() {
   const [selectedItemId, setSelectedItemId] = React.useState<string>("");
   const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const authorizedRoles = [
-  "PETUGAS_LOGISTIK",
-  "LOGISTIK",
-  "KOORDINATOR_POSKO",
-  "KOORDINATOR",
-  "KOMANDAN_MISI",
-  "PEMIMPIN_ORGANISASI",
-  ];
-  const isLogisticsOfficer = authorizedRoles.includes(session.userRole);
+  const isLogisticsOfficer = canApproveDistribution(session.userRole);
+  const isDeliveryAuthorized = canDeliverAid(session.userRole);
 
   const openApproveModal = (ticket: NeedsTicket) => {
   setErrorMessage(null);
@@ -146,10 +140,51 @@ export default function LogisticsDistributePage() {
   }
   };
 
-  const handleCompleteDelivery = (ticket: NeedsTicket) => {
-  completeDelivery(ticket.id);
-  setSuccessToast(`Bantuan ${ticket.quantity} ${ticket.unit} ${ticket.itemName} telah diserahterimakan kepada ${ticket.refugeeName}.`);
-  setTimeout(() => setSuccessToast(null), 4000);
+  const handleCompleteDelivery = async (ticket: NeedsTicket) => {
+    completeDelivery(ticket.id);
+
+    // Link ke Timeline Pengungsi via Event Sourcing (AID_RECEIVED)
+    const targetRefugee = refugees.find(
+      (r) =>
+        (ticket.refugeeId && r.id === ticket.refugeeId) ||
+        r.fullName.toLowerCase() === ticket.refugeeName.toLowerCase()
+    );
+
+    if (targetRefugee) {
+      try {
+        const container = ServiceContainer.getInstance();
+        const roleMap: Record<string, "PEMIMPIN" | "KOMANDAN" | "KOORDINATOR" | "MEDIS" | "LOGISTIK" | "RELAWAN"> = {
+          PEMIMPIN_ORGANISASI: "PEMIMPIN",
+          KOMANDAN_MISI: "KOMANDAN",
+          KOORDINATOR_POSKO: "KOORDINATOR",
+          PETUGAS_MEDIS: "MEDIS",
+          PETUGAS_LOGISTIK: "LOGISTIK",
+          RELAWAN_LAPANGAN: "RELAWAN",
+        };
+
+        await container.recordRefugeeEventUseCase.execute({
+          refugeeId: targetRefugee.id,
+          poskoId: effectivePoskoId,
+          authorId: session.userId,
+          authorName: session.userName,
+          authorRole: roleMap[session.userRole] || "RELAWAN",
+          eventType: "AID_RECEIVED",
+          eventPayload: {
+            item: ticket.itemName,
+            quantity: ticket.quantity,
+            unit: ticket.unit,
+            ticketId: ticket.id,
+            shelterLocation: ticket.shelterLocation || targetRefugee.shelterLocation,
+            deliveredAt: Date.now(),
+          },
+        });
+      } catch (err) {
+        console.error("Failed to append AID_RECEIVED event:", err);
+      }
+    }
+
+    setSuccessToast(`Bantuan ${ticket.quantity} ${ticket.unit} ${ticket.itemName} telah diserahterimakan kepada ${ticket.refugeeName}.`);
+    setTimeout(() => setSuccessToast(null), 4000);
   };
 
   const filteredTickets = React.useMemo(() => {

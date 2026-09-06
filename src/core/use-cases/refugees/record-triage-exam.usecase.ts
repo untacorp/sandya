@@ -54,17 +54,17 @@ export class RecordTriageExamUseCase {
   ) {}
 
   public async execute(input: RecordTriageExamInput): Promise<Result<RecordTriageExamOutput>> {
-  // 1. RBAC Guard: Hanya peran medis & pimpinan posko yang berwenang
-  const authorizedRoles = ['PETUGAS_MEDIS', 'KOORDINATOR_POSKO', 'KOMANDAN_MISI', 'PEMIMPIN_ORGANISASI'];
-  if (!authorizedRoles.includes(input.authorRole)) {
-  return Err(
-  new DomainError(
-  'UNAUTHORIZED_ROLE',
-  'Akses ditolak: Hanya Petugas Medis Berlisensi atau Koordinator yang berhak menetapkan triase klinis dan meresepkan obat.',
-  HTTP_STATUS.FORBIDDEN
-  )
-  );
-  }
+    // 1. RBAC Guard: Eksklusif Petugas Medis Berlisensi (Dokter / Perawat)
+    const authorizedRoles = ['PETUGAS_MEDIS', 'MEDIS', 'DOKTER'];
+    if (!authorizedRoles.includes(input.authorRole)) {
+      return Err(
+        new DomainError(
+          'UNAUTHORIZED_ROLE',
+          `Akses ditolak: Pemeriksaan klinis dan penetapan triase START hanya dapat dilakukan oleh Petugas Medis. Peran Anda: ${input.authorRole}`,
+          HTTP_STATUS.FORBIDDEN
+        )
+      );
+    }
 
   // 2. Fetch refugee from database
   const refugeeId = asRefugeeId(input.refugeeId);

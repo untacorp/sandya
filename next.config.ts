@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     "*.ngrok-free.app",
     "*.ngrok.io",
   ],
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 export default nextConfig;

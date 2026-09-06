@@ -243,10 +243,10 @@ export default function ActivatePassPage() {
   ) : null}
   </main>
 
-  {/* Footer */}
-  <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
-  Jika kartu tugas belum dicetak, minta Koordinator Posko Anda membuka menu anggota posko.
-  </footer>
+      {/* Footer Bersih */}
+      <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
+        Sandya • Sistem Tanggap Darurat Bencana Mandiri
+      </footer>
   </div>
   );
 }

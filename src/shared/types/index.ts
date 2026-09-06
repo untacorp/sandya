@@ -38,7 +38,7 @@ export type ItemCategory =
   | "EMERGENCY_TOOLS"
   | "OTHER";
 
-export type TicketStatus = "PENDING" | "ALLOCATED" | "COMPLETED" | "REJECTED";
+export type TicketStatus = "PENDING" | "ALLOCATED" | "COMPLETED" | "REJECTED" | "CANCELLED";
 
 export type TacticalChannel = "POSKO_ALL" | "MEDIS" | "LOGISTIK" | "SOS";
 
@@ -185,6 +185,10 @@ export interface NeedsTicket {
   createdByUserName: string;
   allocatedByUserId?: string;
   distributedByUserId?: string;
+  cancellationReason?: string;
+  transferredToRefugeeId?: string;
+  transferredToRefugeeName?: string;
+  note?: string;
   createdAt: number;
   completedAt?: number;
 }
@@ -200,6 +204,7 @@ export interface TacticalMessage {
   textContent?: string;
   audioDurationMs?: number;
   audioWaveform?: number[];
+  audioBase64?: string;
   isUrgent?: boolean;
   createdAt: number;
 }

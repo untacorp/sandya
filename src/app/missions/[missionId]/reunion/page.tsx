@@ -124,9 +124,7 @@ export default function MissionReunionRadarPage() {
   <div className="space-y-4 sm:space-y-5">
   {/* Top Header without redundant back button */}
   <PageHeader
-  title="Pencarian Keluarga Lintas Posko"
-  description="Hasil rekonsiliasi graf keluarga antar-posko di seluruh wilayah misi bencana (Standar RFL ICRC)."
-  />
+  title="Pencarian Keluarga Lintas Posko"  />
 
   {/* Search Input */}
   <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2 max-w-lg">

@@ -4,100 +4,115 @@ import { ServiceContainer } from '@/infrastructure/services/service-container';
 import { createProblemResponse } from '@/shared/errors/problem-details';
 import { asPoskoId } from '@/core/shared/branded-types';
 import { HTTP_STATUS } from '@/core/shared/constants';
+import { type VulnerabilityCategory } from '@/shared/types';
 
 export async function GET(req: NextRequest) {
   try {
-  const { searchParams } = new URL(req.url);
-  const poskoId = searchParams.get('poskoId') || 'ALL';
-  const container = ServiceContainer.getInstance();
+    const { searchParams } = new URL(req.url);
+    const poskoId = searchParams.get('poskoId') || 'ALL';
+    const container = ServiceContainer.getInstance();
 
-  const result = await container.refugeeRepo.findByPoskoId(asPoskoId(poskoId));
-  if (!result.ok) {
-  return createProblemResponse({
-  type: 'https://sandya.id/errors/db-query-failed',
-  title: 'Gagal Membaca Data Pengungsi',
-  status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-  detail: result.error.message,
-  code: result.error.code,
-  });
-  }
+    const result = await container.refugeeRepo.findByPoskoId(asPoskoId(poskoId));
+    if (!result.ok) {
+      return createProblemResponse({
+        type: 'https://sandya.id/errors/db-query-failed',
+        title: 'Gagal Membaca Data Pengungsi',
+        status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        detail: result.error.message,
+        code: result.error.code,
+      });
+    }
 
-  const snapshots = result.value.map((r) => r.toSnapshot());
-  return NextResponse.json({
-  success: true,
-  count: snapshots.length,
-  data: snapshots,
-  });
+    const snapshots = result.value.map((r) => r.toSnapshot());
+    return NextResponse.json({
+      success: true,
+      count: snapshots.length,
+      data: snapshots,
+    });
   } catch (error) {
-  return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
-  title: 'Kesalahan Server Internal',
-  status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-  detail: (error as Error).message,
-  code: 'SERVER_ERROR',
-  });
+    return createProblemResponse({
+      type: 'https://sandya.id/errors/server-error',
+      title: 'Kesalahan Server Internal',
+      status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      detail: (error as Error).message,
+      code: 'SERVER_ERROR',
+    });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-  const rawBody = await req.json();
-  const parseResult = FastIntakeSchema.safeParse(rawBody);
+    const rawBody = await req.json();
+    const parseResult = FastIntakeSchema.safeParse(rawBody);
 
-  if (!parseResult.success) {
-  return createProblemResponse({
-  type: 'https://sandya.id/errors/invalid-input',
-  title: 'Format Input Pendaftaran Tidak Valid',
-  status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
-  detail: 'Data input pendaftaran warga tidak memenuhi validasi skema.',
-  code: 'VALIDATION_FAILED',
-  invalidParams: parseResult.error.issues.map((i) => ({
-  field: i.path.join('.'),
-  reason: i.message,
-  })),
-  });
-  }
+    if (!parseResult.success) {
+      return createProblemResponse({
+        type: 'https://sandya.id/errors/invalid-input',
+        title: 'Format Input Pendaftaran Tidak Valid',
+        status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+        detail: 'Data input pendaftaran warga tidak memenuhi validasi skema.',
+        code: 'VALIDATION_FAILED',
+        invalidParams: parseResult.error.issues.map((i) => ({
+          field: i.path.join('.'),
+          reason: i.message,
+        })),
+      });
+    }
 
-  const data = parseResult.data;
-  const container = ServiceContainer.getInstance();
-  const result = await container.fastIntakeUseCase.execute({
-  poskoId: data.posId,
-  fullName: data.fullName,
-  nationalId: data.nationalId,
-  gender: data.gender,
-  age: data.age,
-  domicileOrigin: data.domicileOrigin,
-  shelterLocation: data.shelterLocation,
-  missingKinName: data.missingKinName,
-  urgentNeeds: data.urgentNeeds,
-  vulnerabilities: data.vulnerabilities,
-  registeredByUserId: req.headers.get('x-user-id') || 'system-registrar',
-  });
+    const data = parseResult.data;
+    const bitmask = data.vulnerabilities || 0;
+    const vulns: VulnerabilityCategory[] = [
+      (bitmask & 0x01) ? "BALITA" : null,
+      (bitmask & 0x02) ? "IBU_HAMIL" : null,
+      (bitmask & 0x04) ? "LANSIA" : null,
+      (bitmask & 0x08) ? "DISABILITAS" : null,
+      (bitmask & 0x10) ? "LUKA_BERAT" : null,
+      (bitmask & 0x20) ? "PENYAKIT_KRONIS" : null,
+    ].filter(Boolean) as VulnerabilityCategory[];
 
-  if (!result.ok) {
-  return createProblemResponse({
-  type: 'https://sandya.id/errors/intake-failed',
-  title: 'Pendaftaran Gagal Diproses',
-  status: result.error.status || HTTP_STATUS.BAD_REQUEST,
-  detail: result.error.message,
-  code: result.error.code,
-  });
-  }
+    const needs: string[] | undefined = data.urgentNeeds
+      ? data.urgentNeeds.map((token) => `Kebutuhan #${token}`)
+      : undefined;
 
-  return NextResponse.json(
-  {
-  success: true,
-  data: result.value,
-  },
-  { status: HTTP_STATUS.CREATED }
-  );
+    const container = ServiceContainer.getInstance();
+    const result = await container.fastIntakeUseCase.execute({
+      poskoId: data.posId,
+      fullName: data.fullName,
+      nationalId: data.nationalId,
+      gender: data.gender,
+      age: data.age,
+      domicileOrigin: data.domicileOrigin,
+      shelterLocation: data.shelterLocation,
+      missingKinName: data.missingKinName,
+      urgentNeeds: needs,
+      vulnerabilities: vulns.length > 0 ? vulns : undefined,
+      registeredByUserId: req.headers.get('x-user-id') || 'system-registrar',
+    });
+
+    if (!result.ok) {
+      return createProblemResponse({
+        type: 'https://sandya.id/errors/intake-failed',
+        title: 'Pendaftaran Gagal Diproses',
+        status: result.error.status || HTTP_STATUS.BAD_REQUEST,
+        detail: result.error.message,
+        code: result.error.code,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: result.value,
+      },
+      { status: HTTP_STATUS.CREATED }
+    );
   } catch (error) {
-  return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
-  title: 'Kesalahan Server Internal',
-  status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-  detail: (error as Error).message,
-  code: 'SERVER_ERROR',
-  });
+    return createProblemResponse({
+      type: 'https://sandya.id/errors/server-error',
+      title: 'Kesalahan Server Internal',
+      status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      detail: (error as Error).message,
+      code: 'SERVER_ERROR',
+    });
   }
 }

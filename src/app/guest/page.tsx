@@ -229,14 +229,12 @@ export default function PublicGuestPage() {
       )}
   </main>
 
-  {/* Footer */}
-  <footer className="border-t border-border bg-surface px-4 py-3 text-center">
-  <p className="text-[11px] text-text-muted">
-  Sandya Disaster Management • Standar RFL (Restoring Family Links) ICRC
-  </p>
+  {/* Footer Bersih */}
+  <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
+    Sandya • Sistem Tanggap Darurat Bencana Mandiri
   </footer>
 
-  {/* Family Reunion Pass Modal */}
+  {/* Temu Keluarga Pass Generator Modal */}
   <FamilyReunionPassModal
   open={passModalOpen}
   onOpenChange={setPassModalOpen}

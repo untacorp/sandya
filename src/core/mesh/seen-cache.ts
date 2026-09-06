@@ -1,5 +1,3 @@
-import { createHash } from 'node:crypto';
-
 export const SEEN_CACHE_CONSTANTS = {
   DEFAULT_MAX_ENTRIES: 1024,
   PACKET_HASH_HEX_LENGTH: 16,
@@ -11,22 +9,26 @@ export class LruSeenCache {
   private pointer: number = 0;
 
   constructor(private readonly maxEntries: number = SEEN_CACHE_CONSTANTS.DEFAULT_MAX_ENTRIES) {
-  this.ringBuffer = new Array(maxEntries).fill('');
+    this.ringBuffer = new Array(maxEntries).fill('');
   }
 
   /**
-  * Menghasilkan hash identitas unik paket: BLAKE3/SHA256(senderPeerId + sequence + packetType)
-  */
+   * Menghasilkan hash identitas unik paket: FNV-1a 64-bit (senderPeerId + sequence + packetType)
+   * 100% Isomorfik tanpa dependensi node:crypto (aman untuk Browser, WebView, dan Node.js).
+   */
   public static computePacketHash(
-  senderPeerId: string,
-  sequence: number,
-  packetType: number
+    senderPeerId: string,
+    sequence: number,
+    packetType: number
   ): string {
-  const key = `${senderPeerId}:${sequence}:${packetType}`;
-  return createHash('sha256')
-  .update(key)
-  .digest('hex')
-  .slice(0, SEEN_CACHE_CONSTANTS.PACKET_HASH_HEX_LENGTH);
+    const key = `${senderPeerId}:${sequence}:${packetType}`;
+    let hash = 0xcbf29ce484222325n;
+    const prime = 0x100000001b3n;
+    for (let i = 0; i < key.length; i++) {
+      hash ^= BigInt(key.charCodeAt(i));
+      hash = (hash * prime) & 0xffffffffffffffffn;
+    }
+    return hash.toString(16).padStart(SEEN_CACHE_CONSTANTS.PACKET_HASH_HEX_LENGTH, '0');
   }
 
   /**

@@ -67,7 +67,7 @@ export function DisasterCatalogCombobox({ value, onChange }: DisasterCatalogComb
       >
         <span className="truncate">
           {selectedItem
-            ? `[0x${selectedItem.id.toString(16).padStart(2, "0").toUpperCase()}] ${selectedItem.nameId}`
+            ? `${selectedItem.nameId} (${CLUSTER_LABELS[selectedItem.cluster] || "Logistik"})`
             : "Cari dan pilih komoditas bencana..."}
         </span>
         <Icon name={isOpen ? "arrow-up" : "arrow-down"} size={16} className="text-text-muted shrink-0 ml-2" />
@@ -130,16 +130,13 @@ export function DisasterCatalogCombobox({ value, onChange }: DisasterCatalogComb
                     <span className="text-xs font-bold text-text-main">
                       {item.nameId}
                     </span>
-                    <span className="text-[10px] font-mono text-text-muted bg-surface-muted px-1.5 py-0.5 rounded border border-border/50">
-                      0x{item.id.toString(16).padStart(2, "0").toUpperCase()}
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {CLUSTER_LABELS[item.cluster]}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-text-subtle">
                       {item.nameEn}
-                    </span>
-                    <span className="text-[10px] font-bold text-primary">
-                      {CLUSTER_LABELS[item.cluster]}
                     </span>
                   </div>
                 </button>

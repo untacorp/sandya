@@ -14,7 +14,7 @@
 - **Fast Mobile Intake 30 Detik (`/refugees/intake`)**:
   - Pemicu instan via Tombol FAB Melayang `[+]` di layar mana pun.
   - Penanganan NIK Dinamis (0 Byte jika KTP hilang/lupa, 5 Byte jika sewilayah).
-  - Perekaman Kelompok Rentan (8-kategori bitmask) & Kebutuhan Awal (`uint8` token).
+  - Perekaman Kelompok Rentan (Balita, Lansia, Ibu Hamil, Disabilitas) & Kebutuhan Mendesak Awal.
   - Perekaman Data Temu Keluarga (`missing_kin_name` & `domicile_origin`).
 - **Penyerahan Bantuan ke Warga di Tenda (`/logistics/distribute`)**:
   - Mengambil barang yang telah berstatus `ALLOCATED` dari gudang posko.
@@ -72,7 +72,7 @@ flowchart TD
   %% AKTIVITAS A: FAST MOBILE INTAKE 30s
   VolunteerChoice -->|"1. Daftarkan Warga Baru"| TapFAB["Ketuk Tombol FAB [+] di Layar Mana Saja"]
   TapFAB --> OpenFastIntakeForm["Buka Form Fast Mobile Intake: /refugees/intake"]
-  OpenFastIntakeForm --> FillIntakeData["Input Data 30 Detik:<br/>• Nama: 'Muhammad Budi Santoso' (2 Kata Kamus)<br/>• Usia: 34 Tahun, Gender: Laki-laki<br/>• KTP: [Toggle Lupa/Hilang -> 0 Byte]<br/>• Rentan: [Chip Balita] & [Chip Lansia]<br/>• Kebutuhan: [Beras] & [Susu Formula uint8]<br/>• Cari Kerabat: 'Siti Rahmawati' (Dusun Cijedil)"]
+  OpenFastIntakeForm --> FillIntakeData["Input Data 30 Detik:<br/>• Nama: 'Muhammad Budi Santoso'<br/>• Usia: 34 Tahun, Gender: Laki-laki<br/>• KTP: [Toggle Lupa / Hilang]<br/>• Rentan: [Chip Balita] & [Chip Lansia]<br/>• Kebutuhan: [Beras] & [Susu Formula Bayi]<br/>• Cari Kerabat: 'Siti Rahmawati' (Dusun Cijedil)"]
   FillIntakeData --> TapSaveIntake["Relawan Ketuk: 'Simpan Warga'"]
   TapSaveIntake --> SaveRefugeeDB[("INSERT INTO refugees & refugee_events (SQLite Lokal)")]
   SaveRefugeeDB --> CheckLocalReunion{"Apakah Nama Ini Dicari Posko Lain?"}
