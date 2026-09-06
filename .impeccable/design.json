@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-06T13:46:00.000Z",
+  "title": "Design System: Sandya",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Midnight Slate",
+        "canonical": "#0F172A",
+        "tonalRamp": ["#020617", "#0F172A", "#1E293B", "#334155", "#475569"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Tactical Sky",
+        "canonical": "#0284C7",
+        "tonalRamp": ["#0369A1", "#0284C7", "#38BDF8", "#7DD3FC", "#E0F2FE"]
+      },
+      "status-safe": {
+        "role": "status-safe",
+        "displayName": "Operational Emerald",
+        "canonical": "#059669",
+        "tonalRamp": ["#065F46", "#059669", "#10B981", "#A7F3D0", "#ECFDF5"]
+      },
+      "status-warning": {
+        "role": "status-warning",
+        "displayName": "Caution Amber",
+        "canonical": "#D97706",
+        "tonalRamp": ["#92400E", "#D97706", "#F59E0B", "#FDE68A", "#FFFBEB"]
+      },
+      "status-danger": {
+        "role": "status-danger",
+        "displayName": "Emergency Ruby",
+        "canonical": "#DC2626",
+        "tonalRamp": ["#991B1B", "#DC2626", "#EF4444", "#FECACA", "#FEF2F2"]
+      },
+      "border": {
+        "role": "neutral-border",
+        "displayName": "Precision Border",
+        "canonical": "#E2E8F0",
+        "tonalRamp": ["#94A3B8", "#CBD5E1", "#E2E8F0", "#F1F5F9", "#FFFFFF"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline gerbang utama dan kartu otoritas."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Judul modul operasional dan header posko."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Judul kartu data, widget analitik, nama warga."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Teks deskripsi, catatan logistik, instruksi klinis."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Header kolom tabel, tag status, input labels."
+      },
+      "mono": {
+        "displayName": "Monospace Quarantine",
+        "purpose": "Public key Ed25519, hash, NIK, ID logistik, koordinat GPS."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-2xs",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.04)",
+        "purpose": "Elevasi struktural kartu dan form lapangan."
+      },
+      {
+        "name": "shadow-xs",
+        "value": "0 1px 3px rgba(0, 0, 0, 0.08)",
+        "purpose": "Elevasi interaktif tombol primer dan kartu saat hover."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-standard",
+        "value": "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Transisi mikro-interaksi tombol dan kartu."
+      },
+      {
+        "name": "press-scale",
+        "value": "scale(0.98)",
+        "purpose": "Haptic micro-scale feedback saat tombol ditekan."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tombol aksi operasional utama: Simpan, Rekam, Konfirmasi.",
+      "html": "<button class=\"ds-btn-primary\">Simpan Rekam Triase</button>",
+      "css": ".ds-btn-primary { background: #0F172A; color: #FFFFFF; height: 40px; padding: 0 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; border: 1.5px solid #0F172A; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); transition: all 150ms; } .ds-btn-primary:hover { background: #1E293B; } .ds-btn-primary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Tombol aksi sekunder atau navigasi kembali.",
+      "html": "<button class=\"ds-btn-secondary\">Batal / Kembali</button>",
+      "css": ".ds-btn-secondary { background: #FFFFFF; color: #0F172A; height: 40px; padding: 0 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 500; border: 1.5px solid #E2E8F0; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); transition: all 150ms; } .ds-btn-secondary:hover { background: #F8FAFC; border-color: #CBD5E1; } .ds-btn-secondary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Field Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Kontainer modular data warga, inventaris posko, atau telemetri.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Gudang Utama Posko 01</h3><p class=\"ds-card-desc\">Beras 5kg: 100 Karung • Ketahanan: ~7 Hari</p></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); font-family: 'Plus Jakarta Sans', sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 4px 0; } .ds-card-desc { font-size: 13px; color: #475569; margin: 0; }"
+    },
+    {
+      "name": "START Triage Badge",
+      "kind": "chip",
+      "refersTo": "badge-triage-red",
+      "description": "Indikator prioritas triase START 4-warna di lapangan.",
+      "html": "<span class=\"ds-triage-red\">P1 - IMMEDIATE</span>",
+      "css": ".ds-triage-red { background: #DC2626; color: #FFFFFF; border: 1.5px solid #DC2626; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Plus Jakarta Sans', sans-serif; display: inline-block; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Pos Komando Lapangan (The Field Command Post)",
+    "overview": "Sandya adalah sistem operasi tanggap darurat bencana yang dikalibrasi untuk kondisi krisis luar ruangan (outdoor sunlight contrast) dan minim konektivitas. Filosofi desainnya menuntut disiplin tinggi, keterbacaan instan, dan zero visual noise.",
+    "keyCharacteristics": [
+      "High-Contrast Sunlight Calibration (Rasio 15.8:1)",
+      "Precision 1.5px Architectural Wireframes",
+      "Large Field Touch Targets (40px hingga 48px)",
+      "Strict Monospace Quarantine untuk hash dan kriptografi"
+    ],
+    "rules": [
+      {
+        "name": "The 48px Field Target Rule",
+        "body": "Seluruh tombol dan pemicu interaktif wajib memiliki tinggi minimal 40px hingga 48px agar dapat dioperasikan dengan sarung tangan medis atau tangan kotor/berdebu.",
+        "section": "components"
+      },
+      {
+        "name": "The No-Frivolous-Emoji Rule",
+        "body": "Dilarang keras memakai emoji kartun pada tombol aksi atau label operasional; hanya gunakan Solar Icons bergaris presisi.",
+        "section": "components"
+      },
+      {
+        "name": "The Monospace Quarantine Rule",
+        "body": "Font Geist Mono dikarantina eksklusif hanya untuk hash, public key Ed25519, NIK, ID logistik, dan koordinat GPS.",
+        "section": "typography"
+      },
+      {
+        "name": "The One-Voice Accent Rule",
+        "body": "Warna aksen Tactical Sky (#0284C7) digunakan pada <=10% area visual layar untuk mempertahankan fokus operator.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do gunakan token semantik Tailwind resmi (bg-surface, border-border, text-text-main, bg-status-danger) di setiap komponen UI baru.",
+      "Do gunakan Plus Jakarta Sans untuk seluruh tipografi antarmuka dengan bobot proporsional (400, 500, 600, 700).",
+      "Do gunakan Solar Icons garis presisi tanpa dekorasi berlebihan.",
+      "Do sediakan label teks jelas mendampingi indikator warna untuk aksesibilitas WCAG."
+    ],
+    "donts": [
+      "Don't menuliskan warna heksadesimal arbitrer manual di dalam file komponen JSX.",
+      "Don't menggunakan emoji kartun pada tombol aksi operasional.",
+      "Don't menggunakan font generik seperti Inter atau membiarkan default fallback unconfigured.",
+      "Don't menggunakan font weight 800 atau 900 secara berlebihan.",
+      "Don't menerapkan efek bayangan buram berat atau glassmorphism yang merusak kontras outdoor."
+    ]
+  }
+}
