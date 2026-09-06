@@ -2,7 +2,7 @@
 name = "sandya"
 version = "0.1.0-alpha.1"
 description = "Sandya - Offline-First Disaster Response Management Native Application"
-authors = ["SkensaJaya"]
+authors = ["Skensa Jaya"]
 license = "MIT"
 repository = "https://github.com/untacorp/sandya"
 edition = "2021"

@@ -12,7 +12,7 @@
   
   **Submission for ITECHNO CUP 2026 - Web Development**
   
-  **By SkensaJaya**
+  **By Skensa Jaya**
   
 </div>
 
@@ -709,6 +709,6 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE) - lihat file [LICENSE](L
 
 <div align="center">
 
-  **Made with ❤️ by SkensaJaya for ITECHNO CUP 2026**
+  **Made with ❤️ by Skensa Jaya for ITECHNO CUP 2026**
 
 </div>
