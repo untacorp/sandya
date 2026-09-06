@@ -1,699 +1,301 @@
-<div align="center">
-  
-  # SANDYA
-  ### Platform Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-Mesh Ecosystem)
-  
-  [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-sandya.id-success?style=for-the-badge)](https://sandya.id)
-  [![GitHub](https://img.shields.io/badge/GitHub-untacorp%2Fsandya-181717?style=for-the-badge&logo=github)](https://github.com/untacorp/sandya)
-  [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE) <br/>
-  [![Next.js 16](https://img.shields.io/badge/Next.js-16.3.3_App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-  [![Tauri v2](https://img.shields.io/badge/Tauri-v2_Cross--Platform-24C8D8?style=for-the-badge&logo=tauri)](https://v2.tauri.app)
-  [![SQLite](https://img.shields.io/badge/Database-SQLite_Local--First-003B57?style=for-the-badge&logo=sqlite)](https://sqlite.org)
-  
-  **Submission for ITECHNO CUP 2026 - Web Development**
-  
-  **By SkensaJaya**
-  
-</div>
+---
+name: "Sandya"
+description: "Sistem Operasi Tanggap Darurat Bencana & Logistik Lapangan Offline-First"
+colors:
+  primary: "#0F172A"
+  primary-hover: "#1E293B"
+  primary-foreground: "#FFFFFF"
+  accent: "#0284C7"
+  canvas: "#FFFFFF"
+  surface: "#FFFFFF"
+  surface-subtle: "#F8FAFC"
+  surface-muted: "#F1F5F9"
+  border: "#E2E8F0"
+  border-hover: "#CBD5E1"
+  border-strong: "#94A3B8"
+  text-main: "#0F172A"
+  text-muted: "#475569"
+  text-subtle: "#94A3B8"
+  text-inverse: "#FFFFFF"
+  status-safe: "#059669"
+  status-safe-bg: "#ECFDF5"
+  status-safe-border: "#A7F3D0"
+  status-warning: "#D97706"
+  status-warning-bg: "#FFFBEB"
+  status-warning-border: "#FDE68A"
+  status-danger: "#DC2626"
+  status-danger-bg: "#FEF2F2"
+  status-danger-border: "#FECACA"
+  triage-red: "#DC2626"
+  triage-yellow: "#D97706"
+  triage-green: "#059669"
+  triage-black: "#1E293B"
+typography:
+  display:
+    fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "-0.025em"
+  headline:
+    fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  title:
+    fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "-0.01em"
+  body:
+    fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "normal"
+  label:
+    fontFamily: "var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "0.05em"
+  mono:
+    fontFamily: "var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+    fontSize: "0.75rem"
+    fontWeight: 500
+    lineHeight: 1.4
+    letterSpacing: "0.02em"
+rounded:
+  sm: "6px"
+  md: "8px"
+  lg: "12px"
+  xl: "16px"
+  full: "9999px"
+spacing:
+  xs: "4px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "32px"
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.primary-foreground}"
+    rounded: "{rounded.md}"
+    padding: "10px 16px"
+    height: "40px"
+  button-primary-hover:
+    backgroundColor: "{colors.primary-hover}"
+  button-secondary:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-main}"
+    rounded: "{rounded.md}"
+    padding: "10px 16px"
+    height: "40px"
+  button-danger:
+    backgroundColor: "{colors.status-danger}"
+    textColor: "{colors.text-inverse}"
+    rounded: "{rounded.md}"
+    padding: "10px 16px"
+    height: "40px"
+  card-default:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: "16px 20px"
+  input-default:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.text-main}"
+    rounded: "{rounded.md}"
+    padding: "8px 12px"
+    height: "40px"
+---
+
+# Design System: Sandya
+
+## Overview
+
+**Creative North Star: "Pos Komando Lapangan (The Field Command Post)"**
+
+Sandya adalah sistem operasi perangkat lunak lapangan yang dikalibrasi untuk kondisi krisis darurat kemanusiaan: gempa bumi, banjir bandang, erupsi gunung, dan tanah longsor. Sistem ini digunakan di tenda posko darurat, antrean distribusi logistik berlumpur, pos medis bergerak, dan lingkungan terik matahari langsung dengan keterbatasan akses internet, listrik, maupun stabilitas fisik operator. 
+
+Filosofi desain Sandya menuntut **disiplin tinggi, keterbacaan instan di luar ruangan (outdoor sunlight contrast), dan zero visual noise**. Setiap piksel dan elemen antarmuka dirancang untuk membantu relawan, dokter, dan komandan lapangan membuat keputusan kritis dalam hitungan detik. Kami menggunakan permukaan putih bersih bertingkat (*tonal layering*), batas struktural presisi 1.5px Slate, tipografi **Plus Jakarta Sans** dengan hierarki bobot yang terukur, serta ikon garis **Solar Icons** tanpa dekorasi yang tidak perlu.
+
+Anti-reference yang ditolak secara mutlak:
+1. **No Purple/Neon SaaS Clichés**: Menolak gradien ungu, kartu kaca blur (glassmorphism) berlebih, atau estetika marketing SaaS generik yang membebani daya render GPU dan sulit dibaca di bawah sinar matahari.
+2. **No Frivolous Emojis**: Dilarang menampilkan emoji kartun atau ilustrasi 3D ceria pada tombol aksi operasional dan navigasi sistem.
+3. **No Generic Fonts**: Menolak tipografi generik tanpa identitas seperti Inter default. Tipografi resmi adalah Plus Jakarta Sans yang dipadukan dengan Geist Mono khusus identitas teknis.
+4. **No Heavy Weight Saturation**: Menghindari penggunaan font weight 800/900 secara berlebihan yang membuat teks tampak menggumpal di layar lapangan; hierarki dibangun melalui kontras ukuran dan penataan spasial.
+
+**Key Characteristics:**
+- **High-Contrast Sunlight Calibration**: Rasio kontras teks utama terhadap canvas mencapai 15.8:1 (Slate 900 `#0F172A` di atas White `#FFFFFF`), melampaui standar WCAG AAA.
+- **Precision 1.5px Architectural Wireframes**: Pembagian ruang antar-kartu dan tabel menggunakan border tegas 1.5px `#E2E8F0` yang stabil di layar tablet kasar maupun layar ponsel retak.
+- **Large Field Touch Targets**: Seluruh trigger interaktif mempertahankan area sentuh minimal 40px hingga 48px untuk operator bersarung tangan medis atau tangan kotor/berdebu.
+- **Strict Monospace Quarantine**: Font monospace diisolasi khusus untuk data kriptografis, koordinat, NIK, dan identitas logistik.
 
 ---
 
-## 📋 Daftar Isi
+## Colors
 
-- [Tim Developer](#-tim-developer)
-- [Tentang Proyek](#-tentang-proyek)
-  - [Latar Belakang](#latar-belakang)
-  - [Solusi yang Ditawarkan](#solusi-yang-ditawarkan)
-  - [Tujuan Proyek](#tujuan-proyek)
-- [Fitur Unggulan](#-fitur-unggulan)
-  - [Fitur Utama](#fitur-utama)
-  - [Fitur Tambahan](#fitur-tambahan)
-- [Demo & Screenshot](#-demo--screenshot)
-  - [Live Demo](#live-demo)
-  - [Screenshot Aplikasi](#screenshot-aplikasi)
-- [Teknologi](#-teknologi)
-  - [Tech Stack](#tech-stack)
-  - [Alasan Pemilihan Teknologi](#alasan-pemilihan-teknologi)
-  - [Dependencies Utama](#dependencies-utama)
-- [Arsitektur Sistem](#-arsitektur-sistem)
-  - [System Architecture Diagram](#system-architecture)
-  - [Database Schema (ERD)](#database-schema)
-  - [Folder Structure](#folder-structure)
-- [Instalasi & Setup](#-instalasi--setup)
-  - [Prerequisites](#prerequisites)
-  - [Langkah Instalasi](#langkah-instalasi)
-  - [Opsi Deployment](#opsi-deployment)
-- [Penggunaan](#-penggunaan)
-  - [Menjalankan Aplikasi](#menjalankan-aplikasi)
-  - [User Guide per Peran](#user-guide)
-- [API Documentation](#-api-documentation)
-- [Testing](#-testing)
-  - [Menjalankan Test Suite](#running-tests)
-  - [Hasil Pengujian Unit](#test-coverage)
-- [Lisensi](#-lisensi)
+Palet warna Sandya berkarakter disiplin operasional lapangan: dominan monokromatik slate teratur dengan aksen fungsional berdaya pandang tinggi yang hanya aktif saat terjadi peristiwa klinis, logistik, atau peringatan darurat.
+
+### Primary
+- **Midnight Slate** (`#0F172A`): Warna jangkar utama untuk tombol aksi utama, header navigasi, teks pokok, dan identitas otoritas posko. Memberikan kesan tenang, tegas, dan berwibawa.
+- **Midnight Slate Hover** (`#1E293B`): State interaktif saat tombol ditekan atau di-hover.
+- **Canvas White** (`#FFFFFF`): Teks kontras tinggi di atas elemen Midnight Slate.
+
+### Secondary & Accent
+- **Tactical Sky** (`#0284C7`): Aksen koordinasi taktis dan fokus interaktif. Digunakan secara selektif pada tautan aktif, tab terpilih, indikator saluran komunikasi radio, dan radio switch.
+
+### Functional Status (Crisis & Health Cues)
+- **Operational Emerald** (`#059669`): Indikator kondisi aman, sinkronisasi berhasil, stok mencukupi, dan triase luka ringan (Hijau P3). Dilengkapi dengan varian surface subtle (`#ECFDF5`) dan border (`#A7F3D0`).
+- **Caution Amber** (`#D97706`): Indikator peringatan logistik, buffer persediaan tipis, dan triase mendesak/delayed (Kuning P2). Dilengkapi dengan varian surface subtle (`#FFFBEB`) dan border (`#FDE68A`).
+- **Emergency Ruby** (`#DC2626`): Sinyal kritis SOS, bahaya evakuasi, stok habis, dan triase gawat darurat immediate (Merah P1). Dilengkapi dengan varian surface subtle (`#FEF2F2`) dan border (`#FECACA`).
+- **Expectant Charcoal** (`#1E293B`): Kategori triase START Hitam (P0 - Korban meninggal dunia / tidak tertolong).
+
+### Neutral & Canvas
+- **Pure Canvas** (`#FFFFFF`): Latar belakang utama seluruh viewport dan panel modal.
+- **Field Slate Subtle** (`#F8FAFC`): Background baris data tabel selang-seling, badge netral, dan kartu sekunder.
+- **Field Slate Muted** (`#F1F5F9`): Background input fields dan kontrol tombol nonaktif.
+- **Precision Border** (`#E2E8F0`): Border netral 1.5px untuk kartu, list, dan pembatas section.
+- **Precision Border Hover** (`#CBD5E1`): Feedback visual saat hover pada elemen card interaktif.
+- **Precision Border Strong** (`#94A3B8`): Indikator status fokus input atau border seleksi aktif.
+
+### Named Rules
+**The One-Voice Accent Rule.** Warna aksen Tactical Sky (`#0284C7`) digunakan pada ≤10% total luas layar visual. Kelangkaannya memastikan mata operator langsung tertuju pada titik tindakan utama tanpa terdistraksi.
+
+**The Single-Writer Warning Rule.** Setiap komponen atau modal mutasi inventaris gudang posko yang tidak memiliki hak otorisasi mutasi fisik wajib menampilkan banner pembatas Caution Amber secara permanen.
 
 ---
 
-## 👥 Tim Developer
+## Typography
 
-| Foto Profil | Nama Lengkap | Peran & Kontribusi | GitHub |
-| :---: | :--- | :--- | :--- |
-| <a href="https://github.com/auttomus"><img src="https://github.com/auttomus.png" width="60" height="60" style="border-radius:50%;" alt="@auttomus"/></a> | **[@auttomus](https://github.com/auttomus)** | **Project Lead & Product Strategist**<br/>Memimpin perumusan visi kemanusiaan, tata kelola proyek, strategi produk tanggap darurat, dan koordinasi arsitektur umum. | [![GitHub](https://img.shields.io/badge/GitHub-auttomus-181717?style=flat-square&logo=github)](https://github.com/auttomus) |
-| <a href="https://github.com/Oktazz"><img src="https://github.com/Oktazz.png" width="60" height="60" style="border-radius:50%;" alt="@Oktazz"/></a> | **[@Oktazz](https://github.com/Oktazz)** | **Full Stack & Systems Developer**<br/>Mengembangkan antarmuka responsif Next.js 16, pipeline state management Zustand, integrasi Single-Writer logistik, dan rekayasa end-to-end fitur. | [![GitHub](https://img.shields.io/badge/GitHub-Oktazz-181717?style=flat-square&logo=github)](https://github.com/Oktazz) |
-| <a href="https://github.com/kasumadana"><img src="https://github.com/kasumadana.png" width="60" height="60" style="border-radius:50%;" alt="@kasumadana"/></a> | **[@kasumadana](https://github.com/kasumadana)** | **Core System Architect & Security Lead**<br/>Merancang protokol jaringan *offline-mesh* (SMP v1), algoritma pemulihan Poster Paritas XOR, skema kriptografi Ed25519, dan audit performa biner. | [![GitHub](https://img.shields.io/badge/GitHub-kasumadana-181717?style=flat-square&logo=github)](https://github.com/kasumadana) |
+**Display & Body Font:** Plus Jakarta Sans (`var(--font-plus-jakarta-sans)`, sans-serif)  
+**Monospace / Cryptographic Font:** Geist Mono (`var(--font-geist-mono)`, monospace)
 
----
+**Character:** Modern geometric humanist sans-serif dengan legibilitas tinggi pada ukuran kecil dan kejernihan angka tabular. Menggunakan bobot proporsional (400, 500, 600, 700) tanpa font weight 800/900 yang berlebihan agar tetap tajam dan tidak menggumpal pada resolusi layar rendah.
 
-## 🎯 Tentang Proyek
+### Hierarchy
+- **Display** (Bold 700, 1.75rem / 28px, line-height 1.2, letter-spacing -0.025em): Digunakan khusus pada hero headline gerbang utama (`/`) dan judul ringkasan operasi wilayah.
+- **Headline** (Bold 700, 1.25rem / 20px, line-height 1.25, letter-spacing -0.02em): Digunakan untuk judul modal besar, header modul (Refugees, Logistics, Triage, Tactical), dan nama posko aktif.
+- **Title** (SemiBold 600, 1.00rem / 16px, line-height 1.3, letter-spacing -0.01em): Digunakan pada judul kartu widget, sub-header daftar penerima bantuan, dan nama pasien/warga.
+- **Body** (Regular 400, 0.875rem / 14px, line-height 1.5): Teks konten utama, deskripsi status, petunjuk operasional, dan riwayat rekam peristiwa pengungsi.
+- **Label / Micro** (SemiBold 600, 0.75rem / 12px, line-height 1.2, letter-spacing 0.05em, uppercase): Label input form, tag status kartu tugas, header kolom tabel, dan meta-info baris data.
+- **Monospace Quarantine** (Medium 500, 0.75rem / 12px, line-height 1.4, tabular-nums): Public key Ed25519, hash outbox, nomor sequence event, NIK KTP, kode tiket bantuan, dan koordinat GPS.
 
-### Latar Belakang
-
-Indonesia terletak pada kawasan cincin api pasifik (*Pacific Ring of Fire*) dan pertemuan tiga lempeng tektonik aktif dunia. Berdasarkan data Badan Nasional Penanggulangan Bencana (BNPB), Indonesia mengalami lebih dari **3.000 bencana alam setiap tahunnya**, mulai dari gempa bumi dangkal, tsunami, banjir bandang, hingga erupsi gunung berapi.
-
-Saat bencana katastropik berskala masif menghantam suatu wilayah, terjadi fenomena **Zero-Infrastructure Crisis**:
-1. **Lumpuhnya Jaringan Telekomunikasi & Internet**: Menara BTS seluler roboh, transmisi kabel fiber optik terputus, dan pasokan listrik PLN padam total.
-2. **Pendataan Pengungsi Konvensional Sangat Lambat**: Formulir kertas basah, sobek, mudah hilang, dan membutuhkan waktu rekapitulasi manual berhari-hari.
-3. **Krisis Triase Medis & Kehilangan Riwayat Pasien**: Petugas medis di IGD tenda darurat kewalahan mendata tanda vital korban massal dan sering kali salah memberikan obat karena tidak adanya riwayat resep terstruktur.
-4. ***Phantom Inventory* & Penimbunan Logistik**: Stok bantuan pangan dan obat-obatan tidak terkontrol. Alokasi ganda (*double-allocation*) kerap terjadi di satu posko, sementara posko tetangga mengalami kelaparan ekstrem.
-5. **Keluarga Terpisah Tanpa Informasi**: Ribuan anak terpisah dari orang tuanya tanpa papan informasi yang terhubung antar-kamp pengungsian.
-6. **Ketiadaan Komunikasi Taktis**: Petugas lapangan tidak memiliki saluran komunikasi suara mandiri tanpa pulsa atau sinyal seluler.
-
-Aplikasi manajemen bencana konvensional yang beredar saat ini berasumsi bahwa koneksi internet stabil atau cloud server selalu tersedia—sebuah asumsi yang keliru dan fatal pada menit-menit pertama tanggap darurat di garis depan bencana.
-
-### Solusi yang Ditawarkan
-
-**Sandya** (*Sansekerta: Persatuan & Cahaya Senja Pengharapan*) hadir sebagai **Sistem Operasi Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Zero-Infrastructure Offline-Mesh)**. Sandya dirancang dengan filosofi **"Continuity Over Connectivity"**—setiap alur operasional penyelamatan nyawa harus berfungsi 100% tanpa internet.
-
-Pendekatan inovatif yang dihadirkan Sandya:
-- 🛡️ **Penyimpanan Lokal Edge (Device-First SQLite)**: Setiap data warga, triase medis, mutasi logistik sembako, dan pesan taktis langsung tersimpan secara instan di SQLite lokal perangkat tanpa memerlukan server.
-- 📡 **Multi-Transport Air-Gap Synchronization**:
-  - **Tier 1 (Jalur Utama)**: *Zero-Touch* Bluetooth Low Energy (BLE) Mesh (*Sandya Mesh Protocol / SMP v1*) berbasis protokol gossip BitChat berkecepatan tinggi antar-perangkat posko.
-  - **Tier 2 (Cadangan Udara & Fisik)**: *Animated Dynamic Multipart QR* (kamera streaming 6 FPS) dan *Poster Multi-QR Paritas XOR* berteknologi *Erasure Coding* yang tahan sobekan fisik kertas hingga 25–50%.
-- ⚖️ **Single-Writer Ledger & Ketahanan Pangan Standar Internasional**: Mengunci hak mutasi fisik gudang posko ke satu perangkat otoritatif guna mencegah *phantom inventory*, dilengkapi kalkulasi ketahanan konsumsi dinamis mengadopsi standar kemanusiaan **SPHERE Project** dan **BNPB/PMI**.
-- 🔐 **Kriptografi Asimetris Ed25519 & Role Pass QR**: Otoritas relawan dan komandan diverifikasi secara desentralisasi menggunakan tanda tangan kriptografis tanpa *login server*.
-- 👨‍👩‍👧‍👦 **Offline Indonesian Family Reunion**: Mesin pencocokan kerabat hilang offline yang dilengkapi tokenisasi nama suku Indonesia dan jarak Levenshtein toleran salah eja.
-- 🎙️ **Tactical Mesh Intercom (Push-to-Talk Radio)**: Komunikasi suara darurat 3.2 kbps berbasis kompresi audio Opus di 4 kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`).
-
-### Tujuan Proyek
-
-- 🎯 **Tujuan Utama**: Menghadirkan ekosistem perangkat lunak tanggap darurat bencana yang beroperasi penuh tanpa ketergantungan pada internet publik, dan server terpusat.
-- 📊 **Target Pengguna**: 7 Peran Operasional (Pemimpin Organisasi/BPBD/PMI, Komandan Misi, Koordinator Posko, Petugas Medis, Petugas Logistik, Relawan Lapangan, serta Warga Pengungsi/Tamu).
-- 💡 **Value Proposition**:
-  - *Zero Setup Zero Cloud*: Beroperasi seketika di hari pertama bencana.
-  - *Sub-30s Mobile Intake*: Pendaftaran warga kurang dari 30 detik tanpa syarat NIK wajib.
-  - *Zero Phantom Resources*: Tidak ada stok ganda berkat integritas *Single-Writer*.
-  - *Humanitarian Standard Compliance*: Menjamin kebutuhan kalori 2.100 kkal dan air minum 3L/jiwa/hari terpenuhi secara terukur.
+### Named Rules
+**The Monospace Quarantine Rule.** Font Geist Mono dilarang keras digunakan untuk teks naratif, label tombol, atau instruksi umum. Font ini dikarantina eksklusif untuk deretan angka identitas, token kamus bencana, dan tanda tangan kriptografi.
 
 ---
 
-## ✨ Fitur Unggulan
+## Layout
 
-### Fitur Utama
+Tata letak Sandya dirancang modular dengan arsitektur responsif adaptif yang menyatukan kenyamanan monitor komando desktop dengan kecepatan operasional jempol pada ponsel lapangan.
 
-| Fitur | Deskripsi | Keunggulan Inovatif |
-| :--- | :--- | :--- |
-| **Fast Mobile Intake & Event Sourcing** | Pendaftaran pengungsi instan di garis depan dengan pencatatan *immutable append-only* riwayat hidup warga (INTAKE, HEALTH_CHECK, NEED_REPORTED, AID_RECEIVED). | Pendaftaran rampung dalam <30 detik. Mendukung *dynamic null-bypass* untuk warga yang kehilangan KTP saat bencana, dengan monotonic sequence anti-konflik. |
-| **Triase Medis START 4-Warna & E-Resep** | Protokol klasifikasi darurat Simple Triage and Rapid Treatment (Merah/Gawat Darurat, Kuning/Mendesak, Hijau/Ringan, Hitam/Meninggal) terintegrasi catatan tanda vital dan farmasi. | Penerbitan tiket resep obat otomatis yang langsung terhubung ke Kamus Bencana uint8 dan sistem inventaris logistik medis posko. |
-| **Single-Writer Ledger & Ketahanan SPHERE** | Pengelolaan stok gudang posko dengan hak penulisan tunggal (*Single-Writer invariant*) dan proyeksi sisa hari konsumsi pangan/air dinamis berbasis populasi pengungsi. | Mencegah *double-allocation* secara absolut. Menghitung laju konsumsi harian beras, air galon, popok balita, dan sanitasi wanita berdasarkan standar internasional SPHERE Project & BNPB. |
-| **Offline Family Reunion Matcher** | Mesin pencarian kerabat hilang yang beroperasi secara offline antar-posko tanpa membutuhkan sinkronisasi internet ke server pusat. | Mengadopsi tokenisasi nama Indonesia, penanganan nama panggilan (*nicknames*), dan pencocokan fonetik/Levenshtein toleran salah eja nama warga. |
-| **Tactical Mesh Intercom & PTT Radio** | Komunikasi walkie-talkie Push-to-Talk (PTT) suara berkecepatan 3.2 kbps via BLE Mesh terbagi ke 4 kanal taktis (`#all`, `#medis`, `#logistik`, `#sos`). | Dilengkapi sirene SOS darurat *slide-to-confirm* dengan atribusi identitas kriptografis dan indikator kedekatan hop (*proximity radar*). |
-| **Multi-Transport Sync (BLE & QR Paritas)** | Sinkronisasi data antar-posko melalui gelombang radio Bluetooth Low Energy atau media visual kamera streaming dan cetak kertas. | Mampu memulihkan paket data manifes bencana 100% utuh meskipun 1 lembar kotak QR pada poster sobek atau terkena lumpur (*XOR Erasure Recovery*). |
+### Spacing & Grid System
+- **Spacing Scale:** Base 4px (`xs: 4px`, `sm: 8px`, `md: 16px`, `lg: 24px`, `xl: 32px`, `2xl: 48px`).
+- **Container Max-Width:**
+  - Gerbang Otentikasi & Scanner: `max-w-md` (448px) atau `max-w-xl` (576px) terpusat secara vertikal.
+  - Dashboard Posko & Taktis: `max-w-7xl` (1280px) dengan padding adaptif `px-4 sm:px-6 lg:px-8`.
 
-### Fitur Tambahan
-
-- **Ad-Hoc Distribution & Anti-Hoarding**: Serah terima sembako langsung di meja logistik untuk warga terdaftar, dilengkapi pengaman anti-penimbunan otomatis (blokir klaim ganda < 72 jam).
-- **Inter-Posko Transit Waybill**: Surat jalan digital pengiriman armada truk bantuan antar-gudang posko dengan validasi tanda tangan penerima.
-- **Cryptographic Role Pass (Ed25519)**: Kartu tanda pengenal relawan berbasis QR Code berstempel digital asimetris yang dapat diverifikasi secara offline oleh posko manapun.
-- **Upstream Transactional Outbox**: Antrean pengunggahan data otomatis ke cloud (Supabase atau PostgreSQL mandiri) secara idempoten saat internet kembali menyala.
-- **Kios Publik Survivor (Guest Portal)**: Mode pencarian mandiri ramah privasi untuk warga yang mencari anggota keluarganya di papan pengumuman digital posko.
+### Responsive Adaptation Matrix
+- **Desktop Viewport (≥1024px):**
+  - Menggunakan sidebar navigasi tetap kiri (`w-64 shrink-0`) yang mencakup status posko aktif, profil peran, sinyal mesh BLE, dan tautan modul utama.
+  - Halaman logistik menampilkan layout 2 kolom: katalog stok di kiri dan ledger transaksi kasir keluar-masuk di sticky sidebar kanan.
+- **Mobile / Tablet Viewport (<1024px):**
+  - Sidebar desktop disembunyikan; beralih ke navigasi bawah tetap (*fixed bottom bar*) berukuran 56px dengan 5 tab utama (Ringkasan, Warga, Logistik, Taktis, Sync).
+  - Aksi vital lapangan (seperti pendataan kilat warga) diwadahi dalam tombol mengambang melayang (*Fast Intake Floating Action Button*) di sudut kanan bawah di atas bottom bar.
+  - Aman terhadap notch dan bar sistem operasi dengan `pb-[calc(env(safe-area-inset-bottom)+4rem)]`.
 
 ---
 
-## 📸 Demo & Screenshot
+## Elevation & Depth
 
-### Live Demo
+Sandya menganut filosofi **Tonal Layering & Flat Structural Definition**, bukan bayangan tebal melayang (*floating drop shadows*). Dalam kondisi lapangan yang kotor atau silau matahari, bayangan buram (*ambient shadows*) mengurangi ketajaman kontur antarmuka.
 
-🔗 **[Kunjungi Aplikasi Web Sandya](https://sandya.id)**  
-*(Mode demo web menyediakan simulasi in-memory SQLite dan antarmuka operasional 7 peran).*
-
-### Screenshot Aplikasi
-
-<div align="center">
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-situational-dashboard.png" alt="Situational Awareness Dashboard" width="850"/>
-  <p><em>1. Situational Awareness & Posko Dashboard - Pemantauan triase, hunian pengungsi, dan ketersediaan logistik secara real-time.</em></p>
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-refugees-intake.png" alt="Fast Mobile Intake" width="850"/>
-  <p><em>2. Fast Mobile Intake - Pendaftaran warga pengungsi sub-30 detik dengan pemilahan demografi kelompok rentan.</em></p>
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-medical-triage.png" alt="START Medical Triage" width="850"/>
-  <p><em>3. Triase Medis START 4-Warna - Klasifikasi pasien IGD darurat, pencatatan tanda vital, dan e-resep farmasi bencana.</em></p>
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-logistics-resilience.png" alt="Logistics Warehouse & Resilience" width="850"/>
-  <p><em>4. Gudang Logistik & Ketahanan SPHERE - Pelacakan stok fisik Single-Writer dan proyeksi sisa hari konsumsi per komoditas.</em></p>
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-family-reunion.png" alt="Offline Family Reunion" width="850"/>
-  <p><em>5. Offline Family Reunion - Rekonsiliasi graf kerabat hilang dengan algoritma fonetik toleran salah ketik.</em></p>
-
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-tactical-intercom.png" alt="Tactical Intercom PTT" width="850"/>
-  <p><em>6. Tactical Mesh Intercom - Push-to-Talk (PTT) suara darurat 4 kanal dan tombol sirene darurat SOS.</em></p>
-
-</div>
+### Depth Vocabulary
+- **Level 0 (Base Canvas):** Background datar `#FFFFFF` untuk viewport aplikasi.
+- **Level 1 (Structural Surface):** Kartu, tabel, dan form menggunakan background `#FFFFFF` atau `#F8FAFC` dengan border fisik 1.5px `#E2E8F0` dan `shadow-2xs` (`0 1px 2px rgba(0, 0, 0, 0.04)`).
+- **Level 2 (Interactive Elements):** Tombol aksi dan kartu klik memiliki micro-shadow `shadow-xs` (`0 1px 3px rgba(0, 0, 0, 0.08)`). Saat ditekan (*active state*), elemen merespons dengan micro-scale taktil: `active:scale-[0.98]`.
+- **Level 3 (Overlays & Dialogs):** Modal dialog dan popover lembar aksi menggunakan backdrop netral `bg-black/60` berkontras tinggi dengan elevasi bayangan terfokus `shadow-xl`.
 
 ---
 
-## 🛠️ Teknologi
+## Shapes
 
-### Tech Stack
+Bentuk geometris Sandya merefleksikan peralatan darurat yang kokoh (*rugged, dependable hardware*) dengan sudut membulat yang nyaman disentuh jempol:
 
-#### Frontend & Antarmuka
-```text
-Framework    : Next.js 16.3.3 (App Router, React 19 Server/Client Components, Turbopack)
-Styling      : Tailwind CSS v4 & Tailwind Merge
-Icons        : Solar Icons (@iconify-json/solar) - Crisp 1.5px Stroke Design
-Data Viz     : Recharts v3 (Visualisasi Komposisi Stok & Peringatan Kritis)
-State Mgmt   : Zustand v5 (Persist Middleware Offline-First)
-Validation   : Zod v4 (Skema Kontrak Domain & Payload Biner)
-```
-
-#### Native Desktop, Mobile, & Runtime
-```text
-Native Layer : Tauri v2.11.1 (Rust Toolchain >= 1.78)
-Target OS    : Linux (.deb, .AppImage), Windows (.msi), Android (.apk)
-Plugins      : @tauri-apps/plugin-barcode-scanner, @tauri-apps/plugin-notification
-Native Audio : Pipeline PTT Opus 3.2 kbps Audio Frame Splitter
-Native Mesh  : Rust BLE Peripheral & Central Stack (Sandya Mesh Protocol v1)
-```
-
-#### Database & Penyimpanan
-```text
-Edge Database: SQLite 3 (rusqlite pada desktop/Android, in-memory engine pada web test)
-Cloud DB     : PostgreSQL 16+ (Supabase Managed atau Self-Hosted VPS)
-API Gateway  : PostgREST 12+ (Penyedia RESTful otomatis dari skema relasional)
-Pattern      : Transactional Outbox Pattern (Penyimpanan idempoten sebelum sinkronisasi)
-```
-
-#### Kriptografi & Kompresi Jaringan
-```text
-Signatures   : Ed25519 Asymmetric Cryptographic Signatures
-Handshake    : Noise Protocol Framework (XX Pattern)
-Binary Codec : Ultra-Dense v4 Bit-Packing (Kamus Bencana uint8)
-Erasure Code : Multi-QR XOR Parity Matrix (Dynamic N+1 Recovery System)
-```
-
-### Alasan Pemilihan Teknologi
-
-| Teknologi | Alasan Pemilihan & Keunggulan bagi Operasi Bencana |
-| :--- | :--- |
-| **Next.js 16 (React 19)** | Menghadirkan *Server & Client Component boundaries* yang jelas, performa kompilasi instan dengan Turbopack, serta kemampuan perenderan antarmuka tangguh lintas perangkat tanpa ketergantungan server runtime eksternal. |
-| **Tauri v2 (Rust Backend)** | Berbeda dengan Electron yang memboroskan RAM ratusan megabyte, Tauri v2 berbasis Rust hanya berukuran <15 MB, menggunakan WebKit/Blink bawaan OS, serta memberikan akses native langsung ke chip Bluetooth Low Energy (BLE) dan SQLite lokal tanpa overhead. |
-| **SQLite (Device-First)** | Mesin basis data *in-process* paling teruji di dunia. Transaksi ACID menjamin integritas rekam medis dan saldo logistik tidak akan korup meskipun daya baterai ponsel habis tiba-tiba saat gempa susulan. |
-| **Tailwind CSS v4** | Menghasilkan bundel CSS ultra-ringan dengan variabel CSS token semantik yang memastikan kontras tinggi (WCAG AAA) agar antarmuka terbaca jelas di bawah terik matahari tenda pengungsian. |
-| **Zustand v5** | State manager berbobot <2 KB yang fleksibel, mendukung sinkronisasi reaktif real-time ke penyimpanan lokal browser tanpa boilerplate berlebih, sangat ideal untuk sistem *offline-first*. |
-
-### Dependencies Utama
-
-Dikutip langsung dari konfigurasi produksi [`package.json`](file:///home/okuta/Documents/sandya/package.json):
-
-```json
-{
-  "dependencies": {
-    "next": "16.3.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-barcode-scanner": "~2.4.6",
-    "@tauri-apps/plugin-notification": "~2.4.0",
-    "zustand": "^5.0.15",
-    "zod": "^4.5.4",
-    "recharts": "^3.10.1",
-    "tailwind-merge": "^3.6.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "@iconify-json/solar": "^1.2.10",
-    "@iconify/react": "^6.0.2"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3",
-    "@types/node": "^22.19.1",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "tailwindcss": "^4.2.1",
-    "tsx": "^4.23.13"
-  }
-}
-```
+- **Border Radius Hierarchy:**
+  - `rounded-md` (6px): Digunakan untuk badge status kecil, tombol compact `sm`, dan chip filter kategori.
+  - `rounded-lg` (8px): Standar untuk seluruh input text, select dropdown, tombol ukuran reguler (`h-10`), dan item baris daftar.
+  - `rounded-xl` (12px): Standar wadah kartu data (*Cards*), dialog modal, banner peringatan krisis, dan container status.
+  - `rounded-2xl` (16px): Wadah hero scanner QR dan portal pintu masuk utama.
+  - `rounded-full` (9999px): Indikator status radio online/offline, avatar identitas, dan pil filter status.
+- **Border Stroke Standard:**
+  - Border standar seluruh kartu dan kontrol interaktif adalah **1.5px solid** (`border-[1.5px] border-border`). Standar ini mencegah tampilan antarmuka terlihat rapuh saat dirender pada browser WebView mobile.
 
 ---
 
-## 🏗️ Arsitektur Sistem
+## Components
 
-### System Architecture
+### Buttons
+Komponen tombol adalah penggerak utama penyelamatan jiwa dan mutasi logistik. Didesain taktil, tegas, dan anti-salah sentuh.
+- **Height & Touch Target:** Regular `h-10` (40px) dengan padding horizontal `px-4`, Hero/Mobile Primary `h-12` (48px) dengan `px-5`.
+- **Primary:** Background Midnight Slate `#0F172A`, teks putih `#FFFFFF`, border `#0F172A`, hover `#1E293B`.
+- **Secondary:** Background White `#FFFFFF`, teks Slate 900, border 1.5px `#E2E8F0`, hover `#F8FAFC`.
+- **Danger (SOS / Checkout):** Background Emergency Ruby `#DC2626`, teks putih, hover `opacity-90`.
+- **Taktil Feedback:** Transisi 150ms dengan `active:scale-[0.98]` dan focus ring ganda `focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`.
+- **Icon Support:** Terintegrasi langsung dengan Solar Icons (`name`, `iconVariant`, `iconRight`).
 
-Sandya mengadopsi arsitektur desentralisasi berbasis *Domain-Driven Design (DDD)* dan *Event Sourcing*:
+### Cards & Containers
+- **Corner Style:** `rounded-xl` (12px).
+- **Border:** 1.5px presisi `#E2E8F0`.
+- **Variants:**
+  - `default`: `bg-surface border-border shadow-2xs`.
+  - `subtle`: `bg-surface-subtle border-border shadow-none`.
+  - `interactive`: `bg-surface border-border shadow-2xs hover:border-border-hover hover:shadow-xs cursor-pointer active:scale-[0.99]`.
+- **Internal Padding:** Konsisten `p-4 sm:p-5` dengan header dan konten terpisah rapi.
 
-```mermaid
-flowchart TD
-    subgraph Frontline["Frontline Emergency Zone (100% Offline)"]
-        D1["Perangkat Relawan Lapangan<br/>(Fast Mobile Intake)"]
-        D2["Perangkat Medis Posko<br/>(Triase START 4-Warna)"]
-        D3["Perangkat Gudang Logistik<br/>(Single-Writer Ledger)"]
-        
-        D1 & D2 & D3 -->|Tersimpan Seketika| DB_LOCAL[("Basis Data Lokal SQLite<br/>(Transactional Outbox)")]
-    end
+### Inputs & Selects
+- **Height:** Standar operasional `h-10` (40px) untuk seluruh field isian teks, angka, dan dropdown.
+- **Typography:** Ukuran teks `text-xs sm:text-sm`, berat `font-semibold`, warna teks `#0F172A`, placeholder `#94A3B8`.
+- **Icon Slots:** Slot ikon kiri 18px berjarak `left-3.5` untuk mempermudah identifikasi konteks (nama, NIK, lokasi, stok).
+- **Number Field Behavior:** Spinner panah angka disembunyikan secara global melalui CSS untuk mencegah saltik sentuhan di layar sentuh.
 
-    subgraph MeshSync["Multi-Transport Air-Gap Sync"]
-        DB_LOCAL -->|Tier 1: Radio Nirkabel| BLE["BLE Mesh (SMP v1)<br/>BitChat Gossip & LRU Drop"]
-        DB_LOCAL -->|Tier 2: Visual Kamera| QR_ANIM["Animated Multipart QR<br/>(Streaming 6 FPS)"]
-        DB_LOCAL -->|Tier 2: Kertas Fisik| QR_POSTER["Poster Paritas XOR<br/>(Tahan Robek / Erasure Coding)"]
-    end
+### Badges & Status Indicators
+- **Format:** `inline-flex items-center gap-1.5 font-medium border-[1.5px] select-none`.
+- **Ukuran:** `sm` (`px-2 py-0.5 text-[11px] rounded-md`) dan `md` (`px-2.5 py-1 text-xs rounded-lg`).
+- **START Triage Badges:**
+  - `triage-red`: Background `#DC2626`, teks `#FFFFFF`, border `#DC2626`, font-bold, uppercase.
+  - `triage-yellow`: Background `#D97706`, teks `#FFFFFF`, border `#D97706`, font-bold, uppercase.
+  - `triage-green`: Background `#059669`, teks `#FFFFFF`, border `#059669`, font-bold, uppercase.
+  - `triage-black`: Background `#1E293B`, teks `#FFFFFF`, border `#1E293B`, font-bold, uppercase.
 
-    subgraph DataMule["Universal Data Mule Courier"]
-        BLE & QR_ANIM & QR_POSTER --> MULE["Kurir Relawan / Ambulans Bergerak<br/>(Membawa Manifes Biner Terkompresi)"]
-    end
-
-    subgraph Upstream["Command Center (Saat Internet Tersedia)"]
-        MULE -->|Tiba di Posko Induk| GATEWAY["API Sync Ingest Gateway<br/>(/api/v1/sync/ingest-packet)"]
-        GATEWAY --> CLOUD_DB[("PostgreSQL 16 / Supabase<br/>(Idempotent Merkle Upsert)")]
-        CLOUD_DB --> DASHBOARD["Pusat Komando Makro BPBD / PMI"]
-    end
-```
-
-### Database Schema
-
-Skema basis data relasional Sandya dirancang untuk mendukung integritas audit *append-only event sourcing* dan *transactional outbox*:
-
-```mermaid
-erDiagram
-    ORGANIZATIONS ||--o{ DISASTER_MISSIONS : commissions
-    ORGANIZATIONS {
-        string id PK
-        string name
-        string category
-        string master_pubkey
-        bigint created_at
-    }
-
-    DISASTER_MISSIONS ||--o{ POSTS : deploys
-    DISASTER_MISSIONS {
-        string id PK
-        string org_id FK
-        string name
-        string disaster_type
-        string status
-        int target_days
-    }
-
-    POSTS ||--o{ REFUGEES : shelters
-    POSTS ||--o{ INVENTORY_ITEMS : stores
-    POSTS {
-        string id PK
-        string mission_id FK
-        string name
-        string post_type
-        int capacity
-        int current_refugees
-    }
-
-    REFUGEES ||--o{ REFUGEE_EVENTS : records
-    REFUGEES {
-        string id PK
-        string post_id FK
-        string full_name
-        string national_id
-        char gender
-        int age
-        string current_triage
-        jsonb vulnerabilities
-    }
-
-    REFUGEE_EVENTS {
-        string id PK
-        string refugee_id FK
-        string author_id
-        string event_type
-        jsonb event_payload
-        int logical_seq
-        bigint device_timestamp
-    }
-
-    INVENTORY_ITEMS ||--o{ INVENTORY_TRANSACTIONS : mutates
-    INVENTORY_ITEMS {
-        string id PK
-        string post_id FK
-        string item_name
-        string category
-        decimal current_quantity
-        string unit
-        decimal burn_rate_days
-    }
-
-    INVENTORY_TRANSACTIONS {
-        string id PK
-        string item_id FK
-        string post_id FK
-        string officer_id
-        string tx_type
-        decimal quantity_change
-        int logical_seq
-    }
-
-    REFUGEES ||--o{ NEEDS_TICKETS : requests
-    NEEDS_TICKETS {
-        string id PK
-        string refugee_id FK
-        string post_id FK
-        string item_name
-        int quantity
-        string status
-    }
-
-    POSTS ||--o{ TACTICAL_MESSAGES : broadcasts
-    TACTICAL_MESSAGES {
-        string id PK
-        string post_id FK
-        string channel
-        string sender_name
-        string content_type
-        text text_content
-        boolean is_urgent
-    }
-```
-
-### Folder Structure
-
-Struktur kode diorganisasikan menggunakan pola **Domain-Driven Design (DDD)** modular dan bersih:
-
-```text
-sandya/
-├── src/
-│   ├── app/                               # Next.js 16 App Router Pages & API Routes
-│   │   ├── api/v1/                        # Endpoint REST & SSE Bencana
-│   │   │   ├── analytics/                 # Triage heatmap, burn rate, & reunion matches
-│   │   │   ├── logistics/                 # Mutasi stok Single-Writer
-│   │   │   ├── refugees/                  # Fast intake & event timeline
-│   │   │   ├── sync/                      # Ingest paket biner & vector probe
-│   │   │   └── tactical/                  # Broadcast pesan & SSE streaming
-│   │   ├── missions/                      # Manajemen misi makro & command center
-│   │   ├── posko/[poskoId]/               # Antarmuka lapangan 5-Tab Posko
-│   │   │   ├── logistics/                 # Gudang logistik, charts, & waybills
-│   │   │   ├── refugees/                  # Direktori warga, triase medis, & temu keluarga
-│   │   │   ├── sync/                      # Animated QR scanner & cetak poster paritas
-│   │   │   └── tactical/                  # PTT Walkie-Talkie & radar proximity
-│   │   └── guest/                         # Kios publik mandiri pencarian keluarga
-│   ├── core/                              # Lapisan Domain Murni & Use Cases (Zero Dependency)
-│   │   ├── domain/                        # Agregat, Entities, & Value Objects
-│   │   │   ├── logistics/                 # InventoryAggregate & Consumption Resilience
-│   │   │   ├── refugees/                  # RefugeeAggregate & Event Sourcing
-│   │   │   └── tactical/                  # TacticalMessage & Channel invariants
-│   │   ├── codecs/                        # Kamus Bencana uint8, Paritas XOR, & Role Pass
-│   │   └── use-cases/                     # Logika bisnis use cases teruji
-│   ├── features/                          # Fitur UI Spesifik Domain & State Management
-│   │   ├── auth/                          # Scanner & verifikasi Role Pass Ed25519
-│   │   ├── logistics/                     # Modal Ad-hoc distribution & inventaris
-│   │   ├── posko/store/                   # Zustand posko store & offline persistence
-│   │   ├── refugees/                      # Formulir intake cepat & START triage board
-│   │   └── tactical/                      # PTT voice recorder & kanal radio
-│   ├── infrastructure/                    # Implementasi Database, Driver, & Repositories
-│   │   ├── db/sqlite/                     # SQLite driver & repositories
-│   │   ├── db/supabase-postgres-schema.sql# DDL relasional Cloud PostgreSQL
-│   │   ├── network/ble/                   # Sandya Mesh Protocol (SMP v1) engine
-│   │   └── services/                      # DisasterAnalyticsService & ServiceContainer
-│   └── shared/                            # Komponen UI Reusable & Utilitas Primitif
-│       ├── types/                         # Kontrak tipe TypeScript domain bersama
-│       └── ui/                            # Button, Card, Badge, Dialog, Solar Icon, dll.
-├── src-tauri/                             # Rust Native Backend (Tauri v2)
-│   ├── src/main.rs                        # Inisialisasi plugin native & command handlers
-│   └── tauri.conf.json                    # Konfigurasi perizinan native BLE, audio, & file
-├── tests/                                 # Rangkaian 17 Suite Pengujian Otomatis
-│   ├── unit/                              # Pengujian unit domain, codecs, & algoritma
-│   └── integration/                       # Pengujian integrasi API & sinkronisasi SQLite
-└── docs/                                  # Spesifikasi Teknis & Panduan Desain Lengkap
-```
+### Alert Banners
+- **Format:** Wadah `rounded-xl border flex items-start p-3.5 gap-3 shadow-2xs`.
+- **Variants:**
+  - `danger`: Border `#DC2626`, background `#FEF2F2`, teks `#DC2626`.
+  - `warning`: Border `#FDE68A`, background `#FFFBEB`, teks `#D97706`.
+  - `safe`: Border `#A7F3D0`, background `#ECFDF5`, teks `#059669`.
+  - `info`: Border `#E2E8F0`, background `#F8FAFC`, teks `#0F172A`.
 
 ---
 
-## ⚙️ Instalasi & Setup
+## Do's and Don'ts
 
-### Prerequisites
+### Do:
+- **Do** gunakan token semantik Tailwind resmi (`bg-surface`, `border-border`, `text-text-main`, `bg-status-danger`) di setiap komponen UI baru.
+- **Do** terapkan **The 48px Field Target Rule**: pastikan seluruh tombol sentuh utama lapangan memiliki tinggi minimal 40px hingga 48px.
+- **Do** gunakan **Plus Jakarta Sans** untuk seluruh tipografi antarmuka dan batasi font weight pada rentang 400 (Regular), 500 (Medium), 600 (SemiBold), dan 700 (Bold).
+- **Do** isolasi **Geist Mono** hanya untuk hash transaksi, kunci publik Ed25519, NIK, token heksadesimal kamus bencana, dan koordinat.
+- **Do** gunakan icon stroke bergaris presisi dari pustaka **Solar Icons** (`name="box"`, `name="health"`, `name="shield"`).
+- **Do** sediakan label status teks jelas di samping kode warna (misal: tulisan "P1 - Kritis" mendampingi warna merah) untuk mendukung relawan dengan defisiensi penglihatan warna (aksesibilitas WCAG).
 
-Pastikan perangkat pengembang Anda telah terpasang:
-- **Node.js**: `v20.x` atau lebih tinggi
-- **Package Manager**: `pnpm` (disarankan, v9+) atau `npm` (v10+)
-- **Rust Toolchain**: `rustc` dan `cargo` >= 1.78 (diperlukan jika mengompilasi Tauri v2)
-- **Dependensi Sistem Linux (Ubuntu / Debian)**:
-  ```bash
-  sudo apt update
-  sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-  ```
-
-### Langkah Instalasi
-
-#### 1️⃣ Clone Repository
-```bash
-git clone https://github.com/untacorp/sandya.git
-cd sandya
-```
-
-#### 2️⃣ Pasang Dependensi
-```bash
-pnpm install
-```
-
-#### 3️⃣ Konfigurasi Environment Variables
-Buat berkas `.env.local` pada direktori root proyek:
-```env
-# Mode Driver Sinkronisasi Cloud: 'NONE' | 'SUPABASE' | 'POSTGRES_VPS'
-NEXT_PUBLIC_CLOUD_DRIVER=NONE
-
-# Konfigurasi Supabase (Opsional - Jika menggunakan Opsi 2)
-NEXT_PUBLIC_SUPABASE_URL=https://proyek-anda.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=kunci-anon-supabase-anda
-SUPABASE_SERVICE_ROLE_KEY=kunci-service-role-anda
-
-# Konfigurasi Mandiri PostgreSQL VPS (Opsional - Jika menggunakan Opsi 3 atau 4)
-DATABASE_URL=postgresql://sandya_admin:sandya_secret_password@localhost:5432/sandya_db
-NEXT_PUBLIC_VPS_SYNC_ENDPOINT=http://localhost:3001
-VPS_SYNC_API_KEY=kunci-rahasia-api-vps-anda
-```
-
----
-
-### Opsi Deployment
-
-Sandya mendukung 4 opsi skenario deployment sesuai kebutuhan lapangan:
-
-#### 🟢 Opsi 1: Mode Offline Murni / Local SQLite (Bawaan Tanpa Setup)
-Mode ini adalah konfigurasi standar garis depan bencana. Aplikasi berjalan 100% di perangkat lokal tanpa memerlukan internet, instalasi database eksternal, ataupun registrasi cloud.
-```bash
-# Jalankan langsung di browser
-pnpm dev
-
-# Atau jalankan sebagai aplikasi desktop native Tauri v2
-pnpm tauri dev
-```
-
-#### 🔵 Opsi 2: Mode Supabase Cloud (Managed Online)
-Digunakan saat posko induk memiliki sambungan internet satelit (Starlink) atau seluler untuk mengonsolidasikan data secara otomatis:
-1. Buat proyek baru di [Supabase Dashboard](https://supabase.com).
-2. Buka menu **SQL Editor**, salin dan jalankan file `src/infrastructure/db/supabase-postgres-schema.sql`.
-3. Set `NEXT_PUBLIC_CLOUD_DRIVER=SUPABASE` pada `.env.local`.
-4. Jalankan `pnpm dev` atau `pnpm tauri dev`.
-
-#### 🟡 Opsi 3: Mode Local Docker PostgreSQL (Uji Coba Pengembang)
-Digunakan untuk menguji alur sinkronisasi PostgreSQL + PostgREST secara lokal via container:
-```bash
-# Nyalakan container PostgreSQL 16 & PostgREST
-npm run db:up
-
-# Jalankan aplikasi web
-pnpm dev
-
-# Mematikan container setelah selesai
-npm run db:down
-```
-
-#### 🟣 Opsi 4: Mode Self-Hosted VPS (BYOC untuk Pemerintah / Instansi)
-Digunakan untuk instansi (BPBD, PMI, Basarnas) yang ingin meng-host server data bencana mandiri di data center lokal:
-```bash
-# Migrasi skema database ke server VPS target
-DATABASE_URL="postgresql://user:password@ip-vps:5432/sandya_db" npm run db:migrate
-```
-
----
-
-## 🚀 Penggunaan
-
-### Menjalankan Aplikasi
-
-```bash
-# 1. Mode Web Development (Port 3000)
-pnpm dev
-
-# 2. Kompilasi Produksi & Menjalankan Server Web
-pnpm build
-pnpm start
-
-# 3. Mode Desktop Native (Tauri v2)
-pnpm tauri dev
-
-# 4. Build Paket Installer Desktop (.deb, .AppImage, .msi)
-pnpm tauri build
-
-# 5. Menjalankan Seluruh Pengujian Unit
-pnpm test:unit
-```
-
-### User Guide
-
-#### Untuk Petugas Garis Depan (Frontliners)
-1. **Pendaftaran Warga Cepat (<30 Detik)**:
-   - Masuk ke tab **Warga & Triase** -> Klik tombol **+ Intake Cepat**.
-   - Masukkan Nama, Usia, Jenis Kelamin, dan Lokasi Tenda (NIK bersifat opsional).
-   - Sistem secara otomatis mencatat *event* `INTAKE`, menetapkan tanda pengenal, dan mengalkulasi kebutuhan logistik.
-2. **Pemeriksaan Pasien Tenda Medis (START Triage)**:
-   - Pilih pengungsi dari daftar -> Klik **Periksa Triase**.
-   - Tetapkan warna triase (Merah, Kuning, Hijau, Hitam), isi tanda vital pasien (tensi, nadi, SpO2, suhu), dan resepkan obat.
-   - Tiket resep farmasi otomatis diterbitkan ke gudang logistik.
-3. **Serah Terima Logistik di Gudang (Single-Writer)**:
-   - Buka tab **Logistik Gudang** -> Klik **Catat Barang Masuk (Restock)** untuk bantuan truk yang baru tiba.
-   - Untuk serah terima warga: Buka detail warga -> Klik **Serahkan Bantuan Langsung** (Sistem memvalidasi batas anti-penimbunan 72 jam).
-4. **Komunikasi Radio Taktis (Push-to-Talk)**:
-   - Buka tab **Komunikasi Taktis** -> Pilih kanal operasional (`#all`, `#medis`, `#logistik`, `#sos`).
-   - Tahan tombol mikrofon untuk mengirim rekaman suara darurat 3.2 kbps, atau geser tombol SOS saat terjadi situasi darurat.
-5. **Pertukaran Data Antar-Posko Tanpa Internet**:
-   - Buka tab **Sinkronisasi**.
-   - Gunakan **Animated QR** untuk transfer cepat layar-ke-kamera (6 FPS).
-   - Atau cetak **Poster Multi-QR Paritas** untuk ditempel di papan pengumuman posko, yang dapat dipindai oleh relawan bermobil (*Data Mule*).
-
-#### Untuk Pimpinan & Koordinator Posko
-1. **Inisialisasi Organisasi & Misi**:
-   - Buka menu **Setup Organisasi** -> Masukkan nama lembaga dan generate pasangan kunci induk Ed25519.
-   - Terbitkan misi bencana baru beserta titik-titik posko koordinasi lapangan.
-2. **Penerbitan Role Pass Relawan**:
-   - Terbitkan QR Role Pass untuk setiap petugas lapangan sesuai perannya (*Medis, Logistik, Relawan*).
-   - Petugas memindai QR Role Pass untuk mengaktifkan sesi kerja tanpa memerlukan kata sandi.
-3. **Pemantauan Ketahanan Konsumsi**:
-   - Pantau indikator hari ketahanan pangan (*Burn Rate*) pada kartu inventaris dan grafik logistik. Bila komoditas berstatus *Kritis (<24 Jam)*, segera ajukan bantuan pasokan ke posko pusat.
-
----
-
-## 📚 API Documentation
-
-Sandya menyediakan antarmuka REST API dan Server-Sent Events (SSE) berkinerja tinggi yang mematuhi standar **RFC 7807 Problem Details** untuk penanganan galat terstandarisasi.
-
-### Base URL
-```text
-Development : http://localhost:3000/api/v1
-Production  : https://sandya.id/api/v1
-```
-
-### Endpoints
-
-#### 1. Mutasi Stok Gudang (Single-Writer)
-- **`POST /api/v1/logistics/mutate`**
-  - *Deskripsi*: Melakukan mutasi stok fisik (RESTOCK, DISTRIBUTION, DAMAGE, TRANSFER).
-  - *Headers*: `Content-Type: application/json`
-  - *Request Body*:
-    ```json
-    {
-      "poskoId": "POS-01",
-      "itemId": "POS-01-ITEM-BERAS",
-      "officerId": "USR-LOGISTIK-01",
-      "officerRole": "PETUGAS_LOGISTIK",
-      "txType": "DISTRIBUTION",
-      "quantityChange": 5,
-      "logicalSeq": 4,
-      "referenceTicketId": "TKT-101",
-      "notes": "Penyaluran sembako tenda 3"
-    }
-    ```
-  - *Response (200 OK)*:
-    ```json
-    {
-      "success": true,
-      "item": {
-        "id": "POS-01-ITEM-BERAS",
-        "currentQuantity": 45,
-        "version": 4
-      }
-    }
-    ```
-
-#### 2. Analisis & Ketahanan Bencana
-- **`GET /api/v1/analytics?poskoId=POS-01`**
-  - *Deskripsi*: Mengambil ringkasan heatmap triase pasien, proyeksi ketahanan stok (*burn-rate forecast*) standar SPHERE, dan rekonsiliasi temu keluarga.
-  - *Response (200 OK)*: Menyajikan objek `triageHeatmap`, `burnRateForecast`, dan `reunionMatches`.
-
-#### 3. Manajemen Pengungsi & Event Sourcing
-- **`GET /api/v1/refugees?poskoId=POS-01`**: Mengambil daftar pengungsi terdaftar di posko.
-- **`POST /api/v1/refugees`**: Mendaftarkan warga baru via Fast Intake.
-- **`GET /api/v1/refugees/[refugeeId]/timeline`**: Mengambil kronologis riwayat hidup (*event timeline*) pengungsi.
-
-#### 4. Sinkronisasi Data Mule & Vector Probe
-- **`POST /api/v1/sync/ingest-packet`**: Menerima manifes biner terkompresi dari kurir pembawa data offline.
-- **`GET /api/v1/sync/vector-probe?poskoId=POS-01`**: Memeriksa status interval vector clock untuk sinkronisasi delta.
-
-#### 5. Komunikasi Taktis
-- **`GET /api/v1/tactical/messages?channel=POSKO_ALL`**: Mengambil riwayat pesan taktis pada kanal tertentu.
-- **`GET /api/v1/tactical/sse`**: Langganan stream pesan radio real-time via Server-Sent Events (SSE).
-
----
-
-## 🧪 Testing
-
-Sandya dibangun dengan metodologi **Test-Driven Rigor**. Seluruh algoritma biner, codec QR paritas, protokol BLE mesh, tata kelola logistik, dan rekam medis diverifikasi menggunakan 17 suite pengujian otomatis mandiri tanpa mock palsu (*zero dummy lifecycle*).
-
-### Menjalankan Test Suite
-
-```bash
-# 1. Menjalankan seluruh 17 suite unit test
-pnpm test:unit
-
-# 2. Menjalankan pengujian integrasi API dan sinkronisasi SQLite-Cloud
-pnpm test:integration
-
-# 3. Menjalankan seluruh rangkaian tes (Unit + Integrasi)
-pnpm test
-
-# 4. Menjalankan simulasi performa QR Codec & Erasure Recovery
-pnpm sim:final
-```
-
-### Hasil Pengujian Unit
-
-Eksekusi perintah `pnpm test:unit` mencakup verifikasi menyeluruh terhadap 17 suite komponen:
-
-| No | Suite Pengujian | Berkas Uji | Status |
-| :---: | :--- | :--- | :---: |
-| 1 | **Siklus Hidup Data Bersih (Zero-Dummy)** | `tests/unit/zero-dummy-lifecycle.test.ts` | **PASS (100%)** |
-| 2 | **Jembatan Transportasi Native BLE** | `tests/unit/ble-transport-bridge.test.ts` | **PASS (100%)** |
-| 3 | **Mesin Jaringan BLE Mesh** | `tests/unit/ble-mesh-engine.test.ts` | **PASS (100%)** |
-| 4 | **Relay Intercom Taktis Lapangan** | `tests/unit/tactical-intercom-relay.test.ts` | **PASS (100%)** |
-| 5 | **Gossip Protokol & Vector Clock** | `tests/unit/vector-clock-gossip.test.ts` | **PASS (100%)** |
-| 6 | **Integrasi Antarmuka Mesh UI** | `tests/unit/mesh-ui-integration.test.ts` | **PASS (100%)** |
-| 7 | **Domain Core & Invarian Agregat** | `tests/unit/core-domain.test.ts` | **PASS (100%)** |
-| 8 | **Autentikasi Kriptografis Role Pass** | `tests/unit/role-pass-auth.test.ts` | **PASS (100%)** |
-| 9 | **Intake Pengungsi & Temu Keluarga** | `tests/unit/refugees-and-reunion.test.ts` | **PASS (100%)** |
-| 10 | **Triase Medis START & Farmasi** | `tests/unit/triage-medis.test.ts` | **PASS (100%)** |
-| 11 | **Gudang Logistik Single-Writer Ledger** | `tests/unit/logistics-single-writer.test.ts` | **PASS (100%)** |
-| 12 | **Distribusi Ad-Hoc & Anti-Hoarding** | `tests/unit/adhoc-logistics-distribution.test.ts` | **PASS (100%)** |
-| 13 | **Ketahanan Konsumsi SPHERE & BNPB** | `tests/unit/consumption-resilience.test.ts` | **PASS (100%)** |
-| 14 | **Intercom Push-to-Talk & Sirene SOS** | `tests/unit/tactical-intercom.test.ts` | **PASS (100%)** |
-| 15 | **Codec QR Teranimasi & Role Pass QR** | `tests/unit/qr-codecs.test.ts` | **PASS (100%)** |
-| 16 | **Transport Dinamis & Paritas XOR** | `tests/unit/dynamic-sync-transports.test.ts` | **PASS (100%)** |
-| 17 | **Framing Protokol Biner SMP v1** | `tests/unit/ble-mesh-protocol.test.ts` | **PASS (100%)** |
-
----
-
-## 📄 Lisensi
-
-Proyek **Sandya** dilisensikan di bawah lisensi ganda [MIT License](LICENSE) dan Apache-2.0. Dikembangkan untuk mendukung operasi tanggap darurat kemanusiaan, penanganan krisis bencana, dan perlindungan masyarakat di seluruh pelosok tanah air.
-
----
-
-<div align="center">
-
-  **Made with dedication & humanity by Skensa Jaya for ITECHNO CUP 2026**
-
-</div>
+### Don't:
+- **Don't** menuliskan warna heksadesimal arbitrer secara langsung di dalam kode komponen (misal: `bg-[#0f172a]` atau `text-[#ef4444]`). Seluruh nilai warna wajib merujuk ke token `globals.css`.
+- **Don't** menggunakan emoji kartun (seperti 🚨, 📦, 🏥, ⚠️) pada tombol aksi, label menu, atau status posko. Gunakan Solar Icons SVG.
+- **Don't** menggunakan font generik seperti Inter atau membiarkan fallback font default browser tanpa deklarasi CSS yang tepat.
+- **Don't** menggunakan font weight 800 (ExtraBold) atau 900 (Black) secara berlebihan pada teks panjang karena membuat teks tampak berat dan sulit dibaca di bawah cahaya silau matahari.
+- **Don't** menerapkan efek bayangan buram berat (*blurry drop shadow*) atau transparansi kaca (*glassmorphism*) yang merusak kontras outdoor.
+- **Don't** menempatkan elemen penting di area bawah layar ponsel tanpa memperhitungkan padding aman navigasi bawah (`bottom-nav safe-area`).
