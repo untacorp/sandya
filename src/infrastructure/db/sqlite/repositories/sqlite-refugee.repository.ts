@@ -182,4 +182,46 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
 
   return Ok(matches);
   }
+
+  public async saveRawEvents(events: RefugeeEventProps[]): Promise<Result<void>> {
+    const table = this.db.getTable('refugee_events');
+    for (const ev of events) {
+      table.set(ev.id, {
+        id: ev.id,
+        refugee_id: ev.refugeeId,
+        author_id: ev.authorId,
+        author_name: ev.authorName,
+        author_role: ev.authorRole,
+        event_type: ev.eventType,
+        event_payload: typeof ev.eventPayload === 'string' ? ev.eventPayload : JSON.stringify(ev.eventPayload),
+        device_timestamp: ev.deviceTimestamp,
+        logical_seq: ev.logicalSeq,
+        causal_parent_id: ev.causalParentId ?? null,
+      });
+    }
+    return Ok(undefined);
+  }
+
+  public async getAllEvents(): Promise<Result<RefugeeEventProps[]>> {
+    const table = this.db.getTable('refugee_events');
+    const events: RefugeeEventProps[] = [];
+
+    for (const row of table.values()) {
+      events.push({
+        id: row['id'] as any,
+        refugeeId: asRefugeeId(row['refugee_id'] as string),
+        authorId: row['author_id'] as string,
+        authorName: row['author_name'] as string,
+        authorRole: row['author_role'] as any,
+        eventType: row['event_type'] as any,
+        eventPayload: typeof row['event_payload'] === 'string' ? JSON.parse(row['event_payload']) : row['event_payload'],
+        deviceTimestamp: row['device_timestamp'] as number,
+        logicalSeq: row['logical_seq'] as number,
+        causalParentId: (row['causal_parent_id'] as string) || undefined,
+      });
+    }
+
+    events.sort((a, b) => a.deviceTimestamp - b.deviceTimestamp);
+    return Ok(events);
+  }
 }

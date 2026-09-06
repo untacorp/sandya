@@ -39,13 +39,26 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
   const activePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
 
   const matchedPosko = poskos.find((p) => p.id === routePoskoId);
-  const targetPoskoName = matchedPosko?.name || `Posko ${routePoskoId}`;
+  // Prefer store name → existing session name → ID fallback (never clobber a real name)
+  const targetPoskoName = matchedPosko?.name || session.poskoName || `Posko ${routePoskoId}`;
+
+  const [hasHydrated, setHasHydrated] = React.useState(false);
 
   React.useEffect(() => {
-  if (routePoskoId && routePoskoId !== "POS-LOCAL" && (session.poskoId !== routePoskoId || session.poskoName !== targetPoskoName)) {
-  setSessionPosko(routePoskoId, targetPoskoName);
-  }
-  }, [routePoskoId, session.poskoId, session.poskoName, targetPoskoName, setSessionPosko]);
+    setHasHydrated(usePoskoStore.persist.hasHydrated());
+    const unsub = usePoskoStore.persist.onFinishHydration(() => setHasHydrated(true));
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasHydrated) return;
+    if (routePoskoId && routePoskoId !== "POS-LOCAL" && session.poskoId !== routePoskoId) {
+      // Only sync poskoId; preserve existing poskoName if we don't have a store entry yet
+      setSessionPosko(routePoskoId, matchedPosko?.name || session.poskoName || `Posko ${routePoskoId}`);
+    }
+  }, [hasHydrated, routePoskoId, session.poskoId, matchedPosko, session.poskoName, setSessionPosko]);
 
   React.useEffect(() => {
   let isCancelled = false;
@@ -71,6 +84,16 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
         version: 1,
       });
       await container.inventoryRepo.save(agg);
+    } else {
+      const existingSnap = check.value.toSnapshot();
+      if (existingSnap.lastUpdatedAt < item.lastUpdatedAt || existingSnap.currentQuantity !== item.currentQuantity) {
+        const agg = InventoryAggregate.reconstitute({
+          ...existingSnap,
+          currentQuantity: item.currentQuantity,
+          lastUpdatedAt: Math.max(existingSnap.lastUpdatedAt, item.lastUpdatedAt),
+        });
+        await container.inventoryRepo.save(agg);
+      }
     }
   }
 
@@ -92,6 +115,14 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
         registeredByUserId: person.registeredByUserId,
         createdAt: person.createdAt,
         version: 1,
+      });
+      await container.refugeeRepo.save(agg);
+    } else {
+      // Perbarui record SQLite yang sudah ada agar data dari QR (Zustand) tidak ditimpa state lama
+      const existingSnap = check.value.toSnapshot();
+      const agg = RefugeeAggregate.reconstitute({
+        ...existingSnap,
+        currentTriage: person.triageStatus || existingSnap.currentTriage,
       });
       await container.refugeeRepo.save(agg);
     }

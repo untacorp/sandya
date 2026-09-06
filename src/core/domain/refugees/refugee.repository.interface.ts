@@ -9,4 +9,6 @@ export interface IRefugeeRepository {
   saveBatch(refugees: RefugeeAggregate[]): Promise<Result<number>>;
   getEventsByRefugeeId(refugeeId: RefugeeId): Promise<Result<RefugeeEventProps[]>>;
   findMissingKinMatches(poskoId: PoskoId, missingName: string): Promise<Result<RefugeeAggregate[]>>;
+  saveRawEvents(events: RefugeeEventProps[]): Promise<Result<void>>;
+  getAllEvents(): Promise<Result<RefugeeEventProps[]>>;
 }

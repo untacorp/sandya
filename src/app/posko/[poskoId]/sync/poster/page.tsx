@@ -20,6 +20,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { asRefugeeId, asPoskoId, asEventId } from "@/core/shared/branded-types";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 
 export const PARITY_POSTER_PAGE_CONSTANTS = {
   MAX_CHUNK_BYTES: 200,
@@ -29,7 +32,7 @@ export const PARITY_POSTER_PAGE_CONSTANTS = {
 } as const;
 
 export default function ParityPosterSyncPage() {
-  const { session, refugees, inventory, importRefugeeBatch } = usePoskoStore();
+  const { session, refugees, inventory, transactions, needsTickets, importRefugeeBatch, importInventoryBatch, importTransactionBatch, importNeedsTicketsBatch } = usePoskoStore();
 
   const [mode, setMode] = React.useState<"PRINT" | "SCAN">("PRINT");
   const [posterSpec, setPosterSpec] = React.useState<PosterLayoutSpec | null>(null);
@@ -42,23 +45,92 @@ export default function ParityPosterSyncPage() {
 
   // Generate dynamic N+1 Parity Poster based on actual posko data
   React.useEffect(() => {
-  if (refugees.length === 0) {
+  if (refugees.length === 0 && inventory.length === 0 && transactions.length === 0 && needsTickets.length === 0) {
   setPosterSpec(null);
   return;
   }
 
+  let isMounted = true;
+
+  const buildPosterSpec = async () => {
   try {
   // 1. Build disaster manifest
   const manifestPersons = refugees.map((r) => ({
+  id: r.id,
   fullName: r.fullName,
   nationalId: r.nik || undefined,
   gender: r.gender,
   age: r.age,
-  vulnerabilities: r.vulnerabilities.length > 0 ? 0x01 : 0x00,
+  vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
+    switch (v) {
+      case "BALITA": return mask | 0x01;
+      case "IBU_HAMIL": return mask | 0x02;
+      case "LANSIA": return mask | 0x04;
+      case "DISABILITAS": return mask | 0x08;
+      case "LUKA_BERAT": return mask | 0x10;
+      case "PENYAKIT_KRONIS": return mask | 0x20;
+      default: return mask;
+    }
+  }, 0),
   urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
   domicileOrigin: r.domicileOrigin || undefined,
   shelterLocation: r.shelterLocation || undefined,
   missingKinName: r.missingKinName || undefined,
+  triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
+  }));
+
+  const manifestInventory = inventory.map((i) => ({
+    itemName: i.itemName,
+    category: i.category as "FOOD" | "CLOTHING" | "MEDICAL" | "HYGIENE" | "SHELTER" | "BABY_SUPPLIES",
+    currentQuantity: i.currentQuantity,
+    unit: i.unit,
+  }));
+
+  const manifestTransactions = transactions
+    .filter((tx) => !tx.postId || tx.postId === session.poskoId)
+    .map((tx) => ({
+      id: tx.id,
+      itemId: tx.itemId,
+      txType: tx.txType,
+      quantityChange: tx.quantityChange,
+      note: tx.note || undefined,
+      officerName: tx.officerName || undefined,
+      deviceTimestamp: tx.deviceTimestamp,
+    }));
+
+  // Ambil rekam peristiwa / timeline warga dari SQLite
+  const container = ServiceContainer.getInstance();
+  const eventsRes = await container.refugeeRepo.getAllEvents();
+  const allEvents = eventsRes.ok ? eventsRes.value : [];
+  const refugeeIdSet = new Set(refugees.map((r) => r.id));
+  const poskoEvents = allEvents.filter((ev) => refugeeIdSet.has(ev.refugeeId));
+  const manifestEvents = poskoEvents.map((ev) => ({
+    id: ev.id,
+    refugeeId: ev.refugeeId,
+    authorName: ev.authorName,
+    authorRole: ev.authorRole,
+    eventType: ev.eventType,
+    eventPayloadJson: typeof ev.eventPayload === "string" ? ev.eventPayload : JSON.stringify(ev.eventPayload),
+    deviceTimestamp: ev.deviceTimestamp,
+    logicalSeq: ev.logicalSeq,
+  }));
+
+  // Ambil tiket kebutuhan / distribusi bantuan
+  const poskoTickets = needsTickets.filter((t) => !t.postId || t.postId === session.poskoId);
+  const manifestTickets = poskoTickets.map((t) => ({
+    id: t.id,
+    refugeeId: t.refugeeId,
+    refugeeName: t.refugeeName,
+    shelterLocation: t.shelterLocation,
+    postId: t.postId,
+    itemName: t.itemName,
+    quantity: t.quantity,
+    unit: t.unit,
+    status: t.status,
+    urgency: t.urgency,
+    createdByUserName: t.createdByUserName,
+    createdAt: t.createdAt,
+    completedAt: t.completedAt,
   }));
 
   const manifest: DisasterManifestV4 = {
@@ -66,6 +138,11 @@ export default function ParityPosterSyncPage() {
   defaultRegionCode: "320101",
   timestamp: Date.now(),
   persons: manifestPersons,
+  inventory: manifestInventory,
+  transactions: manifestTransactions,
+  personIds: refugees.map((r) => r.id),
+  events: manifestEvents,
+  tickets: manifestTickets,
   };
 
   // 2. Pack and compress
@@ -83,11 +160,20 @@ export default function ParityPosterSyncPage() {
   maxChunkBytes: PARITY_POSTER_PAGE_CONSTANTS.MAX_CHUNK_BYTES, // Dynamic chunk threshold
   });
 
-  setPosterSpec(spec);
+  if (isMounted) {
+    setPosterSpec(spec);
+  }
   } catch (err) {
   console.error("Gagal membuat spec poster paritas:", err);
   }
-  }, [refugees, session]);
+  };
+
+  buildPosterSpec();
+
+  return () => {
+    isMounted = false;
+  };
+  }, [refugees, inventory, transactions, needsTickets, session]);
 
   // Handle incoming scanned QR code
   const handleQrScanned = React.useCallback(
@@ -122,6 +208,7 @@ export default function ParityPosterSyncPage() {
 
   if (scannedCellsMap.size >= totalDataParts && !recoveredManifest) {
   setIsRecovering(true);
+  (async () => {
   try {
   const cellsArray = Array.from(scannedCellsMap.values());
   const reconstructedBuffer = PosterGenerator.reconstructFromPosterCells(
@@ -142,29 +229,127 @@ export default function ParityPosterSyncPage() {
   if (importRefugeeBatch && manifest.persons.length > 0) {
   importRefugeeBatch(
   manifest.persons.map((p) => ({
+  id: p.id,
   postId: session.poskoId,
   fullName: p.fullName,
   nik: p.nationalId || null,
   gender: p.gender,
   age: p.age,
-  vulnerabilities: p.vulnerabilities > 0 ? ["LANSIA"] : [],
+  vulnerabilities: [
+    (p.vulnerabilities & 0x01) ? "BALITA" : null,
+    (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
+    (p.vulnerabilities & 0x04) ? "LANSIA" : null,
+    (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
+    (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
+    (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
+  ].filter(Boolean) as any[],
   urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
   domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
   shelterLocation: p.shelterLocation || "Tenda Pengungsian",
   missingKinName: p.missingKinName,
   registeredByUserId: session.userId,
   registeredByUserName: session.userName,
-  triageStatus: "GREEN",
+  triageStatus: p.triage || "GREEN",
   }))
   );
+
+  // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
+  const container = ServiceContainer.getInstance();
+  for (const p of manifest.persons) {
+    const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
+    const agg = RefugeeAggregate.reconstitute({
+      id: refId,
+      poskoId: asPoskoId(session.poskoId),
+      fullName: p.fullName,
+      nationalId: p.nationalId || null,
+      gender: p.gender,
+      age: p.age,
+      domicileOrigin: p.domicileOrigin || null,
+      shelterLocation: p.shelterLocation || null,
+      missingKinName: p.missingKinName || null,
+      currentTriage: (p.triage as any) || "GREEN",
+      registeredByUserId: session.userId,
+      createdAt: Date.now(),
+      version: 1,
+    }, []);
+    await container.refugeeRepo.save(agg);
   }
-  } catch (err) {
-  console.error("Gagal merekonstruksi data poster:", err);
-  setIsRecovering(false);
-  setScanMessage(`Gagal merekonstruksi: ${(err as Error).message}`);
   }
+  
+  if (importInventoryBatch && manifest.inventory && manifest.inventory.length > 0) {
+    importInventoryBatch(
+      manifest.inventory.map((i) => ({
+        itemName: i.itemName,
+        category: i.category,
+        currentQuantity: i.currentQuantity,
+        unit: i.unit,
+      }))
+    );
   }
-  }, [scannedCellsMap, recoveredManifest, session, importRefugeeBatch]);
+
+  if (importTransactionBatch && manifest.transactions && manifest.transactions.length > 0) {
+    importTransactionBatch(
+      manifest.transactions.map((tx) => ({
+        id: tx.id,
+        itemId: tx.itemId || "",
+        postId: session.poskoId,
+        officerId: session.userId,
+        officerName: tx.officerName || "Petugas",
+        txType: tx.txType,
+        quantityChange: tx.quantityChange,
+        note: tx.note,
+        deviceTimestamp: tx.deviceTimestamp || Date.now(),
+      }))
+    );
+  }
+
+  // Simpan kronologi & rekam peristiwa ke SQLite repository posko
+  if (manifest.events && manifest.events.length > 0) {
+    const container = ServiceContainer.getInstance();
+    await container.refugeeRepo.saveRawEvents(
+      manifest.events.map((ev) => ({
+        id: asEventId(ev.id),
+        refugeeId: asRefugeeId(ev.refugeeId),
+        authorId: ev.authorId || session.userId,
+        authorName: ev.authorName || "Petugas",
+        authorRole: (ev.authorRole as any) || "RELAWAN",
+        eventType: ev.eventType as any,
+        eventPayload: JSON.parse(ev.eventPayloadJson || "{}"),
+        deviceTimestamp: ev.deviceTimestamp,
+        logicalSeq: ev.logicalSeq,
+      }))
+    );
+  }
+
+  // Impor tiket kebutuhan / data distribusi bantuan ke state posko
+  if (importNeedsTicketsBatch && manifest.tickets && manifest.tickets.length > 0) {
+    importNeedsTicketsBatch(
+      manifest.tickets.map((t) => ({
+        id: t.id,
+        refugeeId: t.refugeeId,
+        refugeeName: t.refugeeName,
+        shelterLocation: t.shelterLocation,
+        postId: session.poskoId,
+        itemName: t.itemName,
+        quantity: t.quantity,
+        unit: t.unit,
+        status: t.status,
+        urgency: t.urgency,
+        createdByUserId: session.userId,
+        createdByUserName: t.createdByUserName || "Petugas",
+        createdAt: t.createdAt || Date.now(),
+        completedAt: t.completedAt,
+      }))
+    );
+  }
+      } catch (err) {
+        console.error("Gagal merekonstruksi data poster:", err);
+        setIsRecovering(false);
+        setScanMessage(`Gagal merekonstruksi: ${(err as Error).message}`);
+      }
+    })();
+  }
+}, [scannedCellsMap, recoveredManifest, session, importRefugeeBatch, importInventoryBatch, importTransactionBatch, importNeedsTicketsBatch]);
 
   // Simulate torn QR box drill
   const handleSimulateTornPosterDrill = () => {
@@ -357,7 +542,7 @@ export default function ParityPosterSyncPage() {
   value={cell.qrRawString}
   size={PARITY_POSTER_PAGE_CONSTANTS.POSTER_QR_SIZE}
   level="M"
-  includeMargin={false}
+  includeMargin={true}
   className="border-none shadow-none"
   />
   </div>
