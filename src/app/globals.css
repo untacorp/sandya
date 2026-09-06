@@ -90,3 +90,50 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-tap-highlight-color: transparent;
 }
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+input, textarea {
+  caret-color: var(--primary);
+}
+
+/* Hide number input spinners globally */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Custom crisp scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hover) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-hover);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-strong);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

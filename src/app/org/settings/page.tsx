@@ -129,8 +129,7 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Lembaga / Instansi
   </label>
-  <Input
-  value={orgName}
+  <Input value={orgName}
   onChange={(e) => setOrgName(e.target.value)}
   icon="buildings"
   required
@@ -142,9 +141,9 @@ export default function OrgSettingsPage() {
   Kategori Lembaga
   </label>
   <select
-  value={orgCategory}
-  onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+    value={orgCategory}
+    onChange={(e) => setOrgCategory(e.target.value as Organization["category"])}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="PMI_LEMBAGA">Palang Merah Indonesia (PMI)</option>
   <option value="BPBD_PEMERINTAH">BPBD / Pemerintah Daerah</option>
@@ -159,8 +158,7 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Alamat Markas Komando Induk
   </label>
-  <Input
-  value={headquartersAddress}
+  <Input value={headquartersAddress}
   onChange={(e) => setHeadquartersAddress(e.target.value)}
   icon="pin"
   required
@@ -171,8 +169,7 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Hotline / Kontak Posko Induk
   </label>
-  <Input
-  value={contactNumber}
+  <Input value={contactNumber}
   onChange={(e) => setContactNumber(e.target.value)}
   placeholder="+62 263 261 444"
   required
@@ -184,8 +181,7 @@ export default function OrgSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Penanggung Jawab / Ketua Pengurus
   </label>
-  <Input
-  value={leadPersonName}
+  <Input value={leadPersonName}
   onChange={(e) => setLeadPersonName(e.target.value)}
   icon="user"
   required
@@ -283,8 +279,7 @@ export default function OrgSettingsPage() {
   Alamat URL Server Instansi (BYOC Endpoint)
   </label>
   <div className="flex flex-col sm:flex-row gap-2">
-  <Input
-  value={byocUrl}
+  <Input value={byocUrl}
   onChange={(e) => setByocUrl(e.target.value)}
   placeholder="https://sandya.lembaga.id"
   className="flex-1 font-mono text-xs"

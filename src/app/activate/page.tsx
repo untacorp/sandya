@@ -234,8 +234,7 @@ export default function ActivatePassPage() {
   <label className="text-xs font-semibold text-text-main block">
   Kode Penugasan
   </label>
-  <Input
-  placeholder="Contoh: SAN-MED-001-0001 atau tempel QR string"
+  <Input placeholder="Contoh: SAN-MED-001-0001 atau tempel QR string"
   value={manualCode}
   onChange={(e) => setManualCode(e.target.value)}
   className="text-xs font-mono"

@@ -8,33 +8,50 @@ import { PoskoNotFoundState } from "@/features/posko/components/posko-not-found"
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { type Posko } from "@/shared/types";
+import { DashboardCharts } from "./dashboard-charts";
 
 export default function PoskoDashboardPage() {
   const params = useParams();
-  const poskoId = (params?.poskoId as string) || "";
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, poskos, refugees, inventory, peers } = usePoskoStore();
 
-  const currentPosko = poskos.find((p) => p.id === poskoId || p.id === session.poskoId);
+  const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
+  const matchedPosko = poskos.find((p) => p.id === effectivePoskoId);
 
-  if (!currentPosko) {
-  return <PoskoNotFoundState poskoId={poskoId || session.poskoId} />;
-  }
+  const poskoRefugees = refugees.filter((r) => r.postId === effectivePoskoId);
+  const poskoInventory = inventory.filter((i) => i.postId === effectivePoskoId);
 
-  const totalRefugees = refugees.length;
-  const balitaCount = refugees.filter((r) => r.vulnerabilities.includes("BALITA")).length;
-  const bumilCount = refugees.filter((r) => r.vulnerabilities.includes("IBU_HAMIL")).length;
-  const lansiaCount = refugees.filter((r) => r.vulnerabilities.includes("LANSIA")).length;
-  const disabilitasCount = refugees.filter((r) => r.vulnerabilities.includes("DISABILITAS")).length;
+  const currentPosko: Posko = matchedPosko || {
+    id: effectivePoskoId,
+    orgId: session.orgId || "ORG-01",
+    missionId: session.missionId || "MSN-01",
+    name: `Posko ${effectivePoskoId}`,
+    postType: "FIELD_SHELTER",
+    status: "OPERATIONAL_NORMAL",
+    capacity: 500,
+    currentRefugees: poskoRefugees.length,
+    locationName: "Area Operasi Lapangan",
+    createdAt: Date.now(),
+  };
 
-  const redTriage = refugees.filter((r) => r.triageStatus === "RED").length;
-  const yellowTriage = refugees.filter((r) => r.triageStatus === "YELLOW").length;
+  const totalRefugees = poskoRefugees.length;
+  const balitaCount = poskoRefugees.filter((r) => r.vulnerabilities.includes("BALITA")).length;
+  const bumilCount = poskoRefugees.filter((r) => r.vulnerabilities.includes("IBU_HAMIL")).length;
+  const lansiaCount = poskoRefugees.filter((r) => r.vulnerabilities.includes("LANSIA")).length;
+  const disabilitasCount = poskoRefugees.filter((r) => r.vulnerabilities.includes("DISABILITAS")).length;
 
-  const uniqueShelters = new Set(refugees.map((r) => r.shelterLocation)).size;
+  const redTriage = poskoRefugees.filter((r) => r.triageStatus === "RED").length;
+  const yellowTriage = poskoRefugees.filter((r) => r.triageStatus === "YELLOW").length;
+  const greenTriage = poskoRefugees.filter((r) => r.triageStatus === "GREEN" || !r.triageStatus).length;
+  const blackTriage = poskoRefugees.filter((r) => r.triageStatus === "BLACK").length;
+
+  const uniqueShelters = new Set(poskoRefugees.map((r) => r.shelterLocation)).size;
   const capacity = currentPosko.capacity || 500;
   const occupancyPercent = Math.min(100, Math.round((totalRefugees / capacity) * 100));
 
-  // Critical inventory items (burn rate <= 1 day)
-  const criticalItems = inventory.filter((i) => i.burnRateDays <= 1 || i.currentQuantity <= 10);
+  // Critical inventory items (burn rate <= 1 day) for this posko
+  const criticalItems = poskoInventory.filter((i) => i.burnRateDays <= 1 || i.currentQuantity <= 10);
 
   return (
   <div className="space-y-4">
@@ -43,7 +60,7 @@ export default function PoskoDashboardPage() {
   <div>
   <div className="flex items-center gap-2">
   <h1 className="text-lg font-bold text-text-main">
-  {session.poskoName}
+  {currentPosko.name}
   </h1>
   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-status-safe-bg text-status-safe border border-status-safe-border">
   Aktif
@@ -56,12 +73,12 @@ export default function PoskoDashboardPage() {
 
   {/* Tombol Aksi Cepat */}
   <div className="flex items-center gap-2 shrink-0">
-  <Link href={`/posko/${session.poskoId}/refugees`}>
+  <Link href={`/posko/${effectivePoskoId}/refugees`}>
   <Button variant="primary" size="sm" icon="users" iconVariant="bold">
   Lihat Daftar Warga
   </Button>
   </Link>
-  <Link href={`/posko/${session.poskoId}/logistics`}>
+  <Link href={`/posko/${effectivePoskoId}/logistics`}>
   <Button variant="secondary" size="sm" icon="box" iconVariant="bold">
   Stok Barang
   </Button>
@@ -82,7 +99,7 @@ export default function PoskoDashboardPage() {
   (diprediksi habis dalam hitungan jam).
   </p>
   </div>
-  <Link href={`/posko/${session.poskoId}/logistics`} className="shrink-0">
+  <Link href={`/posko/${effectivePoskoId}/logistics`} className="shrink-0">
   <Button variant="danger" size="sm">
   Minta Tambahan Stok
   </Button>
@@ -90,65 +107,21 @@ export default function PoskoDashboardPage() {
   </div>
   )}
 
-  {/* 3. Tiga Kartu Ringkasan Utama (Spasi Rasional) */}
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-  {/* Total Warga */}
-  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-1">
-  <div className="flex items-center justify-between text-text-muted">
-  <span className="text-xs font-semibold">Total Warga Terdata</span>
-  <Icon name="users" variant="linear" size={18} />
-  </div>
-  <div className="flex items-baseline gap-1.5 pt-1">
-  <span className="text-2xl font-bold text-text-main tracking-tight">
-  {totalRefugees}
-  </span>
-  <span className="text-xs text-text-muted">Jiwa</span>
-  </div>
-  <p className="text-[11px] text-text-muted">
-  Kapasitas posko terisi ~{occupancyPercent}% (Kapasitas: {capacity} jiwa)
-  </p>
-  </div>
-
-  {/* Pemeriksaan Kesehatan */}
-  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-1">
-  <div className="flex items-center justify-between text-text-muted">
-  <span className="text-xs font-semibold">Pemeriksaan Kesehatan</span>
-  <Icon name="health" variant="linear" size={18} className="text-status-danger" />
-  </div>
-  <div className="flex items-baseline gap-2 pt-1">
-  <span className="text-2xl font-bold text-status-danger">
-  {redTriage}
-  </span>
-  <span className="text-xs text-status-danger font-medium">Perlu Segera</span>
-  <span className="text-lg font-semibold text-status-warning ml-1">
-  {yellowTriage}
-  </span>
-  <span className="text-xs text-status-warning font-medium">Rawat Jalan</span>
-  </div>
-  <p className="text-[11px] text-text-muted">
-  <Link href={`/posko/${session.poskoId}/refugees/triage`} className="text-primary hover:underline">
-  Buka menu pemeriksaan medis &rarr;
-  </Link>
-  </p>
-  </div>
-
-  {/* Kelompok Rentan */}
-  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-1">
-  <div className="flex items-center justify-between text-text-muted">
-  <span className="text-xs font-semibold">Kelompok Rentan</span>
-  <Icon name="health" variant="linear" size={18} className="text-status-warning" />
-  </div>
-  <div className="flex items-baseline gap-1.5 pt-1">
-  <span className="text-2xl font-bold text-text-main">
-  {balitaCount + bumilCount + lansiaCount + disabilitasCount}
-  </span>
-  <span className="text-xs text-text-muted">Orang Prioritas</span>
-  </div>
-  <p className="text-[11px] text-text-muted truncate">
-  {balitaCount} Balita • {bumilCount} Bumil • {lansiaCount} Lansia
-  </p>
-  </div>
-  </div>
+  {/* 3. Visualisasi Grafik Utama Ringkasan Posko */}
+  <DashboardCharts
+    effectivePoskoId={effectivePoskoId}
+    totalRefugees={totalRefugees}
+    capacity={capacity}
+    occupancyPercent={occupancyPercent}
+    redTriage={redTriage}
+    yellowTriage={yellowTriage}
+    greenTriage={greenTriage}
+    blackTriage={blackTriage}
+    balitaCount={balitaCount}
+    bumilCount={bumilCount}
+    lansiaCount={lansiaCount}
+    disabilitasCount={disabilitasCount}
+  />
 
   {/* 4. Dua Panel Informasi Ringkas */}
   <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -158,7 +131,7 @@ export default function PoskoDashboardPage() {
   <h2 className="text-xs font-bold uppercase tracking-wider text-text-main">
   Stok Bantuan di Posko
   </h2>
-  <Link href={`/posko/${session.poskoId}/logistics`}>
+  <Link href={`/posko/${effectivePoskoId}/logistics`}>
   <span className="text-xs text-primary font-semibold hover:underline">
   Kelola Semua Stok
   </span>
@@ -196,7 +169,7 @@ export default function PoskoDashboardPage() {
   Petugas di Sekitar ({peers.length})
   </h2>
   </div>
-  <Link href={`/posko/${session.poskoId}/tactical`}>
+  <Link href={`/posko/${effectivePoskoId}/tactical`}>
   <span className="text-xs text-primary font-semibold hover:underline">
   Buka Obrolan
   </span>

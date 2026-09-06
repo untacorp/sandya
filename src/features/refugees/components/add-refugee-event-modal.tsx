@@ -219,8 +219,7 @@ export function AddRefugeeEventModal({
   <div className="grid grid-cols-3 gap-2">
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted">Suhu (°C)</label>
-  <Input
-  type="number"
+  <Input type="number"
   step="0.1"
   value={temperature}
   onChange={(e) => setTemperature(e.target.value)}
@@ -229,8 +228,7 @@ export function AddRefugeeEventModal({
   </div>
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted">Sistol (mmHg)</label>
-  <Input
-  type="number"
+  <Input type="number"
   value={systolic}
   onChange={(e) => setSystolic(e.target.value)}
   className="text-xs"
@@ -238,8 +236,7 @@ export function AddRefugeeEventModal({
   </div>
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted">Diastol (mmHg)</label>
-  <Input
-  type="number"
+  <Input type="number"
   value={diastolic}
   onChange={(e) => setDiastolic(e.target.value)}
   className="text-xs"
@@ -249,8 +246,7 @@ export function AddRefugeeEventModal({
 
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted">Keluhan Klinis Utama</label>
-  <Input
-  placeholder="Contoh: Demam menggigil, luka lecet di lengan kiri..."
+  <Input placeholder="Contoh: Demam menggigil, luka lecet di lengan kiri..."
   value={complaint}
   onChange={(e) => setComplaint(e.target.value)}
   className="text-xs"
@@ -263,11 +259,10 @@ export function AddRefugeeEventModal({
   <div className="space-y-3 p-3.5 rounded-xl bg-surface-subtle border-[1.5px] border-border">
   <div className="space-y-1">
   <label className="text-xs font-bold text-text-main">Komoditas yang Dibutuhkan</label>
-  <select
-  value={needItem}
+  <select value={needItem}
   onChange={(e) => setNeedItem(e.target.value)}
   aria-label="Pilih Komoditas Kebutuhan"
-  className="w-full p-2.5 rounded-lg bg-surface border border-border text-xs text-text-main font-medium focus:ring-2 focus:ring-primary focus:outline-hidden"
+  className="w-full p-2.5 rounded-lg bg-surface border border-border text-xs text-text-main font-medium focus:ring-2 focus:ring-primary focus:outline-hidden appearance-none focus:border-border-strong transition-colors"
   >
   <option value="Beras 5kg">Beras 5kg</option>
   <option value="Susu Formula Balita">Susu Formula Balita</option>
@@ -282,8 +277,7 @@ export function AddRefugeeEventModal({
 
   <div className="space-y-1">
   <label className="text-xs font-bold text-text-main">Jumlah Kebutuhan</label>
-  <Input
-  type="number"
+  <Input type="number"
   min={ADD_EVENT_CONSTANTS.DEFAULT_NEED_QTY}
   max={ADD_EVENT_CONSTANTS.MAX_NEED_QTY}
   value={needQuantity}

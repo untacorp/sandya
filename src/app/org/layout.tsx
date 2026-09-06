@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
@@ -16,7 +17,17 @@ interface NavItem {
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { session } = usePoskoStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Cegah hydration mismatch
+  }
 
   const mainNavItems: NavItem[] = [
   { href: "/org", label: "Ringkasan Lembaga", icon: "buildings", exact: true },

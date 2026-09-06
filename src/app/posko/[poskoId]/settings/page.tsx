@@ -124,8 +124,7 @@ export default function PoskoSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Posko
   </label>
-  <Input
-  value={poskoName}
+  <Input value={poskoName}
   onChange={(e) => setPoskoName(e.target.value)}
   icon="home"
   required
@@ -136,8 +135,7 @@ export default function PoskoSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Lokasi / Titik Kumpul
   </label>
-  <Input
-  value={locationName}
+  <Input value={locationName}
   onChange={(e) => setLocationName(e.target.value)}
   icon="pin"
   required
@@ -153,7 +151,7 @@ export default function PoskoSettingsPage() {
   <select
   value={status}
   onChange={(e) => setStatus(e.target.value as PostStatus)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="OPERATIONAL_NORMAL">Normal (Operasional)</option>
   <option value="STANDBY">Siaga (Standby)</option>
@@ -168,7 +166,7 @@ export default function PoskoSettingsPage() {
   <select
   value={postType}
   onChange={(e) => setPostType(e.target.value as PostType)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="FIELD_SHELTER">Posko Tenda Lapangan</option>
   <option value="MAIN_WAREHOUSE">Gudang Logistik Sentral</option>
@@ -180,8 +178,7 @@ export default function PoskoSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kapasitas Tampung (Jiwa)
   </label>
-  <Input
-  type="number"
+  <Input type="number"
   value={capacity}
   onChange={(e) => setCapacity(Number(e.target.value))}
   min={1}

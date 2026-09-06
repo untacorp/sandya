@@ -150,14 +150,14 @@ export default function TacticalChatPage() {
   };
 
   const handleCancelSOS = () => {
-  sendTextMessage("SOS", " ALARM DARURAT DIBATALKAN: Situasi telah terkendali oleh Koordinator Posko.", false);
+  sendTextMessage("SOS", "ALARM DARURAT DIBATALKAN: Situasi telah terkendali oleh Koordinator Posko.", false);
   };
 
   const channels: { id: TacticalChannel; label: string; icon: SolarIconName; desc: string }[] = [
     { id: "POSKO_ALL", label: "Umum (#posko-all)", icon: "chat", desc: "Koordinasi umum posko" },
     { id: "MEDIS", label: "Tim Medis (#medis)", icon: "health", desc: "Triase & resep obat darurat" },
     { id: "LOGISTIK", label: "Tim Logistik (#logistik)", icon: "box", desc: "Stok gudang & armada kirim" },
-    { id: "SOS", label: "Darurat ( #sos)", icon: "sos", desc: "Sirene evakuasi & peringatan" },
+    { id: "SOS", label: "Darurat (#sos)", icon: "sos", desc: "Sirene evakuasi & peringatan" },
   ];
 
   const quickChips = [
@@ -402,8 +402,7 @@ export default function TacticalChatPage() {
 
   {/* Input Teks Biasa */}
   <form onSubmit={handleSendText} className="flex-1 flex items-center gap-2">
-  <Input
-  placeholder={`Ketik pesan instruksi ke #${activeChannel.toLowerCase().replace(/_/g, " ")}...`}
+  <Input placeholder={`Ketik pesan instruksi ke #${activeChannel.toLowerCase().replace(/_/g, " ")}...`}
   value={inputMsg}
   onChange={(e) => setInputMsg(e.target.value)}
   className="text-xs h-10"
@@ -507,7 +506,7 @@ export default function TacticalChatPage() {
   <Dialog
   open={sosModalOpen}
   onOpenChange={setSosModalOpen}
-  title=" Peringatan Bahaya Darurat (SOS)"
+  title="Peringatan Bahaya Darurat (SOS)"
   description="Siarkan sirene darurat dan notifikasi getar ke seluruh perangkat petugas posko untuk evakuasi cepat."
   >
   <div className="space-y-4 pt-1 text-xs">

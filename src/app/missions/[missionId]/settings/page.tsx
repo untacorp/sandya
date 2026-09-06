@@ -124,8 +124,7 @@ export default function MissionSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Operasi Misi
   </label>
-  <Input
-  value={name}
+  <Input value={name}
   onChange={(e) => setName(e.target.value)}
   icon="buildings"
   required
@@ -137,9 +136,9 @@ export default function MissionSettingsPage() {
   Jenis Bencana
   </label>
   <select
-  value={disasterType}
-  onChange={(e) => setDisasterType(e.target.value as DisasterType)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+    value={disasterType}
+    onChange={(e) => setDisasterType(e.target.value as DisasterType)}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="GEMPA_BUMI">Gempa Bumi</option>
   <option value="BANJIR_BANDANG">Banjir Bandang</option>
@@ -155,8 +154,7 @@ export default function MissionSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Wilayah / Cakupan Lokasi
   </label>
-  <Input
-  value={location}
+  <Input value={location}
   onChange={(e) => setLocation(e.target.value)}
   icon="pin"
   required
@@ -167,8 +165,7 @@ export default function MissionSettingsPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Target Masa Tanggap (Hari)
   </label>
-  <Input
-  type="number"
+  <Input type="number"
   value={targetDays}
   onChange={(e) => setTargetDays(Number(e.target.value))}
   min={1}
@@ -181,9 +178,9 @@ export default function MissionSettingsPage() {
   Status Siklus Misi
   </label>
   <select
-  value={status}
-  onChange={(e) => setStatus(e.target.value as MissionStatus)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+    value={status}
+    onChange={(e) => setStatus(e.target.value as MissionStatus)}
+    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="ACTIVE_EMERGENCY">Tanggap Darurat Aktif</option>
   <option value="TRANSITION_RECOVERY">Masa Pemulihan</option>

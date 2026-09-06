@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import { usePoskoStore, type MacroWaybill } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -13,33 +14,44 @@ import { StatCard } from "@/shared/ui/stat-card";
 import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 
 export default function MissionLogisticsHubPage() {
+  const params = useParams();
+  const routeMissionId = params?.missionId as string;
   const { session, centralInventory, missionWaybills, poskos, issueMissionWaybill } = usePoskoStore();
 
+  const effectiveMissionId = routeMissionId || session.missionId;
+  const missionPoskos = poskos.filter((p) => !effectiveMissionId || p.missionId === effectiveMissionId);
+
   const [dispatchModalOpen, setDispatchModalOpen] = React.useState(false);
-  const [selectedPoskoId, setSelectedPoskoId] = React.useState("POS-01");
+  const [selectedPoskoId, setSelectedPoskoId] = React.useState(missionPoskos[0]?.id || "POS-01");
   const [selectedItem, setSelectedItem] = React.useState(centralInventory[0]?.itemName || "");
   const [qty, setQty] = React.useState(1);
   const [driverName, setDriverName] = React.useState("");
 
+  React.useEffect(() => {
+    if (missionPoskos.length > 0 && !missionPoskos.some((p) => p.id === selectedPoskoId)) {
+      setSelectedPoskoId(missionPoskos[0].id);
+    }
+  }, [missionPoskos, selectedPoskoId]);
+
   const [waybillModal, setWaybillModal] = React.useState<MacroWaybill | null>(null);
 
   const handleCreateDispatch = (e: React.FormEvent) => {
-  e.preventDefault();
-  const targetP = poskos.find((p) => p.id === selectedPoskoId);
+    e.preventDefault();
+    const targetP = poskos.find((p) => p.id === selectedPoskoId);
 
-  issueMissionWaybill({
-  missionId: session.missionId,
-  sourceHub: session.poskoName || "Gudang Sentral Logistik",
-  targetPoskoId: selectedPoskoId,
-  targetPoskoName: targetP?.name || "Posko Lapangan",
-  itemName: selectedItem,
-  quantity: Number(qty),
-  unit: "SAK",
-  status: "IN_TRANSIT",
-  driverName: driverName || "Menunggu Penugasan Armada",
-  });
+    issueMissionWaybill({
+      missionId: effectiveMissionId,
+      sourceHub: session.poskoName || "Gudang Sentral Logistik",
+      targetPoskoId: selectedPoskoId,
+      targetPoskoName: targetP?.name || "Posko Lapangan",
+      itemName: selectedItem,
+      quantity: Number(qty),
+      unit: "SAK",
+      status: "IN_TRANSIT",
+      driverName: driverName || "Menunggu Penugasan Armada",
+    });
 
-  setDispatchModalOpen(false);
+    setDispatchModalOpen(false);
   };
 
   return (
@@ -153,12 +165,11 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Posko Lapangan Tujuan
   </label>
-  <select
-  value={selectedPoskoId}
+  <select value={selectedPoskoId}
   onChange={(e) => setSelectedPoskoId(e.target.value)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
-  {poskos.map((p) => (
+  {missionPoskos.map((p) => (
   <option key={p.id} value={p.id}>
   {p.name} ({p.locationName})
   </option>
@@ -171,10 +182,9 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Komoditas Barang
   </label>
-  <select
-  value={selectedItem}
+  <select value={selectedItem}
   onChange={(e) => setSelectedItem(e.target.value)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   {centralInventory.map((i) => (
   <option key={i.id} value={i.itemName}>
@@ -187,8 +197,7 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Jumlah
   </label>
-  <Input
-  type="number"
+  <Input type="number"
   value={qty}
   onChange={(e) => setQty(Number(e.target.value))}
   min={1}
@@ -201,8 +210,7 @@ export default function MissionLogisticsHubPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Pengemudi / Nama Armada
   </label>
-  <Input
-  value={driverName}
+  <Input value={driverName}
   onChange={(e) => setDriverName(e.target.value)}
   placeholder="Contoh: Sopian (Truk #02)"
   icon="user"

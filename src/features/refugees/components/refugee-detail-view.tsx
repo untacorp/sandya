@@ -51,8 +51,33 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   }, [person]);
 
   React.useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+    let isCancelled = false;
+    if (!person) {
+      setIsLoadingEvents(false);
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        const container = ServiceContainer.getInstance();
+        const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
+        if (result.ok && !isCancelled) {
+          setDbEvents(result.value);
+        }
+      } catch (err) {
+        console.error("Failed to load refugee events:", err);
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingEvents(false);
+        }
+      }
+    };
+
+    loadData();
+    return () => {
+      isCancelled = true;
+    };
+  }, [person]);
 
   const handleCheckout = () => {
   if (!person) return;
@@ -109,29 +134,29 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   };
 
   const formatPayloadDescription = (evt: RefugeeEventProps) => {
-    const p = evt.eventPayload as Record<string, unknown>;
+    const payload = evt.eventPayload as Record<string, unknown>;
     if (evt.eventType === "HEALTH_CHECK" || evt.eventType === "TRIAGE_UPDATE") {
-      const v = (p.vitalSigns || {}) as Record<string, unknown>;
+      const vitalSigns = (payload.vitalSigns || {}) as Record<string, unknown>;
       const parts = [];
-      if (v.temperature) parts.push(`Suhu: ${v.temperature}°C`);
-      if (v.systolic && v.diastolic) parts.push(`Tensi: ${v.systolic}/${v.diastolic} mmHg`);
-      if (v.complaint) parts.push(`Keluhan: "${v.complaint}"`);
-      if (p.triageCategory) parts.push(`Triase: ${p.triageCategory}`);
+      if (vitalSigns.temperature) parts.push(`Suhu: ${vitalSigns.temperature}°C`);
+      if (vitalSigns.systolic && vitalSigns.diastolic) parts.push(`Tensi: ${vitalSigns.systolic}/${vitalSigns.diastolic} mmHg`);
+      if (vitalSigns.complaint) parts.push(`Keluhan: "${vitalSigns.complaint}"`);
+      if (payload.triageCategory) parts.push(`Triase: ${payload.triageCategory}`);
       return parts.join(" • ") || "Pemeriksaan vital stabil.";
     }
     if (evt.eventType === "NEED_REPORTED") {
-      return `Permintaan: ${(p.item as string) || "Barang"} (${p.quantity || 1} unit)`;
+      return `Permintaan: ${(payload.item as string) || "Barang"} (${payload.quantity || 1} unit)`;
     }
     if (evt.eventType === "AID_RECEIVED") {
-      return `Bantuan Diserahkan: ${(p.item as string) || (p.payload as string) || "Bantuan logistik resmi"}`;
+      return `Bantuan Diserahkan: ${(payload.item as string) || (payload.payload as string) || "Bantuan logistik resmi"}`;
     }
     if (evt.eventType === "INTAKE") {
-      return `Warga didata pertama kali saat tiba di ${(p.initialShelter as string) || person.shelterLocation || "posko evakuasi"}.`;
+      return `Warga didata pertama kali saat tiba di ${(payload.initialShelter as string) || person.shelterLocation || "posko evakuasi"}.`;
     }
-    if (p.note) {
-      return p.note as string;
+    if (payload.note) {
+      return payload.note as string;
     }
-  return JSON.stringify(p);
+    return JSON.stringify(payload);
   };
 
   return (

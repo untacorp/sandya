@@ -83,7 +83,7 @@ export interface PoskoState {
 
   // Level 3: Refugees & Intake
   refugees: DisasterPerson[];
-  addRefugee: (refugee: Omit<DisasterPerson, "id" | "createdAt">) => void;
+  addRefugee: (refugee: Omit<DisasterPerson, "createdAt"> & { id?: string }) => void;
   updateRefugee: (refugeeId: string, data: Partial<Omit<DisasterPerson, "id" | "createdAt">>) => void;
   deleteRefugee: (refugeeId: string) => void;
   importRefugeeBatch: (persons: Array<Omit<DisasterPerson, "id" | "createdAt">>) => void;
@@ -92,7 +92,7 @@ export interface PoskoState {
   // Level 3: Inventory & Single-Writer Ledger
   inventory: InventoryItem[];
   transactions: InventoryTransaction[];
-  addRestock: (itemName: string, category: InventoryItem["category"], qty: number, unit: string) => void;
+  addRestock: (itemName: string, category: InventoryItem["category"], qty: number, unit: string, id?: string, targetPoskoId?: string) => void;
   updateInventoryItem: (itemId: string, data: Partial<Omit<InventoryItem, "id">>) => void;
   deleteInventoryItem: (itemId: string) => void;
   allocateStock: (ticketId: string, itemId: string, qty: number) => boolean;
@@ -122,135 +122,165 @@ export interface PoskoState {
   setCloudProvider: (provider: "MANAGED" | "BYOC", endpoint?: string) => void;
   triggerCloudSync: () => Promise<{ success: boolean; message: string }>;
   simulateSync: () => void;
+  hydrateStore: (data: {
+    inventory?: InventoryItem[];
+    refugees?: DisasterPerson[];
+    needsTickets?: NeedsTicket[];
+  }) => void;
 }
 
 export const usePoskoStore = create<PoskoState>()(
   persist(
     (set, get) => ({
       // Default Session (uninitialized or configured by active user)
-  session: {
-  userId: "USR-001",
-  userName: "Petugas Posko",
-  userRole: "KOORDINATOR_POSKO",
-  orgId: "",
-  orgName: "",
-  missionId: "",
-  missionName: "",
-  poskoId: "",
-  poskoName: "",
-  },
-  setSessionRole: (role) =>
-  set((state) => ({ session: { ...state.session, userRole: role } })),
-  setSessionPosko: (poskoId, poskoName) =>
-  set((state) => ({ session: { ...state.session, poskoId, poskoName } })),
-  setSessionMission: (missionId, missionName) =>
-  set((state) => ({ session: { ...state.session, missionId, missionName } })),
-  setSessionOrg: (orgId, orgName) =>
-    set((state) => ({ session: { ...state.session, orgId, orgName } })),
-  setSessionUser: (userId, userName) =>
-    set((state) => ({ session: { ...state.session, userId, userName } })),
-  setFullSession: (sessionData) =>
-    set((state) => ({ session: { ...state.session, ...sessionData } })),
+      session: {
+        userId: "USR-001",
+        userName: "Petugas Posko",
+        userRole: "KOORDINATOR_POSKO",
+        orgId: "",
+        orgName: "",
+        missionId: "",
+        missionName: "",
+        poskoId: "",
+        poskoName: "",
+      },
+      setSessionRole: (role) =>
+        set((state) => ({ session: { ...state.session, userRole: role } })),
+      setSessionPosko: (poskoId, poskoName) =>
+        set((state) => ({ session: { ...state.session, poskoId, poskoName } })),
+      setSessionMission: (missionId, missionName) =>
+        set((state) => ({ session: { ...state.session, missionId, missionName } })),
+      setSessionOrg: (orgId, orgName) =>
+        set((state) => ({ session: { ...state.session, orgId, orgName } })),
+      setSessionUser: (userId, userName) =>
+        set((state) => ({ session: { ...state.session, userId, userName } })),
+      setFullSession: (sessionData) =>
+        set((state) => ({ session: { ...state.session, ...sessionData } })),
 
-  // Level 1: Organizations (Pristine - Zero Mock Data)
-  organizations: [],
+      // Level 1: Organizations (Pristine - Zero Mock Data)
+      organizations: [],
 
-  addOrganization: (orgData) => {
-  const newOrg: Organization = {
-  ...orgData,
-  id: `ORG-${String(get().organizations.length + 1).padStart(2, "0")}`,
-  createdAt: Date.now(),
-  };
-  set((state) => ({
-  organizations: [newOrg, ...state.organizations],
-  session: state.session.orgId
-  ? state.session
-  : { ...state.session, orgId: newOrg.id, orgName: newOrg.name },
-  }));
-  return newOrg;
-  },
+      addOrganization: (orgData) => {
+        const existingIds = new Set(get().organizations.map((o) => o.id));
+        let nextIdx = get().organizations.length + 1;
+        let candidateId = `ORG-${String(nextIdx).padStart(2, "0")}`;
+        while (existingIds.has(candidateId)) {
+          nextIdx++;
+          candidateId = `ORG-${String(nextIdx).padStart(2, "0")}`;
+        }
+        const newOrg: Organization = {
+          ...orgData,
+          id: candidateId,
+          createdAt: Date.now(),
+        };
+        set((state) => ({
+          organizations: [newOrg, ...state.organizations],
+          session: state.session.orgId
+            ? state.session
+            : { ...state.session, orgId: newOrg.id, orgName: newOrg.name },
+        }));
+        return newOrg;
+      },
 
-  updateOrganization: (orgId, data) => {
-  set((state) => ({
-  organizations: state.organizations.map((o) =>
-  o.id === orgId ? { ...o, ...data } : o
-  ),
-  session:
-  state.session.orgId === orgId && data.name
-  ? { ...state.session, orgName: data.name }
-  : state.session,
-  }));
-  },
+      updateOrganization: (orgId, data) => {
+        set((state) => ({
+          organizations: state.organizations.map((o) =>
+            o.id === orgId ? { ...o, ...data } : o
+          ),
+          session:
+            state.session.orgId === orgId && data.name
+              ? { ...state.session, orgName: data.name }
+              : state.session,
+        }));
+      },
 
-  deleteOrganization: (orgId) => {
-  set((state) => ({
-  organizations: state.organizations.filter((o) => o.id !== orgId),
-  }));
-  },
+      deleteOrganization: (orgId) => {
+        set((state) => ({
+          organizations: state.organizations.filter((o) => o.id !== orgId),
+        }));
+      },
 
-  // Level 1: Disaster Missions (Pristine - Zero Mock Data)
-  missions: [],
+      // Level 1: Disaster Missions (Pristine - Zero Mock Data)
+      missions: [],
 
-  addMission: (missionData) => {
-  const newMission: DisasterMission = {
-  ...missionData,
-  id: `MSN-${new Date().getFullYear()}-${String(get().missions.length + 1).padStart(2, "0")}`,
-  createdAt: Date.now(),
-  };
-  set((state) => ({
-  missions: [newMission, ...state.missions],
-  session: state.session.missionId
-  ? state.session
-  : { ...state.session, missionId: newMission.id, missionName: newMission.name },
-  }));
-  return newMission;
-  },
+      addMission: (missionData) => {
+        const existingIds = new Set(get().missions.map((m) => m.id));
+        const year = new Date().getFullYear();
+        let nextIdx = get().missions.length + 1;
+        let candidateId = `MSN-${year}-${String(nextIdx).padStart(2, "0")}`;
+        while (existingIds.has(candidateId)) {
+          nextIdx++;
+          candidateId = `MSN-${year}-${String(nextIdx).padStart(2, "0")}`;
+        }
+        const newMission: DisasterMission = {
+          ...missionData,
+          id: candidateId,
+          createdAt: Date.now(),
+        };
+        set((state) => ({
+          missions: [newMission, ...state.missions],
+          session: state.session.missionId
+            ? state.session
+            : { ...state.session, missionId: newMission.id, missionName: newMission.name },
+        }));
+        return newMission;
+      },
 
-  updateMission: (missionId, data) => {
-  set((state) => ({
-  missions: state.missions.map((m) =>
-  m.id === missionId ? { ...m, ...data } : m
-  ),
-  session:
-  state.session.missionId === missionId && data.name
-  ? { ...state.session, missionName: data.name }
-  : state.session,
-  }));
-  },
+      updateMission: (missionId, data) => {
+        set((state) => ({
+          missions: state.missions.map((m) =>
+            m.id === missionId ? { ...m, ...data } : m
+          ),
+          session:
+            state.session.missionId === missionId && data.name
+              ? { ...state.session, missionName: data.name }
+              : state.session,
+        }));
+      },
 
-  deleteMission: (missionId) => {
-  set((state) => ({
-  missions: state.missions.filter((m) => m.id !== missionId),
-  poskos: state.poskos.filter((p) => p.missionId !== missionId),
-  }));
-  },
+      deleteMission: (missionId) => {
+        set((state) => ({
+          missions: state.missions.filter((m) => m.id !== missionId),
+          poskos: state.poskos.filter((p) => p.missionId !== missionId),
+        }));
+      },
 
-  closeMission: (missionId) => {
-  set((state) => ({
-  missions: state.missions.map((m) =>
-  m.id === missionId ? { ...m, status: "CLOSED_ARCHIVED" as const } : m
-  ),
-  }));
-  },
+      closeMission: (missionId) => {
+        set((state) => ({
+          missions: state.missions.map((m) =>
+            m.id === missionId ? { ...m, status: "CLOSED_ARCHIVED" as const } : m
+          ),
+        }));
+      },
 
-  // Level 2: Posko Directory (Pristine - Zero Mock Data)
-  poskos: [],
+      // Level 2: Posko Directory (Pristine - Zero Mock Data)
+      poskos: [],
 
-  addPosko: (poskoData) => {
-  const newPosko: Posko = {
-  ...poskoData,
-  id: `POS-${String(get().poskos.length + 1).padStart(2, "0")}`,
-  currentRefugees: 0,
-  createdAt: Date.now(),
-  };
-  set((state) => ({
-  poskos: [...state.poskos, newPosko],
-  session: state.session.poskoId
-  ? state.session
-  : { ...state.session, poskoId: newPosko.id, poskoName: newPosko.name },
-  }));
-  return newPosko;
-  },
+      addPosko: (poskoData) => {
+        const existingIds = new Set(get().poskos.map((p) => p.id));
+        let nextIdx = get().poskos.length + 1;
+        let candidateId = `POS-${String(nextIdx).padStart(2, "0")}`;
+        while (existingIds.has(candidateId)) {
+          nextIdx++;
+          candidateId = `POS-${String(nextIdx).padStart(2, "0")}`;
+        }
+        const newPosko: Posko = {
+          ...poskoData,
+          id: candidateId,
+          currentRefugees: 0,
+          createdAt: Date.now(),
+        };
+        set((state) => ({
+          poskos: [...state.poskos, newPosko],
+          session: {
+            ...state.session,
+            poskoId: newPosko.id,
+            poskoName: newPosko.name,
+            ...(newPosko.missionId ? { missionId: newPosko.missionId } : {}),
+          },
+        }));
+        return newPosko;
+      },
 
   updatePosko: (poskoId, data) => {
   set((state) => ({
@@ -326,7 +356,7 @@ export const usePoskoStore = create<PoskoState>()(
   break;
   }
   }
-  get().addRestock(wb.itemName, cat, wb.quantity, wb.unit);
+  get().addRestock(wb.itemName, cat, wb.quantity, wb.unit, undefined, wb.targetPoskoId);
   },
 
   // Level 3: Refugees (Pristine - Zero Mock Data)
@@ -348,30 +378,65 @@ export const usePoskoStore = create<PoskoState>()(
   }
   const newPerson: DisasterPerson = {
   ...refugee,
-  id: `REF-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
+  id: refugee.id || `REF-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
   createdAt: Date.now(),
   };
-  set((state) => ({
-  refugees: [newPerson, ...state.refugees],
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
-  },
 
-  updateRefugee: (refugeeId, data) => {
-  set((state) => ({
-  refugees: state.refugees.map((r) =>
-  r.id === refugeeId ? { ...r, ...data } : r
-  ),
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
-  },
+  const generatedTickets: NeedsTicket[] = [];
+  if (refugee.urgentNeeds && refugee.urgentNeeds.length > 0) {
+  refugee.urgentNeeds.forEach((need, idx) => {
+  generatedTickets.push({
+  id: `TKT-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}${idx}`,
+  refugeeId: newPerson.id,
+  refugeeName: newPerson.fullName,
+  shelterLocation: newPerson.shelterLocation,
+  postId: newPerson.postId,
+  itemName: need,
+  quantity: 1,
+  unit: need.toLowerCase().includes("beras") ? "karung" : need.toLowerCase().includes("galon") ? "galon" : "paket",
+  status: "PENDING",
+  urgency: "HIGH",
+  createdByUserId: newPerson.registeredByUserId,
+  createdByUserName: newPerson.registeredByUserName,
+  createdAt: Date.now(),
+  });
+  });
+  }
+        set((state) => ({
+          refugees: [newPerson, ...state.refugees],
+          poskos: state.poskos.map((p) =>
+            p.id === newPerson.postId
+              ? { ...p, currentRefugees: (p.currentRefugees || 0) + 1 }
+              : p
+          ),
+          needsTickets: [...generatedTickets, ...state.needsTickets],
+          pendingOutboxCount: state.pendingOutboxCount + 1 + generatedTickets.length,
+        }));
+      },
 
-  deleteRefugee: (refugeeId) => {
-  set((state) => ({
-  refugees: state.refugees.filter((r) => r.id !== refugeeId),
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
-  },
+      updateRefugee: (refugeeId, data) => {
+        set((state) => ({
+          refugees: state.refugees.map((r) =>
+            r.id === refugeeId ? { ...r, ...data } : r
+          ),
+          pendingOutboxCount: state.pendingOutboxCount + 1,
+        }));
+      },
+
+      deleteRefugee: (refugeeId) => {
+        const target = get().refugees.find((r) => r.id === refugeeId);
+        set((state) => ({
+          refugees: state.refugees.filter((r) => r.id !== refugeeId),
+          poskos: target
+            ? state.poskos.map((p) =>
+                p.id === target.postId
+                  ? { ...p, currentRefugees: Math.max(0, (p.currentRefugees || 1) - 1) }
+                  : p
+              )
+            : state.poskos,
+          pendingOutboxCount: state.pendingOutboxCount + 1,
+        }));
+      },
 
   importRefugeeBatch: (persons) => {
   set((state) => {
@@ -428,49 +493,62 @@ export const usePoskoStore = create<PoskoState>()(
   inventory: [],
   transactions: [],
 
-  addRestock: (itemName, category, qty, unit) => {
-  const state = get();
-  const existingIndex = state.inventory.findIndex((i) => i.itemName === itemName);
-  const updatedInventory = [...state.inventory];
-  let itemId = `INV-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`;
+  addRestock: (itemName, category, qty, unit, id, targetPoskoId) => {
+    const state = get();
+    const currentPoskoId = targetPoskoId || state.session.poskoId;
+    const existingIndex = state.inventory.findIndex(
+      (i) => i.itemName.toLowerCase() === itemName.toLowerCase() && i.postId === currentPoskoId
+    );
+    const updatedInventory = [...state.inventory];
+    let itemId =
+      id ||
+      (existingIndex >= 0
+        ? updatedInventory[existingIndex].id
+        : `INV-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`);
 
-  if (existingIndex >= 0) {
-  itemId = updatedInventory[existingIndex].id;
-  updatedInventory[existingIndex] = {
-  ...updatedInventory[existingIndex],
-  currentQuantity: updatedInventory[existingIndex].currentQuantity + qty,
-  lastUpdatedAt: Date.now(),
-  };
-  } else {
-  updatedInventory.push({
-  id: itemId,
-  postId: state.session.poskoId,
-  itemName,
-  category,
-  currentQuantity: qty,
-  unit,
-  burnRateDays: POSKO_STORE_CONSTANTS.DEFAULT_BURN_RATE_DAYS,
-  lastUpdatedAt: Date.now(),
-  });
-  }
+    if (existingIndex >= 0) {
+      if (id) {
+        itemId = id;
+      } else {
+        itemId = updatedInventory[existingIndex].id;
+      }
+      updatedInventory[existingIndex] = {
+        ...updatedInventory[existingIndex],
+        id: itemId,
+        postId: currentPoskoId,
+        currentQuantity: updatedInventory[existingIndex].currentQuantity + qty,
+        lastUpdatedAt: Date.now(),
+      };
+    } else {
+      updatedInventory.push({
+        id: itemId,
+        postId: currentPoskoId,
+        itemName,
+        category,
+        currentQuantity: qty,
+        unit,
+        burnRateDays: POSKO_STORE_CONSTANTS.DEFAULT_BURN_RATE_DAYS,
+        lastUpdatedAt: Date.now(),
+      });
+    }
 
-  const tx: InventoryTransaction = {
-  id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
-  itemId,
-  postId: state.session.poskoId,
-  officerId: state.session.userId,
-  officerName: state.session.userName,
-  txType: "RESTOCK",
-  quantityChange: qty,
-  note: "Penerimaan barang masuk gudang",
-  deviceTimestamp: Date.now(),
-  };
+    const tx: InventoryTransaction = {
+      id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
+      itemId,
+      postId: currentPoskoId,
+      officerId: state.session.userId,
+      officerName: state.session.userName,
+      txType: "RESTOCK",
+      quantityChange: qty,
+      note: "Penerimaan barang masuk gudang",
+      deviceTimestamp: Date.now(),
+    };
 
-  set({
-  inventory: updatedInventory,
-  transactions: [tx, ...state.transactions],
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  });
+    set({
+      inventory: updatedInventory,
+      transactions: [tx, ...state.transactions],
+      pendingOutboxCount: state.pendingOutboxCount + 1,
+    });
   },
 
   updateInventoryItem: (itemId, data) => {
@@ -678,6 +756,36 @@ export const usePoskoStore = create<PoskoState>()(
           lastSyncedAt: Date.now(),
         });
       },
+
+      hydrateStore: (data) =>
+        set((state) => {
+          const existingInvMap = new Map(state.inventory.map((i) => [i.id, i]));
+          if (data.inventory) {
+            for (const item of data.inventory) {
+              existingInvMap.set(item.id, item);
+            }
+          }
+
+          const existingRefMap = new Map(state.refugees.map((r) => [r.id, r]));
+          if (data.refugees) {
+            for (const person of data.refugees) {
+              existingRefMap.set(person.id, person);
+            }
+          }
+
+          const existingTktMap = new Map(state.needsTickets.map((t) => [t.id, t]));
+          if (data.needsTickets) {
+            for (const tkt of data.needsTickets) {
+              existingTktMap.set(tkt.id, tkt);
+            }
+          }
+
+          return {
+            inventory: Array.from(existingInvMap.values()),
+            refugees: Array.from(existingRefMap.values()),
+            needsTickets: Array.from(existingTktMap.values()),
+          };
+        }),
     }),
     {
       name: "sandya_offline_posko_v1",

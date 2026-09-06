@@ -23,9 +23,15 @@ export function MissionShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { session, missions } = usePoskoStore();
+  const { session, missions, setSessionMission } = usePoskoStore();
 
   const mission = missions.find((m) => m.id === missionId);
+
+  React.useEffect(() => {
+    if (mission && (session.missionId !== mission.id || session.missionName !== mission.name)) {
+      setSessionMission(mission.id, mission.name);
+    }
+  }, [mission, session.missionId, session.missionName, setSessionMission]);
 
   if (!mission) {
   return <MissionNotFoundState missionId={missionId} />;

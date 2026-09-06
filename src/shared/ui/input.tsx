@@ -30,7 +30,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ...props
   },
   ref
-) => {
+  ) => {
     const generatedId = React.useId();
     const inputId = id || generatedId;
 
@@ -54,15 +54,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   id={inputId}
   type={type}
   className={cn(
-  "flex h-11 w-full rounded-lg border-[1.5px] bg-surface px-3.5 py-2 text-sm text-text-main transition-colors duration-150",
+  "flex w-full rounded-lg bg-surface transition-colors duration-150",
+  "h-10 px-3 text-xs font-semibold text-text-main border border-border",
   "placeholder:text-text-subtle",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-border-strong",
+  "focus:outline-none focus:ring-2 focus:ring-primary focus:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-border-strong",
   "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-subtle",
-  icon && "pl-10",
-  iconRight && "pr-10",
-  error
-  ? "border-status-danger focus-visible:ring-status-danger"
-  : "border-border hover:border-border-hover",
+  icon && "pl-9",
+  iconRight && "pr-9",
+  error ? "border-status-danger focus:ring-status-danger" : "hover:border-border-hover",
   className
   )}
   ref={ref}

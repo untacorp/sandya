@@ -1,5 +1,5 @@
 -- ====================================================================================
--- Sandya - INDUSTRIAL-GRADE CLOUD RELATIONAL DATABASE SCHEMA (DDL)
+-- Sandya - CLOUD RELATIONAL DATABASE SCHEMA (DDL)
 -- Compliant with: database-architect & backend-architect standards
 -- Suitable for: Supabase Cloud & Self-Hosted PostgreSQL 16+ on VPS
 -- ====================================================================================
@@ -10,12 +10,16 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Helper function for automatic updated_at timestamping
 CREATE OR REPLACE FUNCTION update_timestamp_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
 BEGIN
-  NEW.updated_at = (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT;
+  NEW.updated_at = (pg_catalog.date_part('epoch', pg_catalog.now()) * 1000)::BIGINT;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- ------------------------------------------------------------------------------------
 -- 1. ORGANIZATIONS (Lembaga Induk / Badan Penanggulangan Bencana)
@@ -313,26 +317,55 @@ ALTER TABLE events_outbox ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mesh_sync_clocks ENABLE ROW LEVEL SECURITY;
 
 -- 1. Read policies (Public & Volunteer access for disaster transparency)
-CREATE POLICY "Public read for organizations" ON organizations FOR SELECT USING (true);
-CREATE POLICY "Public read for disaster missions" ON disaster_missions FOR SELECT USING (true);
-CREATE POLICY "Public read for posts" ON posts FOR SELECT USING (true);
-CREATE POLICY "Public read for refugees" ON refugees FOR SELECT USING (true);
-CREATE POLICY "Public read for refugee events" ON refugee_events FOR SELECT USING (true);
-CREATE POLICY "Public read for inventory items" ON inventory_items FOR SELECT USING (true);
-CREATE POLICY "Public read for tactical messages" ON tactical_messages FOR SELECT USING (true);
-CREATE POLICY "Public read for macro waybills" ON macro_waybills FOR SELECT USING (true);
-CREATE POLICY "Public read for needs requests" ON needs_requests FOR SELECT USING (true);
+CREATE POLICY "Public read for organizations" ON organizations FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for disaster missions" ON disaster_missions FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for posts" ON posts FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for refugees" ON refugees FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for refugee events" ON refugee_events FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for inventory items" ON inventory_items FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for inventory transactions" ON inventory_transactions FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for tactical messages" ON tactical_messages FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for macro waybills" ON macro_waybills FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for needs requests" ON needs_requests FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for events outbox" ON events_outbox FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Public read for mesh sync clocks" ON mesh_sync_clocks FOR SELECT TO anon, authenticated USING (true);
 
--- 2. Write policies (Edge synchronization & authenticated officer write)
-CREATE POLICY "Edge sync insert for outbox" ON events_outbox FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for refugees" ON refugees FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for refugee events" ON refugee_events FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for inventory" ON inventory_items FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for inventory transactions" ON inventory_transactions FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for tactical messages" ON tactical_messages FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for macro waybills" ON macro_waybills FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for needs requests" ON needs_requests FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Edge sync write for mesh clocks" ON mesh_sync_clocks FOR ALL USING (true) WITH CHECK (true);
+-- 2. Write policies (Edge synchronization & authenticated officer write with non-null validation)
+CREATE POLICY "Edge sync insert for outbox" ON events_outbox FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND topic IS NOT NULL AND signature IS NOT NULL AND monotonic_seq >= 1);
+CREATE POLICY "Edge sync update for outbox" ON events_outbox FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND topic IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for refugees" ON refugees FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND post_id IS NOT NULL AND full_name IS NOT NULL AND age >= 0);
+CREATE POLICY "Edge sync update for refugees" ON refugees FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND post_id IS NOT NULL AND full_name IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for refugee events" ON refugee_events FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND refugee_id IS NOT NULL AND author_id IS NOT NULL AND event_type IS NOT NULL AND logical_seq >= 1);
+CREATE POLICY "Edge sync update for refugee events" ON refugee_events FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND refugee_id IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for inventory" ON inventory_items FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND post_id IS NOT NULL AND item_name IS NOT NULL AND current_quantity >= 0);
+CREATE POLICY "Edge sync update for inventory" ON inventory_items FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND post_id IS NOT NULL AND current_quantity >= 0);
+
+CREATE POLICY "Edge sync insert for inventory transactions" ON inventory_transactions FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND item_id IS NOT NULL AND post_id IS NOT NULL AND officer_id IS NOT NULL AND logical_seq >= 1);
+CREATE POLICY "Edge sync update for inventory transactions" ON inventory_transactions FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND item_id IS NOT NULL AND post_id IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for tactical messages" ON tactical_messages FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND channel IS NOT NULL AND sender_peer_id IS NOT NULL);
+CREATE POLICY "Edge sync update for tactical messages" ON tactical_messages FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND channel IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for macro waybills" ON macro_waybills FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND mission_id IS NOT NULL AND target_posko_id IS NOT NULL AND quantity > 0);
+CREATE POLICY "Edge sync update for macro waybills" ON macro_waybills FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND mission_id IS NOT NULL AND target_posko_id IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for needs requests" ON needs_requests FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND refugee_id IS NOT NULL AND post_id IS NOT NULL AND quantity > 0);
+CREATE POLICY "Edge sync update for needs requests" ON needs_requests FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND refugee_id IS NOT NULL AND post_id IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for mesh clocks" ON mesh_sync_clocks FOR INSERT TO anon, authenticated WITH CHECK (posko_id IS NOT NULL AND peer_id IS NOT NULL AND last_seen_seq >= 0);
+CREATE POLICY "Edge sync update for mesh clocks" ON mesh_sync_clocks FOR UPDATE TO anon, authenticated USING (posko_id IS NOT NULL AND peer_id IS NOT NULL) WITH CHECK (posko_id IS NOT NULL AND peer_id IS NOT NULL AND last_seen_seq >= 0);
+
+CREATE POLICY "Edge sync insert for organizations" ON organizations FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND name IS NOT NULL AND master_pubkey IS NOT NULL);
+CREATE POLICY "Edge sync update for organizations" ON organizations FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND name IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for disaster missions" ON disaster_missions FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND org_id IS NOT NULL AND name IS NOT NULL);
+CREATE POLICY "Edge sync update for disaster missions" ON disaster_missions FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND org_id IS NOT NULL);
+
+CREATE POLICY "Edge sync insert for posts" ON posts FOR INSERT TO anon, authenticated WITH CHECK (id IS NOT NULL AND org_id IS NOT NULL AND mission_id IS NOT NULL);
+CREATE POLICY "Edge sync update for posts" ON posts FOR UPDATE TO anon, authenticated USING (id IS NOT NULL) WITH CHECK (id IS NOT NULL AND org_id IS NOT NULL);
 
 -- 3. Enable Supabase Realtime Publication for Live Outdoor Tactical & Urgent Alerts
 DO $$

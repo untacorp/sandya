@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/shared/lib/utils";
+import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -29,8 +30,10 @@ export function PoskoCard({
   className,
   showToggleAction = true,
 }: PoskoCardProps) {
+  const { refugees } = usePoskoStore();
   const isEvac = posko.status === "HAZARD_EVACUATION";
-  const percent = Math.round((posko.currentRefugees / posko.capacity) * POSKO_CARD_CONSTANTS.PERCENTAGE_BASE);
+  const realCount = refugees.filter((r) => r.postId === posko.id).length || posko.currentRefugees || 0;
+  const percent = Math.round((realCount / (posko.capacity || 1)) * POSKO_CARD_CONSTANTS.PERCENTAGE_BASE);
 
   const getPostTypeLabel = (type: string) => {
   switch (type) {
@@ -73,7 +76,7 @@ export function PoskoCard({
   </Badge>
 
   <span className="text-xs font-bold text-text-main">
-  {posko.currentRefugees}{" "}
+  {realCount}{" "}
   <span className="font-normal text-text-muted">/ {posko.capacity} Jiwa</span>
   </span>
   </div>

@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
-import { asPoskoId } from "@/core/shared/branded-types";
+import { asPoskoId, asItemId } from "@/core/shared/branded-types";
+import { InventoryAggregate } from "@/core/domain/logistics/inventory.aggregate";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { Dialog } from "@/shared/ui/dialog";
@@ -16,7 +17,18 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { type NeedsTicket } from "@/shared/types";
 
 export default function LogisticsDistributePage() {
+  const params = useParams();
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, needsTickets, inventory, allocateStock, completeDelivery } = usePoskoStore();
+  const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
+
+  const poskoTickets = React.useMemo(() => {
+    return needsTickets.filter((t) => t.postId === effectivePoskoId);
+  }, [needsTickets, effectivePoskoId]);
+
+  const poskoInventory = React.useMemo(() => {
+    return inventory.filter((i) => i.postId === effectivePoskoId);
+  }, [inventory, effectivePoskoId]);
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -39,11 +51,11 @@ export default function LogisticsDistributePage() {
   setErrorMessage(null);
   setSelectedTicketForAllocation(ticket);
   // Find best match in inventory
-  const matched = inventory.find((i) =>
+  const matched = poskoInventory.find((i) =>
   i.itemName.toLowerCase().includes(ticket.itemName.toLowerCase()) ||
   ticket.itemName.toLowerCase().includes(i.itemName.toLowerCase())
   );
-  setSelectedItemId(matched?.id || (inventory.length > 0 ? inventory[0]?.id || "" : ""));
+  setSelectedItemId(matched?.id || (poskoInventory.length > 0 ? poskoInventory[0]?.id || "" : ""));
   };
 
   const handleExecuteApproval = async (e: React.FormEvent) => {
@@ -75,8 +87,25 @@ export default function LogisticsDistributePage() {
   }
 
   const container = ServiceContainer.getInstance();
+
+  // Pastikan item terdaftar di inventoryRepo SQLite backend (jika tersimpan dari sesi sebelumnya)
+  const existingAggRes = await container.inventoryRepo.findById(asItemId(targetItem.id));
+  if (!existingAggRes.ok || !existingAggRes.value) {
+  const agg = InventoryAggregate.reconstitute({
+  id: asItemId(targetItem.id),
+  poskoId: asPoskoId(effectivePoskoId),
+  itemName: targetItem.itemName,
+  category: targetItem.category as any,
+  currentQuantity: targetItem.currentQuantity,
+  unit: targetItem.unit,
+  lastUpdatedAt: targetItem.lastUpdatedAt,
+  version: 1,
+  });
+  await container.inventoryRepo.save(agg);
+  }
+
   const mutateRes = await container.mutateStockUseCase.execute({
-  poskoId: session.poskoId,
+  poskoId: effectivePoskoId,
   itemId: targetItem.id,
   officerId: session.userId,
   officerRole: session.userRole,
@@ -116,16 +145,16 @@ export default function LogisticsDistributePage() {
   };
 
   const filteredTickets = React.useMemo(() => {
-  if (!searchQuery.trim()) return needsTickets;
+  if (!searchQuery.trim()) return poskoTickets;
   const q = searchQuery.toLowerCase();
-  return needsTickets.filter(
+  return poskoTickets.filter(
   (t) =>
   t.refugeeName.toLowerCase().includes(q) ||
   t.itemName.toLowerCase().includes(q) ||
   t.shelterLocation?.toLowerCase().includes(q) ||
   t.id.toLowerCase().includes(q)
   );
-  }, [needsTickets, searchQuery]);
+  }, [poskoTickets, searchQuery]);
 
   const pendingTickets = filteredTickets.filter((t) => t.status === "PENDING");
   const allocatedTickets = filteredTickets.filter((t) => t.status === "ALLOCATED");
@@ -134,16 +163,6 @@ export default function LogisticsDistributePage() {
   return (
   <div className="space-y-4">
   {/* 1. Sub-Tabs */}
-  <Tabs
-  items={[
-  { id: "stock", label: "Stok Gudang", icon: "box", href: `/posko/${session.poskoId}/logistics` },
-  { id: "distribute", label: "Distribusi Bantuan", icon: "delivery", badgeCount: pendingTickets.length, href: `/posko/${session.poskoId}/logistics/distribute` },
-  { id: "waybills", label: "Surat Jalan Antar-Posko", icon: "waybill", href: `/posko/${session.poskoId}/logistics/waybills` },
-  ]}
-  activeId="distribute"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
 
   {/* 2. Banner Notifikasi RBAC & Sukses */}
   {!isLogisticsOfficer && (
@@ -173,8 +192,7 @@ export default function LogisticsDistributePage() {
   size={16}
   className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
   />
-  <Input
-  value={searchQuery}
+  <Input value={searchQuery}
   onChange={(e) => setSearchQuery(e.target.value)}
   placeholder="Cari tiket berdasarkan nama penerima, komoditas, atau nomor tiket..."
   className="pl-9 text-xs h-10"
@@ -406,12 +424,11 @@ export default function LogisticsDistributePage() {
   <label className="font-bold text-text-main block">
   Pilih Komoditas Sumber di Gudang
   </label>
-  <select
-  value={selectedItemId}
+  <select value={selectedItemId}
   onChange={(e) => setSelectedItemId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
-  {inventory.map((item) => (
+  {poskoInventory.map((item) => (
   <option key={item.id} value={item.id}>
   {item.itemName} (Tersedia: {item.currentQuantity} {item.unit})
   </option>
