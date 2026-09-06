@@ -26,13 +26,40 @@ export function Dialog({
   maxWidth = "md",
 }: DialogProps) {
   React.useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === "Escape" && open) {
-  onOpenChange(false);
-  }
-  };
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) {
+        onOpenChange(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
+  // Graceful browser & mobile swipe back handling
+  React.useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+
+    let hasPushed = false;
+    try {
+      window.history.pushState({ isModalOpen: true }, "");
+      hasPushed = true;
+    } catch {
+      // Push state ignored in restricted contexts
+    }
+
+    const handlePopState = () => {
+      hasPushed = false;
+      onOpenChange(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (hasPushed && window.history.state?.isModalOpen) {
+        window.history.back();
+      }
+    };
   }, [open, onOpenChange]);
 
   if (!open) return null;

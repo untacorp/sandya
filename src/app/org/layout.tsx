@@ -9,6 +9,7 @@ import { useAutoCloudSync } from "@/features/posko/hooks/use-auto-cloud-sync";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { UnifiedAppHeader, UnifiedAppSidebar } from "@/features/navigation";
+import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
 
 interface NavItem {
   label: string;
@@ -21,6 +22,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "";
   const { session } = usePoskoStore();
   const [isMounted, setIsMounted] = useState(false);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   // Mount background auto-sync across all organization pages
   useAutoCloudSync();
@@ -99,22 +101,28 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
                 <Icon name="arrow-right" variant="linear" size={14} />
               </Link>
             )}
-            <Link
-              href="/activate"
-              className="flex items-center justify-between p-2.5 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors border border-primary/30 font-semibold text-primary"
+            <button
+              type="button"
+              onClick={() => setRoleModalOpen(true)}
+              className="w-full flex items-center justify-between p-2.5 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors border border-primary/30 font-semibold text-primary cursor-pointer text-left"
             >
               <div className="flex items-center gap-2">
                 <Icon name="qr-code" variant="bold" size={16} />
                 <span>Pindai Kartu Tugas Pemimpin</span>
               </div>
               <Icon name="arrow-right" variant="linear" size={14} />
-            </Link>
+            </button>
           </div>
         </main>
 
         <footer className="text-center text-xs text-text-muted py-4 border-t border-border">
           Sandya • Sistem Tanggap Darurat Bencana Mandiri
         </footer>
+
+        <RoleActivationModal
+          open={roleModalOpen}
+          onOpenChange={setRoleModalOpen}
+        />
       </div>
     );
   }

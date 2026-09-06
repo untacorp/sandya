@@ -10,6 +10,7 @@ import { Badge } from "@/shared/ui/badge";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { useHierarchicalNav, type HierarchyLevel } from "../hooks/use-hierarchical-nav";
 import { HierarchySwitcherModal } from "./hierarchy-switcher-modal";
+import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
 
 interface NavItem {
   label: string;
@@ -22,6 +23,7 @@ interface NavItem {
 export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: HierarchyLevel }) {
   const pathname = usePathname() || "/";
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
+  const [roleActivationOpen, setRoleActivationOpen] = React.useState(false);
   const { session, poskos, missions, refugees, needsTickets } = usePoskoStore();
   const {
     currentLevel: detectedLevel,
@@ -323,13 +325,15 @@ export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: Hierarchy
                 {session.userRole.replace(/_/g, " ")}
               </p>
             </div>
-            <Link
-              href="/activate"
-              className="p-1.5 rounded-lg bg-surface hover:bg-surface-muted border border-border text-text-muted hover:text-text-main transition-colors shrink-0"
+            <button
+              type="button"
+              onClick={() => setRoleActivationOpen(true)}
+              className="p-1.5 rounded-lg bg-surface hover:bg-surface-muted border border-border text-text-muted hover:text-text-main transition-colors shrink-0 cursor-pointer"
               title="Pindai Kartu Tugas Baru"
+              aria-label="Pindai Kartu Tugas Baru"
             >
               <Icon name="qr-code" variant="linear" size={14} />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
@@ -338,6 +342,12 @@ export function UnifiedAppSidebar({ levelOverride }: { levelOverride?: Hierarchy
       <HierarchySwitcherModal
         open={switcherOpen}
         onOpenChange={setSwitcherOpen}
+      />
+
+      {/* In-Place Role Activation Modal */}
+      <RoleActivationModal
+        open={roleActivationOpen}
+        onOpenChange={setRoleActivationOpen}
       />
     </>
   );

@@ -8,6 +8,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { useHierarchicalNav } from "../hooks/use-hierarchical-nav";
+import { RoleActivationModal } from "@/features/auth/components/role-activation-modal";
 
 interface HierarchySwitcherModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface HierarchySwitcherModalProps {
 
 export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcherModalProps) {
   const router = useRouter();
+  const [activationOpen, setActivationOpen] = React.useState(false);
   const { session, poskos, missions, setSessionPosko, setSessionMission } = usePoskoStore();
   const { getSwitchPoskoHref, activePoskoId, activeMissionId } = useHierarchicalNav();
 
@@ -41,10 +43,11 @@ export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcher
   const activeMission = missions.find((m) => m.id === (session.missionId || activeMissionId)) || missions[0];
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Pilih Posko & Tingkat Operasi"
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Pilih Posko & Tingkat Operasi"
       description="Beralih antar-posko lapangan atau ruang komando misi bencana."
       maxWidth="lg"
     >
@@ -209,7 +212,7 @@ export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcher
               icon="qr-code"
               onClick={() => {
                 onOpenChange(false);
-                router.push("/activate");
+                setActivationOpen(true);
               }}
               className="text-xs shrink-0"
             >
@@ -219,5 +222,11 @@ export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcher
         </div>
       </div>
     </Dialog>
+
+    <RoleActivationModal
+      open={activationOpen}
+      onOpenChange={setActivationOpen}
+    />
+    </>
   );
 }

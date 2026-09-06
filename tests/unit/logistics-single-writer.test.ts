@@ -121,8 +121,8 @@ async function runLogisticsSingleWriterTests() {
   const transferOutResult = await mutateStockUseCase.execute({
   poskoId: 'POS-01',
   itemId: 'POS-01-ITEM-001',
-  officerId: 'USR-COORD-01',
-  officerRole: 'KOORDINATOR_POSKO',
+  officerId: 'USR-LOG-01',
+  officerRole: 'PETUGAS_LOGISTIK',
   txType: 'TRANSFER_OUT',
   quantityChange: -20,
   logicalSeq: 4,
@@ -197,7 +197,7 @@ async function runLogisticsSingleWriterTests() {
   } = await import('@/core/permissions/posko-permissions');
 
   assert.strictEqual(canMutateStock('PETUGAS_LOGISTIK'), true);
-  assert.strictEqual(canMutateStock('KOORDINATOR_POSKO'), true);
+  assert.strictEqual(canMutateStock('KOORDINATOR_POSKO'), false);
   assert.strictEqual(canMutateStock('RELAWAN_LAPANGAN'), false);
   assert.strictEqual(canMutateStock('PETUGAS_MEDIS'), false);
 
@@ -209,11 +209,11 @@ async function runLogisticsSingleWriterTests() {
   assert.strictEqual(canDeliverAid('WARGA_TAMU'), false);
 
   assert.strictEqual(canManageWaybills('PETUGAS_LOGISTIK'), true);
-  assert.strictEqual(canManageWaybills('KOMANDAN_MISI'), true);
+  assert.strictEqual(canManageWaybills('KOMANDAN_MISI'), false);
   assert.strictEqual(canManageWaybills('RELAWAN_LAPANGAN'), false);
 
   assert.strictEqual(canConductTriage('PETUGAS_MEDIS'), true);
-  assert.strictEqual(canConductTriage('KOORDINATOR_POSKO'), true);
+  assert.strictEqual(canConductTriage('KOORDINATOR_POSKO'), false);
   assert.strictEqual(canConductTriage('PETUGAS_LOGISTIK'), false);
   assert.strictEqual(canConductTriage('RELAWAN_LAPANGAN'), false);
 

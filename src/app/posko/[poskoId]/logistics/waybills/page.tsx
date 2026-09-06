@@ -235,16 +235,16 @@ export default function WaybillsPage() {
   options={poskos.map(p => ({ value: p.id, label: `${p.name} (${p.locationName})` }))}
   />
   </div>
-
-  <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
-  <Select
-    value={selectedCatalogId.toString()}
-    onChange={(val) => setSelectedCatalogId(parseInt(val))}
-    options={Object.values(DISASTER_NEEDS_CATALOG).map((c) => ({
-      value: c.id.toString(),
-      label: `[0x${c.id.toString(16).padStart(2, "0")}] ${c.nameId} (${c.cluster})`,
-    }))}
-  />
+  <div className="space-y-1">
+    <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
+    <Select
+      value={selectedCatalogId.toString()}
+      onChange={(val) => setSelectedCatalogId(parseInt(val))}
+      options={Object.values(DISASTER_NEEDS_CATALOG).map((c) => ({
+        value: c.id.toString(),
+        label: `[0x${c.id.toString(16).padStart(2, "0")}] ${c.nameId} (${c.cluster})`,
+      }))}
+    />
   </div>
 
   <div className="grid grid-cols-2 gap-2">
