@@ -38,7 +38,8 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d",
-    "db:migrate": "node scripts/apply-schema.js"
+    "db:migrate": "node scripts/apply-schema.js",
+    "db:patch": "node scripts/apply-security-patch.js"
   },
   "dependencies": {
     "@iconify-json/solar": "^1.2.10",
