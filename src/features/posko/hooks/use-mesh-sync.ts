@@ -3,41 +3,16 @@
 import * as React from "react";
 import { usePoskoStore } from "../store/use-posko-store";
 import { type MeshPeer } from "@/shared/types";
-import { TIME_CONSTANTS } from "@/core/shared/constants";
+import { meshRuntime } from "@/core/mesh/mesh-runtime";
+import { BleRadioState } from "@/core/mesh/transport/ble-transport";
 
 export const MESH_SYNC_CONSTANTS = {
   GOSSIP_INTERVAL_MS: 15000,
   PEER_HEARTBEAT_TIMEOUT_MS: 45000,
-  SIMULATED_PEERS: [
-    {
-      peerId: "PEER-MED-01",
-      aliasName: "dr. Siti Rahma",
-      role: "PETUGAS_MEDIS" as const,
-      rssi: -58,
-      hops: 1,
-      isDirect: true,
-      lastSeenOffsetMs: 4000,
-    },
-    {
-      peerId: "PEER-LOG-02",
-      aliasName: "Budi Santoso (Gudang)",
-      role: "PETUGAS_LOGISTIK" as const,
-      rssi: -67,
-      hops: 1,
-      isDirect: true,
-      lastSeenOffsetMs: 9000,
-    },
-    {
-      peerId: "PEER-REL-03",
-      aliasName: "Ahmad Fauzi (Tenda B)",
-      role: "RELAWAN_LAPANGAN" as const,
-      rssi: -82,
-      hops: 2,
-      isDirect: false,
-      lastSeenOffsetMs: 18000,
-    },
-  ],
+  SIMULATED_PEERS: [] as const,
 } as const;
+
+export type RadioDisplayStatus = "SCANNING" | "CONNECTED" | "IDLE" | "RADIO_OFF" | "UNAVAILABLE";
 
 export function useMeshSync() {
   const {
@@ -49,52 +24,89 @@ export function useMeshSync() {
 
   const [isMeshActive, setIsMeshActive] = React.useState(true);
   const [lastGossipTimestamp, setLastGossipTimestamp] = React.useState<number>(0);
-  const [meshRadioStatus, setMeshRadioStatus] = React.useState<"SCANNING" | "CONNECTED" | "IDLE">("CONNECTED");
+  const [meshRadioStatus, setMeshRadioStatus] = React.useState<RadioDisplayStatus>("SCANNING");
 
-  // Initialize or maintain peers in vicinity
+  // Initialize and synchronize meshRuntime
   React.useEffect(() => {
-    if (!isMeshActive) return;
+    let isMounted = true;
 
-    const updatePeers = () => {
-      const now = Date.now();
-      const updatedPeers: MeshPeer[] = MESH_SYNC_CONSTANTS.SIMULATED_PEERS.map((p) => ({
-        peerId: p.peerId,
-        noisePubkey: `noise_${p.peerId.toLowerCase()}`,
-        signingPubkey: `sig_${p.peerId.toLowerCase()}`,
-        aliasName: p.aliasName,
-        role: p.role,
-        rssi: p.rssi + Math.floor(Math.random() * 5 - 2), // Natural RSSI jitter
-        hops: p.hops,
-        lastSeen: now - p.lastSeenOffsetMs,
-      }));
+    meshRuntime.initialize().then(() => {
+      if (!isMounted) return;
+      const rawState = meshRuntime.getRadioState();
+      if (rawState === "OFF") {
+        setMeshRadioStatus("RADIO_OFF");
+      } else if (rawState === "UNAVAILABLE") {
+        setMeshRadioStatus("UNAVAILABLE");
+      } else if (peers.length > 0) {
+        setMeshRadioStatus("CONNECTED");
+      } else {
+        setMeshRadioStatus("SCANNING");
+      }
+    }).catch((err) => {
+      console.error("[useMeshSync] Mesh runtime init error:", err);
+    });
 
-      // Update zustand store state
-      usePoskoStore.setState({ peers: updatedPeers });
-      setMeshRadioStatus("CONNECTED");
-    };
-
-    updatePeers();
-    const peerInterval = setInterval(updatePeers, MESH_SYNC_CONSTANTS.GOSSIP_INTERVAL_MS);
+    const unsubscribeRadio = meshRuntime.onRadioStateChanged((state) => {
+      if (state === "OFF") {
+        setMeshRadioStatus("RADIO_OFF");
+      } else if (state === "UNAVAILABLE") {
+        setMeshRadioStatus("UNAVAILABLE");
+      } else if (usePoskoStore.getState().peers.length > 0) {
+        setMeshRadioStatus("CONNECTED");
+      } else {
+        setMeshRadioStatus("SCANNING");
+      }
+    });
 
     return () => {
-      clearInterval(peerInterval);
+      isMounted = false;
+      unsubscribeRadio();
     };
-  }, [isMeshActive]);
+  }, []);
 
-  // Background Gossip & Vector Clock Delta Exchange
+  // Sync mesh active toggle with runtime radio state
   React.useEffect(() => {
-    if (!isMeshActive) return;
+    if (!isMeshActive) {
+      meshRuntime.setRadioState("OFF");
+      setMeshRadioStatus("RADIO_OFF");
+    } else {
+      const currentState = meshRuntime.getRadioState();
+      if (currentState === "OFF") {
+        meshRuntime.setRadioState("SCANNING");
+      }
+      if (peers.length > 0) {
+        setMeshRadioStatus("CONNECTED");
+      } else {
+        setMeshRadioStatus("SCANNING");
+      }
+    }
+  }, [isMeshActive, peers.length]);
+
+  // Periodic Vector Clock Gossip & Outbox Synchronization
+  React.useEffect(() => {
+    if (!isMeshActive || meshRadioStatus === "RADIO_OFF" || meshRadioStatus === "UNAVAILABLE") {
+      return;
+    }
 
     const gossipInterval = setInterval(() => {
       const now = Date.now();
       setLastGossipTimestamp(now);
 
-      // If there are pending outbox items, gossip them across mesh
+      // Trigger vector probe broadcast across mesh
+      meshRuntime.broadcastVectorProbe().catch((err) => {
+        console.error("[useMeshSync] Vector probe gossip error:", err);
+      });
+
+      // If there are pending outbox items, clear them upon gossip
       if (pendingOutboxCount > 0) {
         setMeshRadioStatus("SCANNING");
         setTimeout(() => {
           simulateSync();
-          setMeshRadioStatus("CONNECTED");
+          if (usePoskoStore.getState().peers.length > 0) {
+            setMeshRadioStatus("CONNECTED");
+          } else {
+            setMeshRadioStatus("SCANNING");
+          }
         }, 800);
       }
     }, MESH_SYNC_CONSTANTS.GOSSIP_INTERVAL_MS);
@@ -102,14 +114,21 @@ export function useMeshSync() {
     return () => {
       clearInterval(gossipInterval);
     };
-  }, [isMeshActive, pendingOutboxCount, simulateSync]);
+  }, [isMeshActive, meshRadioStatus, pendingOutboxCount, simulateSync]);
 
   const triggerManualGossip = React.useCallback(() => {
     setMeshRadioStatus("SCANNING");
     setLastGossipTimestamp(Date.now());
+    meshRuntime.broadcastVectorProbe().catch((err) => {
+      console.error("[useMeshSync] Manual vector probe error:", err);
+    });
     setTimeout(() => {
       simulateSync();
-      setMeshRadioStatus("CONNECTED");
+      if (usePoskoStore.getState().peers.length > 0) {
+        setMeshRadioStatus("CONNECTED");
+      } else {
+        setMeshRadioStatus("SCANNING");
+      }
     }, 600);
   }, [simulateSync]);
 

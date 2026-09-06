@@ -23,7 +23,8 @@ import { TIME_CONSTANTS } from "@/core/shared/constants";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { asRefugeeId, asPoskoId, asEventId } from "@/core/shared/branded-types";
-import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
+import { RefugeeAggregate, type RefugeeEventProps } from "@/core/domain/refugees/refugee.aggregate";
+import { type VulnerabilityCategory, type TriageCategory } from "@/shared/types";
 
 export const ANIMATED_QR_PAGE_CONSTANTS = {
   DEFAULT_FPS: 6,
@@ -222,21 +223,21 @@ export default function AnimatedQRPage() {
   nik: p.nationalId || null,
   gender: p.gender,
   age: p.age,
-  vulnerabilities: [
+  vulnerabilities: ([
     (p.vulnerabilities & 0x01) ? "BALITA" : null,
     (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
     (p.vulnerabilities & 0x04) ? "LANSIA" : null,
     (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
     (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
     (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
-  ].filter(Boolean) as any[],
+  ].filter((v): v is VulnerabilityCategory => Boolean(v))),
   urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
   domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
   shelterLocation: p.shelterLocation || "Tenda Pengungsian",
   missingKinName: p.missingKinName,
   registeredByUserId: session.userId,
   registeredByUserName: session.userName,
-  triageStatus: p.triage || "GREEN",
+  triageStatus: (p.triage as TriageCategory) || "GREEN",
   }))
   );
 
@@ -254,7 +255,7 @@ export default function AnimatedQRPage() {
       domicileOrigin: p.domicileOrigin || null,
       shelterLocation: p.shelterLocation || null,
       missingKinName: p.missingKinName || null,
-      currentTriage: (p.triage as any) || "GREEN",
+      currentTriage: (p.triage as TriageCategory) || "GREEN",
       registeredByUserId: session.userId,
       createdAt: Date.now(),
       version: 1,
@@ -299,8 +300,8 @@ export default function AnimatedQRPage() {
         refugeeId: asRefugeeId(ev.refugeeId),
         authorId: ev.authorId || session.userId,
         authorName: ev.authorName || "Petugas",
-        authorRole: (ev.authorRole as any) || "RELAWAN",
-        eventType: ev.eventType as any,
+        authorRole: (ev.authorRole as RefugeeEventProps["authorRole"]) || "RELAWAN",
+        eventType: (ev.eventType as RefugeeEventProps["eventType"]) || "INTAKE",
         eventPayload: JSON.parse(ev.eventPayloadJson || "{}"),
         deviceTimestamp: ev.deviceTimestamp,
         logicalSeq: ev.logicalSeq,

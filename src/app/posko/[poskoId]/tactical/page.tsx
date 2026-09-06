@@ -3,6 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { useMeshSync } from "@/features/posko/hooks/use-mesh-sync";
+import { meshRuntime } from "@/core/mesh/mesh-runtime";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -38,6 +40,8 @@ export default function TacticalChatPage() {
   triggerSOS,
   peers,
   } = usePoskoStore();
+
+  const { meshRadioStatus, isMeshActive, setIsMeshActive } = useMeshSync();
 
   const [inputMsg, setInputMsg] = React.useState("");
   const [sosModalOpen, setSosModalOpen] = React.useState(false);
@@ -92,12 +96,19 @@ export default function TacticalChatPage() {
   const handleSendText = (e: React.FormEvent) => {
   e.preventDefault();
   if (!inputMsg.trim()) return;
-  sendTextMessage(activeChannel, inputMsg.trim());
+  const trimmed = inputMsg.trim();
+  sendTextMessage(activeChannel, trimmed);
+  meshRuntime.sendTextMessage(activeChannel, trimmed).catch(() => {
+    // Graceful offline mesh handling
+  });
   setInputMsg("");
   };
 
   const handleSendQuickChip = (text: string) => {
   sendTextMessage(activeChannel, text);
+  meshRuntime.sendTextMessage(activeChannel, text).catch(() => {
+    // Graceful offline mesh handling
+  });
   };
 
   const startPTT = (e: React.MouseEvent | React.TouchEvent) => {
@@ -119,7 +130,13 @@ export default function TacticalChatPage() {
   if (timerRef.current) clearInterval(timerRef.current);
   setIsRecording(false);
   if (broadcast && recordingSeconds > 0) {
-  sendVoiceMessage(activeChannel, recordingSeconds * TIME_CONSTANTS.MS_PER_SECOND);
+    const duration = recordingSeconds * TIME_CONSTANTS.MS_PER_SECOND;
+    sendVoiceMessage(activeChannel, duration);
+    // Broadcast sample PCM byte buffer over real mesh runtime
+    const sampleBytes = Buffer.alloc(Math.min(300, recordingSeconds * 60), 140);
+    meshRuntime.sendVoiceNote(activeChannel, duration, sampleBytes).catch(() => {
+      // Graceful offline mesh handling
+    });
   }
   setRecordingSeconds(0);
   };
@@ -146,6 +163,9 @@ export default function TacticalChatPage() {
 
   const handleTriggerSOS = () => {
   triggerSOS(hazardType);
+  meshRuntime.triggerSOS(hazardType).catch(() => {
+    // Graceful offline mesh handling
+  });
   setSosModalOpen(false);
   };
 
@@ -175,6 +195,32 @@ export default function TacticalChatPage() {
 
   return (
   <div className="space-y-3">
+  {/* Fallback Banner if BLE is Off / Unavailable */}
+  {(meshRadioStatus === "RADIO_OFF" || meshRadioStatus === "UNAVAILABLE") && (
+    <div className="space-y-2">
+      <AlertBanner
+        variant="warning"
+        title="Modul Bluetooth Rendah Energi (BLE) Dinonaktifkan"
+        description="Siaran radio dan transmisi suara PTT antar-perangkat nirkabel tidak dapat dipancarkan saat Bluetooth mati. Aktifkan Bluetooth atau gunakan sinkronisasi visual."
+        icon="shield"
+      />
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/posko/${session.poskoId}/sync/animated-qr`}>
+          <Button variant="secondary" size="sm" className="text-xs font-bold">
+            <Icon name="qr-code" variant="bold" size={14} className="mr-1.5" />
+            Buka Sinkronisasi Animated QR
+          </Button>
+        </Link>
+        <Link href={`/posko/${session.poskoId}/sync/poster`}>
+          <Button variant="secondary" size="sm" className="text-xs font-bold">
+            <Icon name="printer" variant="bold" size={14} className="mr-1.5" />
+            Buka Poster Paritas Cetak
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )}
+
   {/* 1. Baris Pilihan Saluran Radio Lapangan */}
   <div className="p-2.5 rounded-xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
   {/* Pilihan 4 Saluran */}
@@ -205,8 +251,15 @@ export default function TacticalChatPage() {
   })}
   </div>
 
-  {/* Tombol Peringatan Bahaya SOS */}
+  {/* Tombol Radio BLE & Peringatan Bahaya SOS */}
   <div className="flex items-center gap-2 shrink-0">
+  <button
+    type="button"
+    onClick={() => setIsMeshActive(!isMeshActive)}
+    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-subtle transition-colors cursor-pointer"
+  >
+    Radio: <span className={isMeshActive ? "text-status-safe font-bold" : "text-status-danger font-bold"}>{isMeshActive ? "ON" : "OFF"}</span>
+  </button>
   <Button
   variant="danger"
   size="sm"
@@ -490,7 +543,7 @@ export default function TacticalChatPage() {
   {proximity.hopDesc}
   </span>
   <span className="font-mono text-[10px]">
-  {peer.currentPosId || "Posko 01"}
+  {peer.currentPosId || session.poskoName || (session.poskoId ? `Posko ${session.poskoId}` : "Simpul Mesh")}
   </span>
   </div>
   </Card>

@@ -208,13 +208,13 @@ export class SqliteRefugeeRepository implements IRefugeeRepository {
 
     for (const row of table.values()) {
       events.push({
-        id: row['id'] as any,
+        id: asEventId(row['id'] as string),
         refugeeId: asRefugeeId(row['refugee_id'] as string),
         authorId: row['author_id'] as string,
         authorName: row['author_name'] as string,
-        authorRole: row['author_role'] as any,
-        eventType: row['event_type'] as any,
-        eventPayload: typeof row['event_payload'] === 'string' ? JSON.parse(row['event_payload']) : row['event_payload'],
+        authorRole: row['author_role'] as RefugeeEventProps['authorRole'],
+        eventType: row['event_type'] as RefugeeEventProps['eventType'],
+        eventPayload: typeof row['event_payload'] === 'string' ? JSON.parse(row['event_payload']) : (row['event_payload'] as Record<string, unknown>),
         deviceTimestamp: row['device_timestamp'] as number,
         logicalSeq: row['logical_seq'] as number,
         causalParentId: (row['causal_parent_id'] as string) || undefined,

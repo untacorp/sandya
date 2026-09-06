@@ -26,7 +26,17 @@ export function MissionShell({
   const pathname = usePathname();
   const { session, missions, setSessionMission } = usePoskoStore();
 
-  const mission = missions.find((m) => m.id === missionId);
+  const [hasHydrated, setHasHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasHydrated(usePoskoStore.persist.hasHydrated());
+    const unsub = usePoskoStore.persist.onFinishHydration(() => setHasHydrated(true));
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
+
+  const mission = missions.find((m) => m.id === missionId || m.id === session.missionId);
 
   React.useEffect(() => {
     if (mission && (session.missionId !== mission.id || session.missionName !== mission.name)) {
@@ -34,8 +44,16 @@ export function MissionShell({
     }
   }, [mission, session.missionId, session.missionName, setSessionMission]);
 
+  if (hasHydrated && !mission) {
+    return <MissionNotFoundState missionId={missionId} />;
+  }
+
   if (!mission) {
-  return <MissionNotFoundState missionId={missionId} />;
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   const mainNavItems: NavItem[] = [

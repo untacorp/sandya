@@ -3,10 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { useMeshSync } from "@/features/posko/hooks/use-mesh-sync";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
+import { AlertBanner } from "@/shared/ui/alert-banner";
 
 export const RADAR_CONSTANTS = {
   RSSI_VERY_CLOSE_THRESHOLD: -50,
@@ -17,6 +19,7 @@ export const RADAR_CONSTANTS = {
 
 export default function MeshRadarPage() {
   const { session, peers } = usePoskoStore();
+  const { meshRadioStatus, isMeshActive, setIsMeshActive } = useMeshSync();
 
   const getProximityStatus = (rssi: number, hops: number) => {
   if (rssi >= RADAR_CONSTANTS.RSSI_VERY_CLOSE_THRESHOLD) {
@@ -61,11 +64,58 @@ export default function MeshRadarPage() {
   Kembali ke Radio HT Posko
   </Button>
   </Link>
-  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border shadow-2xs text-xs font-bold text-text-main">
-  <span className="w-2 h-2 rounded-full bg-status-safe animate-pulse" />
-  <span>{peers.length} Petugas Terhubung</span>
+  <div className="flex items-center gap-2">
+    <button
+      type="button"
+      onClick={() => setIsMeshActive(!isMeshActive)}
+      className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-border bg-surface hover:bg-surface-subtle transition-colors cursor-pointer"
+    >
+      Bluetooth: <span className={isMeshActive ? "text-status-safe font-bold" : "text-status-danger font-bold"}>{isMeshActive ? "ON" : "OFF"}</span>
+    </button>
+    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border shadow-2xs text-xs font-bold text-text-main">
+      <span className={`w-2 h-2 rounded-full ${
+        meshRadioStatus === "RADIO_OFF" || meshRadioStatus === "UNAVAILABLE"
+          ? "bg-status-danger"
+          : meshRadioStatus === "SCANNING"
+          ? "bg-status-warning animate-ping"
+          : "bg-status-safe animate-pulse"
+      }`} />
+      <span>
+        {meshRadioStatus === "RADIO_OFF"
+          ? "Radio BLE Mati"
+          : meshRadioStatus === "UNAVAILABLE"
+          ? "Radio Tidak Tersedia"
+          : `${peers.length} Petugas Terhubung`}
+      </span>
+    </div>
   </div>
   </div>
+
+  {/* Radio Fallback Banner if BLE is Off / Unavailable */}
+  {(meshRadioStatus === "RADIO_OFF" || meshRadioStatus === "UNAVAILABLE") && (
+    <div className="space-y-2">
+      <AlertBanner
+        variant="warning"
+        title="Modul Bluetooth Rendah Energi (BLE) Dinonaktifkan"
+        description="Jaringan radar mesh nirkabel tidak aktif. Anda tetap dapat melakukan sinkronisasi data antar-posko nir-internet secara visual menggunakan Animated QR atau Poster Paritas Cetak."
+        icon="shield"
+      />
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Link href={`/posko/${session.poskoId}/sync/animated-qr`}>
+          <Button variant="secondary" size="sm" className="text-xs font-bold">
+            <Icon name="qr-code" variant="bold" size={14} className="mr-1.5" />
+            Buka Sinkronisasi Animated QR
+          </Button>
+        </Link>
+        <Link href={`/posko/${session.poskoId}/sync/poster`}>
+          <Button variant="secondary" size="sm" className="text-xs font-bold">
+            <Icon name="printer" variant="bold" size={14} className="mr-1.5" />
+            Buka Poster Paritas Cetak
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )}
 
   {/* Topologi Card */}
   <Card className="shadow-2xs">
@@ -104,41 +154,57 @@ export default function MeshRadarPage() {
 
   {/* Peers List */}
   <div className="space-y-3">
-  <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
-  <Icon name="users" variant="bold" size={14} className="text-primary" />
-  Daftar Petugas & Relawan di Sekitar
-  </h3>
+    <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+      <Icon name="users" variant="bold" size={14} className="text-primary" />
+      Daftar Petugas & Relawan di Sekitar
+    </h3>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  {peers.map((peer) => {
-  const proximity = getProximityStatus(peer.rssi, peer.hops);
-  return (
-  <Card key={peer.peerId} className="p-3.5 space-y-2 border-border bg-surface shadow-2xs">
-  <div className="flex items-start justify-between gap-2">
-  <div>
-  <h4 className="text-sm font-bold text-text-main">
-  {peer.aliasName}
-  </h4>
-  <p className="text-xs text-text-muted font-semibold mt-0.5">
-  {peer.role.replace(/_/g, " ")}
-  </p>
-  </div>
+    {peers.length === 0 ? (
+      <div className="p-6 rounded-2xl border border-border bg-surface text-center space-y-3 shadow-2xs">
+        <div className="w-12 h-12 mx-auto rounded-full bg-surface-muted text-text-muted flex items-center justify-center">
+          <Icon name="radar" variant="bold" size={24} className="animate-pulse text-primary" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-sm font-bold text-text-main">
+            Memindai Simpul Relawan di Sekitar...
+          </h4>
+          <p className="text-xs text-text-muted max-w-sm mx-auto">
+            Belum ada perangkat petugas lain yang terdeteksi dalam jangkauan Bluetooth Low Energy (BLE). Perangkat Anda akan terhubung otomatis saat berdekatan dengan relawan lain.
+          </p>
+        </div>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {peers.map((peer) => {
+          const proximity = getProximityStatus(peer.rssi, peer.hops);
+          return (
+            <Card key={peer.peerId} className="p-3.5 space-y-2 border-border bg-surface shadow-2xs">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-text-main">
+                    {peer.aliasName}
+                  </h4>
+                  <p className="text-xs text-text-muted font-semibold mt-0.5">
+                    {peer.role.replace(/_/g, " ")}
+                  </p>
+                </div>
 
-  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${proximity.bgBadge} shrink-0`}>
-  {proximity.label}
-  </span>
-  </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${proximity.bgBadge} shrink-0`}>
+                  {proximity.label}
+                </span>
+              </div>
 
-  <div className="flex items-center justify-between text-xs pt-2 border-t border-border text-text-muted">
-  <span>Jalur Transmisi:</span>
-  <span className="font-semibold text-text-main">
-  {proximity.hopDesc}
-  </span>
-  </div>
-  </Card>
-  );
-  })}
-  </div>
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-border text-text-muted">
+                <span>Jalur Transmisi:</span>
+                <span className="font-semibold text-text-main">
+                  {proximity.hopDesc}
+                </span>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    )}
   </div>
   </div>
   );
