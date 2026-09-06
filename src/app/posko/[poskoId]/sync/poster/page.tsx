@@ -18,7 +18,6 @@ import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 import { EmptyState } from "@/shared/ui/empty-state";
 
@@ -207,18 +206,7 @@ export default function ParityPosterSyncPage() {
 
   return (
   <div className="space-y-5">
-  {/* Sub-Tabs Navigasi */}
-  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
-  <Tabs
-  items={[
-  { id: "hub", label: "Pusat Data", icon: "sync", href: `/posko/${session.poskoId}/sync` },
-  { id: "animated", label: "Pindai Layar HP", icon: "qr-code", href: `/posko/${session.poskoId}/sync/animated-qr` },
-  { id: "poster", label: "Cetak Berkas QR", icon: "printer", href: `/posko/${session.poskoId}/sync/poster` },
-  ]}
-  activeId="poster"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
+  <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 print:hidden">
 
   {/* Print vs Scan Toggle */}
   <div className="flex rounded-lg border border-border bg-surface p-1">

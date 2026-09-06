@@ -1,13 +1,22 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { cn } from "@/shared/lib/utils";
 
 export default function LandingGatewayPage() {
   const { session } = usePoskoStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isOrgLeader = isMounted;
 
   return (
   <div className="min-h-screen bg-canvas text-text-main flex flex-col justify-between">
@@ -29,7 +38,7 @@ export default function LandingGatewayPage() {
   </div>
 
   <div className="flex items-center gap-2 text-xs text-text-muted">
-  <span className="w-2 h-2 rounded-full bg-status-safe" />
+  <span className="w-2 h-2 rounded-full bg-status-safe animate-pulse" />
   <span className="hidden sm:inline">Posko Aktif:</span>
   <span className="font-semibold text-text-main">{session.poskoName}</span>
   </div>
@@ -110,7 +119,8 @@ export default function LandingGatewayPage() {
   </div>
   </Link>
 
-  {/* Pilihan 3: Pengelola Induk */}
+  {/* Pilihan 3: Pengelola Induk ATAU Daftar Lembaga */}
+  {isOrgLeader ? (
   <Link
   href="/org"
   className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-border-hover transition-colors cursor-pointer shadow-2xs"
@@ -139,6 +149,36 @@ export default function LandingGatewayPage() {
   />
   </div>
   </Link>
+  ) : (
+  <Link
+  href="/org-setup"
+  className="group flex flex-col justify-between p-4 rounded-xl border border-border bg-surface hover:border-primary transition-colors cursor-pointer shadow-2xs"
+  >
+  <div className="space-y-2.5">
+  <div className="w-9 h-9 rounded-lg bg-surface-subtle text-text-main border border-border flex items-center justify-center">
+  <Icon name="buildings" variant="linear" size={18} />
+  </div>
+  <div>
+  <h2 className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">
+  Daftarkan Lembaga
+  </h2>
+  <p className="text-xs text-text-muted mt-1 leading-relaxed">
+  Buka institusi baru dan dapatkan akses penuh sebagai Pemimpin Organisasi.
+  </p>
+  </div>
+  </div>
+
+  <div className="pt-3 mt-3 border-t border-border flex items-center justify-between text-xs font-semibold text-text-main group-hover:text-primary">
+  <span>Buat Lembaga Baru</span>
+  <Icon
+  name="arrow-right"
+  variant="linear"
+  size={14}
+  className="transition-transform group-hover:translate-x-0.5"
+  />
+  </div>
+  </Link>
+  )}
   </div>
 
   {/* 3. Pintasan Langsung */}
@@ -147,8 +187,8 @@ export default function LandingGatewayPage() {
   Pintasan Langsung:
   </p>
 
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-  <Link href={`/posko/${session.poskoId}`} className="block">
+  <div className={cn("grid grid-cols-1 gap-2", isOrgLeader ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+  <Link href={`/posko/${session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : "POS-01"}`} className="block">
   <Button
   variant="primary"
   size="sm"
@@ -157,7 +197,7 @@ export default function LandingGatewayPage() {
   iconVariant="bold"
   iconRight="arrow-right"
   >
-  <span className="truncate">{session.poskoName ? `Posko ${session.poskoName}` : "Masuk ke Posko"}</span>
+  <span className="truncate">{session.poskoName && !session.poskoName.includes("POS-LOCAL") ? `Posko ${session.poskoName}` : "Masuk ke Posko"}</span>
   </Button>
   </Link>
 
@@ -174,6 +214,7 @@ export default function LandingGatewayPage() {
   </Button>
   </Link>
 
+  {isOrgLeader && (
   <Link href="/org" className="block">
   <Button
   variant="secondary"
@@ -186,6 +227,7 @@ export default function LandingGatewayPage() {
   <span className="truncate">{session.orgName || "Pusat Lembaga"}</span>
   </Button>
   </Link>
+  )}
   </div>
   </div>
   </main>

@@ -103,8 +103,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Lengkap Sesuai KTP / Lisan
   </label>
-  <Input
-  value={fullName}
+  <Input value={fullName}
   onChange={(e) => setFullName(e.target.value)}
   icon="user"
   required
@@ -116,8 +115,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nomor Induk Kependudukan (NIK - Opsional)
   </label>
-  <Input
-  value={nik}
+  <Input value={nik}
   onChange={(e) => setNik(e.target.value)}
   placeholder="Kosongkan jika KTP hilang / belum ada"
   className="font-mono text-xs"
@@ -128,8 +126,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Usia (Tahun)
   </label>
-  <Input
-  type="number"
+  <Input type="number"
   value={age}
   onChange={(e) => setAge(Number(e.target.value))}
   min={EDIT_REFUGEE_CONSTANTS.MIN_AGE}
@@ -174,8 +171,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Lokasi Tenda / Blok Hunian
   </label>
-  <Input
-  value={shelterLocation}
+  <Input value={shelterLocation}
   onChange={(e) => setShelterLocation(e.target.value)}
   placeholder="Contoh: Tenda Darurat 02"
   icon="pin"
@@ -189,8 +185,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Asal Domisili / Dusun Asal
   </label>
-  <Input
-  value={domicileOrigin}
+  <Input value={domicileOrigin}
   onChange={(e) => setDomicileOrigin(e.target.value)}
   placeholder="Contoh: RT 03/RW 03 Cijedil"
   icon="buildings"
@@ -202,8 +197,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kerabat yang Dicari (Restoring Family Links)
   </label>
-  <Input
-  value={missingKinName}
+  <Input value={missingKinName}
   onChange={(e) => setMissingKinName(e.target.value)}
   placeholder="Nama keluarga terpisah (opsional)"
   icon="users"
@@ -241,8 +235,7 @@ export function EditRefugeeModal({ open, onOpenChange, refugee }: EditRefugeeMod
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kebutuhan Logistik Mendesak (Pisahkan dengan koma)
   </label>
-  <Input
-  value={urgentNeedsText}
+  <Input value={urgentNeedsText}
   onChange={(e) => setUrgentNeedsText(e.target.value)}
   placeholder="Contoh: Selimut, Susu Balita, Obat Hipertensi"
   icon="box"

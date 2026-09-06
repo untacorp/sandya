@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
@@ -16,8 +16,10 @@ interface NavItem {
 
 export function PoskoBottomNav() {
   const pathname = usePathname();
+  const params = useParams();
   const { session } = usePoskoStore();
-  const poskoId = session.poskoId;
+  const routePoskoId = (params?.poskoId as string) || (pathname.startsWith("/posko/") ? pathname.split("/")[2] : null);
+  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
 
   const navItems: NavItem[] = [
   {
@@ -93,8 +95,10 @@ export function PoskoBottomNav() {
 
 export function PoskoDesktopSidebar() {
   const pathname = usePathname();
+  const params = useParams();
   const { session } = usePoskoStore();
-  const poskoId = session.poskoId;
+  const routePoskoId = (params?.poskoId as string) || (pathname.startsWith("/posko/") ? pathname.split("/")[2] : null);
+  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
 
   const mainNavItems: NavItem[] = [
   {

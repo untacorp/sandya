@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 
 export default function SyncHubPage() {
@@ -22,18 +21,6 @@ export default function SyncHubPage() {
 
   return (
   <div className="space-y-4">
-  {/* 1. Sub-Navigasi */}
-  <Tabs
-  items={[
-  { id: "hub", label: "Pusat Data", icon: "sync", href: `/posko/${session.poskoId}/sync` },
-  { id: "animated", label: "Pindai Layar HP", icon: "qr-code", href: `/posko/${session.poskoId}/sync/animated-qr` },
-  { id: "poster", label: "Cetak Berkas QR", icon: "printer", href: `/posko/${session.poskoId}/sync/poster` },
-  ]}
-  activeId="hub"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
-
   {/* 2. Kartu Utama: Pembaruan Nirkabel Otomatis */}
   <Card className="border border-border bg-surface shadow-2xs">
   <CardHeader>
