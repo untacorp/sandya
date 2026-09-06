@@ -601,7 +601,8 @@ export default function ParityPosterSyncPage() {
   <QRCameraScanner
   onScan={handleQrScanned}
   continuous={true}
-  viewfinderText="Arahkan ke setiap kotak QR lembar posko bergantian"
+  active={!recoveredManifest && !isRecovering}
+  viewfinderText={recoveredManifest ? "Pemulihan poster selesai" : "Arahkan ke setiap kotak QR lembar posko bergantian"}
   />
   </div>
 

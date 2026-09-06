@@ -208,7 +208,10 @@ export default function ActivatePassPage() {
         ) : !verifying && mode === "SCAN" ? (
           /* Jendela Scanner Kamera Nyata */
           <div className="space-y-3">
-            <QRCameraScanner onScan={handleScanPass} />
+            <QRCameraScanner
+              onScan={handleScanPass}
+              active={!verifying && !verifiedPass && !verifyError}
+            />
           </div>
         ) : !verifying ? (
   /* Ketik Kode Manual */

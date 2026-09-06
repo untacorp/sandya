@@ -509,7 +509,8 @@ export default function AnimatedQRPage() {
   <QRCameraScanner
   onScan={handleScanFrame}
   continuous={true}
-  viewfinderText="Arahkan kamera ke layar pengirim"
+  active={!recoveredManifest}
+  viewfinderText={recoveredManifest ? "Sinkronisasi selesai" : "Arahkan kamera ke layar pengirim"}
   />
   </div>
 

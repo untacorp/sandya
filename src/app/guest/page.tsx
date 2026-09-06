@@ -252,7 +252,9 @@ export default function PublicGuestPage() {
   maxWidth="md"
   >
   <div className="p-2 space-y-3">
-  <QRCameraScanner onScan={handleScanSuccess} />
+  {scanModalOpen && (
+    <QRCameraScanner onScan={handleScanSuccess} active={scanModalOpen} />
+  )}
   <Button
   variant="outline"
   size="sm"
