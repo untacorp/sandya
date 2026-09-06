@@ -257,7 +257,7 @@ export default function LogisticsDistributePage() {
       onClick={() => setAdHocModalOpen(true)}
       className="h-10 text-xs font-bold shrink-0 shadow-2xs"
     >
-      + Penyaluran Warga (Ad-hoc)
+      Penyaluran Warga (Ad-hoc)
     </Button>
   </div>
   </div>

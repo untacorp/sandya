@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon";
 import { Badge } from "@/shared/ui/badge";
 import { useHierarchicalNav } from "../hooks/use-hierarchical-nav";
@@ -22,7 +23,7 @@ export function UnifiedAppHeader({
   rightActions,
 }: UnifiedAppHeaderProps) {
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
-  const { session, pendingOutboxCount } = usePoskoStore();
+  const { session, pendingOutboxCount, sidebarCollapsed, toggleSidebar } = usePoskoStore();
   const {
     currentLevel,
     currentTitle,
@@ -57,20 +58,31 @@ export function UnifiedAppHeader({
     <>
       <header className="sticky top-0 z-30 w-full bg-surface border-b border-border shadow-2xs">
         <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 max-w-7xl mx-auto gap-2">
-          {/* Left: Deterministic Back Button + Context Pill */}
-          <div className="flex items-center gap-2 min-w-0">
-            <Link
-              href={finalBackHref}
-              className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors py-1 px-2 rounded-lg hover:bg-surface-muted shrink-0"
-              title={`Kembali ke ${finalBackLabel}`}
+          {/* Left: Sidebar Toggle (only when collapsed) + Operational Context Switcher Pill */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Desktop Sidebar Toggle Button: Centralized control in navbar */}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className={cn(
+                "hidden md:flex items-center justify-center p-2 rounded-lg border transition-all cursor-pointer shrink-0",
+                sidebarCollapsed
+                  ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 shadow-2xs"
+                  : "bg-surface-subtle border-border/80 text-text-muted hover:text-text-main hover:bg-surface-muted"
+              )}
+              title={sidebarCollapsed ? "Buka Sidebar Penuh" : "Kecilkan Sidebar"}
+              aria-label={sidebarCollapsed ? "Buka Sidebar Penuh" : "Kecilkan Sidebar"}
             >
-              <Icon name="arrow-left" variant="linear" size={16} />
-              <span className="hidden xs:inline">{finalBackLabel}</span>
-              <span className="xs:hidden">Kembali</span>
-            </Link>
-
-            <span className="text-text-subtle font-light hidden sm:inline select-none">|</span>
-
+              <Icon
+                name="sidebar-collapse"
+                variant={sidebarCollapsed ? "bold" : "linear"}
+                size={18}
+                className={cn(
+                  "transition-transform duration-200",
+                  sidebarCollapsed ? "rotate-180 text-primary" : "text-text-muted"
+                )}
+              />
+            </button>
             {/* Mobile: Interactive Posko/Level Switcher Pill */}
             <button
               type="button"
@@ -84,7 +96,7 @@ export function UnifiedAppHeader({
                 size={14}
                 className="text-primary shrink-0 group-hover:scale-105 transition-transform"
               />
-              <span className="text-xs sm:text-sm font-bold text-text-main truncate max-w-[130px] sm:max-w-[220px]">
+              <span className="text-xs sm:text-sm font-bold text-text-main truncate max-w-[140px] sm:max-w-[220px]">
                 {displayTitle}
               </span>
               <Icon
@@ -95,17 +107,52 @@ export function UnifiedAppHeader({
               />
             </button>
 
-            {/* Desktop: Clean Static Context Title */}
-            <div className="hidden md:flex items-center gap-2 px-1">
-              <Icon
-                name={getLevelIcon()}
-                variant="bold"
-                size={15}
-                className="text-primary shrink-0"
-              />
-              <span className="text-sm font-bold text-text-main truncate max-w-md">
-                {displayTitle}
-              </span>
+            {/* Desktop: Operational Context Pill */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSwitcherOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-surface-muted border border-border/80 hover:border-primary/40 transition-all text-left group cursor-pointer"
+                title="Beralih tingkat operasi atau ganti posko"
+              >
+                <div
+                  className={cn(
+                    "w-5 h-5 rounded flex items-center justify-center shrink-0 font-bold",
+                    currentLevel === "POSKO"
+                      ? "bg-status-safe-bg text-status-safe border border-status-safe-border"
+                      : currentLevel === "MISSION"
+                      ? "bg-status-warning-bg text-status-warning border border-status-warning-border"
+                      : "bg-primary text-primary-foreground"
+                  )}
+                >
+                  <Icon name={getLevelIcon()} variant="bold" size={12} />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded",
+                    currentLevel === "POSKO"
+                      ? "bg-status-safe-bg text-status-safe"
+                      : currentLevel === "MISSION"
+                      ? "bg-status-warning-bg text-status-warning"
+                      : "bg-primary/10 text-primary"
+                  )}
+                >
+                  {currentLevel === "POSKO"
+                    ? "TK 3 • POSKO"
+                    : currentLevel === "MISSION"
+                    ? "TK 2 • MISI"
+                    : "TK 1 • LEMBAGA"}
+                </span>
+                <span className="text-xs font-bold text-text-main truncate max-w-[220px]">
+                  {displayTitle}
+                </span>
+                <Icon
+                  name="arrow-down"
+                  variant="linear"
+                  size={12}
+                  className="text-text-muted group-hover:text-primary transition-colors shrink-0"
+                />
+              </button>
             </div>
           </div>
 

@@ -77,7 +77,7 @@ export function MissionNotFoundState({ missionId }: { missionId: string }) {
   icon="add-circle"
   iconVariant="bold"
   >
-  Buka Misi Baru
+    Buka Misi Baru
   </Button>
   </Link>
   <Link href="/org" className="flex-1">

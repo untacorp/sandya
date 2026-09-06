@@ -239,8 +239,11 @@ function broadcastToLocalMesh(msg: TacticalMessage) {
 }
 
 export interface PoskoState {
-  // Session
+  // Session & UI
   session: ActiveSession;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
   setSessionRole: (role: UserRole) => void;
   setSessionPosko: (poskoId: string, poskoName: string) => void;
   setSessionMission: (missionId: string, missionName: string) => void;
@@ -386,6 +389,9 @@ export const usePoskoStore = create<PoskoState>()(
         poskoId: "",
         poskoName: "",
       },
+      sidebarCollapsed: false,
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSessionRole: (role) =>
         set((state) => ({ session: { ...state.session, userRole: role } })),
       setSessionPosko: (poskoId, poskoName) =>
@@ -1842,6 +1848,7 @@ export const usePoskoStore = create<PoskoState>()(
       name: "sandya_offline_posko_v1",
       partialize: (state) => ({
         session: state.session,
+        sidebarCollapsed: state.sidebarCollapsed,
         organizations: state.organizations,
         missions: state.missions,
         poskos: state.poskos,

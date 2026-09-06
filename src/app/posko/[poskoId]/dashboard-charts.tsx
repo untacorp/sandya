@@ -44,6 +44,11 @@ export function DashboardCharts({
   lansiaCount,
   disabilitasCount,
 }: DashboardChartsProps) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
   // 1. Data Gauge Kapasitas (Semi-circle donut 180deg to 0deg)
   const remainingCapacity = Math.max(0, capacity - totalRefugees);
   const capacityData = [
@@ -81,51 +86,59 @@ export function DashboardCharts({
         </div>
 
         <div className="relative h-32 w-full flex items-center justify-center my-1">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={capacityData}
-                cx="50%"
-                cy="85%"
-                startAngle={180}
-                endAngle={0}
-                innerRadius={55}
-                outerRadius={75}
-                paddingAngle={2}
-                dataKey="value"
-                stroke="none"
-              >
-                <Cell fill={capacityColor} />
-                <Cell fill="#f1f5f9" />
-              </Pie>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const d = payload[0];
-                    return (
-                      <div className="bg-surface p-2 rounded-lg border border-border shadow-md text-xs">
-                        <span className="font-bold text-text-main">{d.name}:</span>{" "}
-                        <span className="text-primary font-bold">{d.value} Jiwa</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {!isMounted ? (
+            <div className="h-full w-full flex items-center justify-center bg-surface-subtle/30 rounded-lg animate-pulse">
+              <span className="text-xs text-text-subtle">Memuat grafik...</span>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={capacityData}
+                    cx="50%"
+                    cy="85%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={55}
+                    outerRadius={75}
+                    paddingAngle={2}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    <Cell fill={capacityColor} />
+                    <Cell fill="#f1f5f9" />
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0];
+                        return (
+                          <div className="bg-surface p-2 rounded-lg border border-border shadow-md text-xs">
+                            <span className="font-bold text-text-main">{d.name}:</span>{" "}
+                            <span className="text-primary font-bold">{d.value} Jiwa</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
 
-          {/* Angka di tengah poros speedometer */}
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-center pointer-events-none">
-            <span
-              className={`text-xl font-black tracking-tight ${
-                isOverCapacity ? "text-status-danger" : "text-text-main"
-              }`}
-            >
-              {occupancyPercent}%
-            </span>
-            <span className="text-[10px] text-text-muted block -mt-0.5">Terisi</span>
-          </div>
+              {/* Angka di tengah poros speedometer */}
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-center pointer-events-none">
+                <span
+                  className={`text-xl font-black tracking-tight ${
+                    isOverCapacity ? "text-status-danger" : "text-text-main"
+                  }`}
+                >
+                  {occupancyPercent}%
+                </span>
+                <span className="text-[10px] text-text-muted block -mt-0.5">Terisi</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center justify-between text-[11px] text-text-muted border-t border-border/60 pt-2 mt-1">
@@ -146,7 +159,11 @@ export function DashboardCharts({
         </div>
 
         <div className="relative h-32 w-full flex items-center justify-center my-1">
-          {triageData.length === 0 ? (
+          {!isMounted ? (
+            <div className="h-full w-full flex items-center justify-center bg-surface-subtle/30 rounded-lg animate-pulse">
+              <span className="text-xs text-text-subtle">Memuat triase...</span>
+            </div>
+          ) : triageData.length === 0 ? (
             <div className="text-center py-6 text-xs text-text-muted">
               Belum ada data triase medis
             </div>
@@ -228,7 +245,11 @@ export function DashboardCharts({
         </div>
 
         <div className="h-32 w-full flex items-center justify-center my-1">
-          {totalVulnerable === 0 ? (
+          {!isMounted ? (
+            <div className="h-full w-full flex items-center justify-center bg-surface-subtle/30 rounded-lg animate-pulse">
+              <span className="text-xs text-text-subtle">Memuat kelompok rentan...</span>
+            </div>
+          ) : totalVulnerable === 0 ? (
             <div className="text-center py-6 text-xs text-text-muted">
               Tidak ada kelompok rentan tercatat
             </div>

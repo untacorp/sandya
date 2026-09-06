@@ -81,7 +81,7 @@ export function PoskoNotFoundState({ poskoId }: { poskoId: string }) {
   icon="add-circle"
   iconVariant="bold"
   >
-  Buka Posko Baru
+    Buka Posko Baru
   </Button>
   </Link>
   )}

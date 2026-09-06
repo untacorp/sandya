@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { useParams } from "next/navigation";
-import { PoskoNotFoundState } from "@/features/posko/components/posko-not-found";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
@@ -32,7 +31,7 @@ export default function PoskoDashboardPage() {
     capacity: 500,
     currentRefugees: poskoRefugees.length,
     locationName: "Area Operasi Lapangan",
-    createdAt: Date.now(),
+    createdAt: 1740000000000,
   };
 
   const totalRefugees = poskoRefugees.length;

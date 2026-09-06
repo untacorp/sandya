@@ -40,7 +40,9 @@ export type SolarIconName =
   | "arrow-up"
   | "flashlight"
   | "volume"
-  | "add-circle";
+  | "add-circle"
+  | "menu"
+  | "sidebar-collapse";
 
 export type SolarIconVariant = "linear" | "bold";
 
@@ -186,8 +188,16 @@ const SOLAR_ICON_MAP: Record<SolarIconName, { linear: string; bold: string }> = 
   bold: "solar:volume-loud-bold",
   },
   "add-circle": {
-  linear: "solar:add-circle-linear",
-  bold: "solar:add-circle-bold",
+    linear: "solar:add-circle-linear",
+    bold: "solar:add-circle-bold",
+  },
+  menu: {
+    linear: "solar:hamburger-menu-linear",
+    bold: "solar:hamburger-menu-bold",
+  },
+  "sidebar-collapse": {
+    linear: "solar:sidebar-minimalistic-linear",
+    bold: "solar:sidebar-minimalistic-bold",
   },
 };
 

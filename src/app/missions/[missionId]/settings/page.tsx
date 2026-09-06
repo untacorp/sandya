@@ -200,7 +200,7 @@ export default function MissionSettingsPage() {
   </Link>
   <Link href={`/missions/${mission.id}/poskos/create`}>
   <Button variant="ghost" size="sm" icon="add-circle">
-  + Posko Baru
+    Posko Baru
   </Button>
   </Link>
   {status !== "CLOSED_ARCHIVED" && (
@@ -238,7 +238,7 @@ export default function MissionSettingsPage() {
   <CardTitle>Posko Lapangan Terdaftar ({missionPoskos.length})</CardTitle>
   <Link href={`/missions/${mission.id}/poskos/create`}>
   <Button variant="outline" size="sm" icon="add-circle">
-  Tambah Posko
+    Tambah Posko
   </Button>
   </Link>
   </div>

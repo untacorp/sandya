@@ -48,12 +48,36 @@ export function HierarchySwitcherModal({ open, onOpenChange }: HierarchySwitcher
         open={open}
         onOpenChange={onOpenChange}
         title="Pilih Posko & Tingkat Operasi"
-      description="Beralih antar-posko lapangan atau ruang komando misi bencana."
-      maxWidth="lg"
-    >
-      <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
-        {/* Section 1: Switch Antar Posko Lapangan */}
-        <div>
+        description="Beralih antar-posko lapangan, ruang komando misi bencana, atau markas lembaga."
+        maxWidth="lg"
+      >
+        <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+          {/* Current Level Status Banner */}
+          <div className="p-3 rounded-xl bg-surface-subtle border border-border flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 font-bold">
+                <Icon
+                  name={activePoskoId ? "home" : activeMissionId ? "radar" : "buildings"}
+                  variant="bold"
+                  size={16}
+                />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-text-subtle block">
+                  Lokasi Operasi Anda Saat Ini
+                </span>
+                <p className="text-xs font-bold text-text-main truncate">
+                  {poskos.find((p) => p.id === activePoskoId)?.name || "Markas Komando"}
+                </p>
+              </div>
+            </div>
+            <Badge variant="primary" size="sm" className="text-[10px] font-bold shrink-0">
+              Tingkat 3 • Posko
+            </Badge>
+          </div>
+
+          {/* Section 1: Switch Antar Posko Lapangan */}
+          <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
               <Icon name="home" variant="bold" size={14} className="text-primary" />

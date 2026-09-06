@@ -10,6 +10,8 @@ export interface HierarchicalNavResult {
   levelBadgeText: string;
   currentTitle: string;
   currentSubtitle: string;
+  poskoDisplayName: string;
+  missionDisplayName: string;
   backHref: string;
   backLabel: string;
   isRootOfLevel: boolean;
@@ -194,6 +196,8 @@ export function useHierarchicalNav(): HierarchicalNavResult {
     levelBadgeText,
     currentTitle,
     currentSubtitle,
+    poskoDisplayName,
+    missionDisplayName,
     backHref,
     backLabel,
     isRootOfLevel,

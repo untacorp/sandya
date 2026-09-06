@@ -30,9 +30,6 @@ export default function LandingGatewayPage() {
               <span className="text-base font-bold tracking-tight text-text-main">
                 Sandya
               </span>
-              <Badge variant="neutral" size="sm" className="text-[10px] font-semibold">
-                v2.4
-              </Badge>
             </div>
           </div>
 

@@ -196,7 +196,7 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
       iconVariant="bold"
       onClick={() => setAddEventOpen(true)}
     >
-      + Rekam Peristiwa
+      Rekam Peristiwa
     </Button>
     <Button
       variant="ghost"

@@ -39,7 +39,7 @@ export default function MissionPoskosDirectoryPage() {
             iconVariant="bold"
             className="w-full sm:w-auto"
           >
-            + Buka Posko Baru
+            Buka Posko Baru
           </Button>
         </Link>
       </PageHeader>

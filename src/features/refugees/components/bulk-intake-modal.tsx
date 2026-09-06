@@ -514,7 +514,7 @@ export function BulkIntakeModal({ open, onOpenChange, poskoId }: BulkIntakeModal
                   {summaryStats.lansiaCount > 0 && <Badge variant="neutral" size="sm">Lansia: {summaryStats.lansiaCount}</Badge>}
                 </div>
                 <Button type="button" variant="outline" size="sm" icon="add-circle" onClick={handleAddEmptyRow}>
-                  + Tambah Baris Manual
+                  Tambah Baris Manual
                 </Button>
               </div>
 

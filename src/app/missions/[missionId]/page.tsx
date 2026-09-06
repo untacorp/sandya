@@ -80,7 +80,7 @@ export default function MissionOverviewPage() {
   iconVariant="bold"
   className="w-full sm:w-auto"
   >
-  + Buka Posko Lapangan
+    Buka Posko Lapangan
   </Button>
   </Link>
   </div>
