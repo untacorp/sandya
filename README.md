@@ -592,7 +592,7 @@ Sandya menyediakan antarmuka REST API dan Server-Sent Events (SSE) yang mematuhi
 ### Base URL
 ```text
 Development : http://localhost:3000/api/v1
-Production  : https://sandya.id/api/v1
+Production  : https://sandya.skensa.web.id/api/v1
 ```
 
 ### Endpoints

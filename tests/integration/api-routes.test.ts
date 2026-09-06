@@ -94,7 +94,7 @@ async function runIntegrationTests() {
   const mutateReq = new NextRequest('http://localhost:3000/api/v1/logistics/mutate', {
   method: 'POST',
   body: JSON.stringify({
-  posId: '550e8400-e29b-41d4-a716-446655440000',
+  posId: targetItem.poskoId,
   itemId: targetItem.id,
   txType: 'DISTRIBUTION',
   quantityChange: -15,
@@ -116,7 +116,7 @@ async function runIntegrationTests() {
   const unauthMutateReq = new NextRequest('http://localhost:3000/api/v1/logistics/mutate', {
   method: 'POST',
   body: JSON.stringify({
-  posId: '550e8400-e29b-41d4-a716-446655440000',
+  posId: targetItem.poskoId,
   itemId: targetItem.id,
   txType: 'DISTRIBUTION',
   quantityChange: -5,

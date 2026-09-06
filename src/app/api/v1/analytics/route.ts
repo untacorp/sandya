@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   });
   } catch (error) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
+  type: 'https://sandya.skensa.web.id/errors/server-error',
   title: 'Kesalahan Server Internal',
   status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
   detail: (error as Error).message,

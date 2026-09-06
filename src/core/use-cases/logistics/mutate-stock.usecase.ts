@@ -41,6 +41,17 @@ export class MutateStockUseCase {
   return Err(new DomainError('ITEM_NOT_FOUND', 'Item logistik tidak ditemukan di posko ini.', HTTP_STATUS.NOT_FOUND));
   }
 
+  // Cross-posko guard: Item hanya dapat dimutasi dalam posko tempat item tersebut berada
+  if (inventory.toSnapshot().poskoId !== asPoskoId(input.poskoId)) {
+    return Err(
+      new DomainError(
+        'CROSS_POSKO_INVENTORY_FORBIDDEN',
+        `Akses ditolak: Item logistik terdaftar di posko '${inventory.toSnapshot().poskoId}', bukan di posko '${input.poskoId}'.`,
+        HTTP_STATUS.FORBIDDEN
+      )
+    );
+  }
+
   // 2. Eksekusi mutasi dengan pengawasan invarian Single-Writer
   const mutateResult = inventory.mutateStock(
   input.officerId,

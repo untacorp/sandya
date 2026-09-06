@@ -117,55 +117,64 @@ export default function OrganizationConsolePage() {
       </div>
 
       {/* 2. Cloud Sync Telemetry & Uplink Bar */}
-      <div className="p-3.5 rounded-xl border border-border bg-surface-subtle shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-            <Icon name="radar" variant="bold" size={16} />
-          </div>
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-text-main">
-                Status Sinkronisasi Cloud:
-              </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-status-safe-bg text-status-safe border border-status-safe-border flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-status-safe animate-pulse" />
-                {cloudProvider === "MANAGED" ? "Cloud Resmi Sandya (Supabase)" : "BYOC Instansi"}
-              </span>
-            </div>
-            <p className="text-[11px] text-text-muted truncate">
-              Endpoint: <span className="font-mono">{cloudEndpoint}</span> • Terakhir sinkron:{" "}
-              <strong>
-                {new Date(lastSyncedAt).toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                WIB
-              </strong>
-              {pendingOutboxCount > 0 ? (
-                <span className="text-status-warning font-semibold ml-1.5">
-                  ({pendingOutboxCount} data antrean outbox)
-                </span>
-              ) : (
-                <span className="text-status-safe font-semibold ml-1.5">
-                  (Semua data tersinkron)
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
+      {(() => {
+        const displayEndpoint =
+          !cloudEndpoint || cloudEndpoint.includes("sandya.id")
+            ? "https://sandya.skensa.web.id/api/v1"
+            : cloudEndpoint;
 
-        <Button
-          variant="primary"
-          size="sm"
-          loading={isCloudSyncing}
-          onClick={handleCloudSync}
-          icon="sync"
-          iconVariant="bold"
-          className="shrink-0"
-        >
-          {isCloudSyncing ? "Menyinkronkan..." : "Sinkronkan ke Cloud"}
-        </Button>
-      </div>
+        return (
+          <div className="p-3.5 rounded-xl border border-border bg-surface-subtle shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <Icon name="radar" variant="bold" size={16} />
+              </div>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-text-main">
+                    Status Sinkronisasi Cloud:
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-status-safe-bg text-status-safe border border-status-safe-border flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-status-safe animate-pulse" />
+                    {cloudProvider === "MANAGED" ? "Cloud Resmi Sandya (Supabase)" : "BYOC Instansi"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-text-muted truncate" title={displayEndpoint}>
+                  Endpoint: <span className="font-mono">{displayEndpoint}</span> • Terakhir sinkron:{" "}
+                  <strong>
+                    {new Date(lastSyncedAt).toLocaleTimeString("id-ID", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    WIB
+                  </strong>
+                  {pendingOutboxCount > 0 ? (
+                    <span className="text-status-warning font-semibold ml-1.5">
+                      ({pendingOutboxCount} data antrean outbox)
+                    </span>
+                  ) : (
+                    <span className="text-status-safe font-semibold ml-1.5">
+                      (Semua data tersinkron)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              loading={isCloudSyncing}
+              onClick={handleCloudSync}
+              icon="sync"
+              iconVariant="bold"
+              className="w-full sm:w-auto shrink-0 self-stretch sm:self-auto justify-center text-xs"
+            >
+              {isCloudSyncing ? "Menyinkronkan..." : "Sinkronkan ke Cloud"}
+            </Button>
+          </div>
+        );
+      })()}
 
       {syncToast && (
         <div

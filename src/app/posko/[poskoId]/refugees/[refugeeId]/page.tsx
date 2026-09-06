@@ -20,5 +20,5 @@ export default async function RefugeeDetailPage({
   params: Promise<{ poskoId: string; refugeeId: string }>;
 }) {
   const resolvedParams = await params;
-  return <RefugeeDetailView refugeeId={resolvedParams.refugeeId} />;
+  return <RefugeeDetailView refugeeId={resolvedParams.refugeeId} poskoId={resolvedParams.poskoId} />;
 }

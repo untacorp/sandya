@@ -19,6 +19,7 @@ import { type DisasterPerson } from "@/shared/types";
 interface AdHocDistributionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  poskoId?: string;
   preselectedRefugeeId?: string;
   onSuccess?: (message: string) => void;
 }
@@ -36,6 +37,7 @@ const toInventoryCategory = (cat: string): InventoryCategory => {
 export function AdHocDistributionModal({
   open,
   onOpenChange,
+  poskoId,
   preselectedRefugeeId,
   onSuccess,
 }: AdHocDistributionModalProps) {
@@ -48,10 +50,14 @@ export function AdHocDistributionModal({
     createNeedsTicket,
   } = usePoskoStore();
 
-  const effectivePoskoId = session.poskoId;
+  const effectivePoskoId = poskoId || session.poskoId;
   const poskoInventory = React.useMemo(() => {
     return inventory.filter((i) => i.postId === effectivePoskoId);
   }, [inventory, effectivePoskoId]);
+
+  const poskoRefugees = React.useMemo(() => {
+    return refugees.filter((r) => r.postId === effectivePoskoId);
+  }, [refugees, effectivePoskoId]);
 
   // RBAC Permission Check
   const authorizedRoles = [
@@ -78,21 +84,29 @@ export function AdHocDistributionModal({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
-  // Preselect refugee if provided
+  // Preselect refugee if provided (strict posko boundary check)
   React.useEffect(() => {
     if (preselectedRefugeeId) {
       const found = refugees.find((r) => r.id === preselectedRefugeeId);
       if (found) {
-        setSelectedRefugee(found);
+        if (found.postId && found.postId !== effectivePoskoId) {
+          setSelectedRefugee(null);
+          setErrorMessage(
+            `Akses ditolak: Warga "${found.fullName}" terdaftar di Posko lain (${found.postId}). Alokasi stok posko ini (${effectivePoskoId}) hanya dapat disalurkan untuk warga yang terdaftar di posko ini.`
+          );
+        } else {
+          setSelectedRefugee(found);
+          setErrorMessage(null);
+        }
       }
     }
-  }, [preselectedRefugeeId, refugees]);
+  }, [preselectedRefugeeId, refugees, effectivePoskoId]);
 
-  // Filtered refugees for search
+  // Filtered refugees for search (strictly isolated to active posko)
   const filteredRefugees = React.useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return refugees
+    return poskoRefugees
       .filter(
         (r) =>
           r.fullName.toLowerCase().includes(q) ||
@@ -101,7 +115,7 @@ export function AdHocDistributionModal({
           (r.shelterLocation && r.shelterLocation.toLowerCase().includes(q))
       )
       .slice(0, 5);
-  }, [refugees, searchQuery]);
+  }, [poskoRefugees, searchQuery]);
 
   // Set default item if inventory exists
   React.useEffect(() => {
@@ -136,7 +150,7 @@ export function AdHocDistributionModal({
     );
   }, [targetItem, selectedRefugee, recentDistributions]);
 
-  // Handle QR scan to find refugee
+  // Handle QR scan to find refugee (with cross-posko guard)
   const handleQrScan = (decodedText: string) => {
     setIsScannerOpen(false);
     const matched = refugees.find(
@@ -146,13 +160,20 @@ export function AdHocDistributionModal({
         decodedText.includes(r.id) ||
         decodedText.toLowerCase().includes(r.fullName.toLowerCase())
     );
-    if (matched) {
-      setSelectedRefugee(matched);
-      setSearchQuery("");
-      setErrorMessage(null);
-    } else {
-      setErrorMessage(`Warga dengan kode QR "${decodedText}" tidak ditemukan dalam data posko.`);
+    if (!matched) {
+      setErrorMessage(`Warga dengan kode QR "${decodedText}" tidak ditemukan dalam sistem.`);
+      return;
     }
+    if (matched.postId && matched.postId !== effectivePoskoId) {
+      setSelectedRefugee(null);
+      setErrorMessage(
+        `Akses ditolak: Warga "${matched.fullName}" terdaftar di Posko lain (${matched.postId}). Stok logistik Posko ${effectivePoskoId} tidak dapat dialokasikan untuk warga dari posko berbeda.`
+      );
+      return;
+    }
+    setSelectedRefugee(matched);
+    setSearchQuery("");
+    setErrorMessage(null);
   };
 
   const handleClose = () => {
@@ -170,6 +191,12 @@ export function AdHocDistributionModal({
     e.preventDefault();
     if (!selectedRefugee) {
       setErrorMessage("Pilih warga penerima terlebih dahulu.");
+      return;
+    }
+    if (selectedRefugee.postId && selectedRefugee.postId !== effectivePoskoId) {
+      setErrorMessage(
+        `Akses ditolak: Warga ${selectedRefugee.fullName} terdaftar di posko lain (${selectedRefugee.postId}). Alokasi stok Posko ${effectivePoskoId} tidak diizinkan.`
+      );
       return;
     }
     if (!targetItem) {

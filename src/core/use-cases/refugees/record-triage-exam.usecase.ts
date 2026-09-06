@@ -74,6 +74,18 @@ export class RecordTriageExamUseCase {
   }
 
   const refugee = refugeeResult.value;
+  const refugeeSnapshot = refugee.toSnapshot();
+
+  // Cross-posko guard: Pasien hanya dapat diperiksa di posko tempat mereka terdaftar
+  if (refugeeSnapshot.poskoId !== asPoskoId(input.poskoId)) {
+    return Err(
+      new DomainError(
+        'CROSS_POSKO_MUTATION_FORBIDDEN',
+        `Akses ditolak: Pasien terdaftar di posko '${refugeeSnapshot.poskoId}', tidak dapat melakukan pemeriksaan medis di posko '${input.poskoId}'.`,
+        HTTP_STATUS.FORBIDDEN
+      )
+    );
+  }
 
   // 3. Hitung monotonic sequence & causal parent
   const eventsResult = await this.refugeeRepo.getEventsByRefugeeId(refugeeId);

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   if (!parseResult.success) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/invalid-input',
+  type: 'https://sandya.skensa.web.id/errors/invalid-input',
   title: 'Format Input Mutasi Tidak Valid',
   status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
   detail: 'Data mutasi stok logistik tidak memenuhi validasi skema.',
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   if (!result.ok) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/stock-mutation-failed',
+  type: 'https://sandya.skensa.web.id/errors/stock-mutation-failed',
   title: 'Mutasi Stok Gagal Dilakukan',
   status: result.error.status || HTTP_STATUS.BAD_REQUEST,
   detail: result.error.message,
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   );
   } catch (error) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
+  type: 'https://sandya.skensa.web.id/errors/server-error',
   title: 'Kesalahan Server Internal',
   status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
   detail: (error as Error).message,

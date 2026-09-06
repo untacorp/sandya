@@ -8,17 +8,25 @@ import { Tabs } from "@/shared/ui/tabs";
 export default function LogisticsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
-  const { session, needsTickets, missionWaybills } = usePoskoStore();
+  const { session, poskos, needsTickets, missionWaybills } = usePoskoStore();
 
-  const routePoskoId = (params?.poskoId as string) || (pathname.startsWith("/posko/") ? pathname.split("/")[2] : null);
-  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
+  const routePoskoId = (params?.poskoId as string) || (pathname?.startsWith("/posko/") ? pathname.split("/")[2] : null);
+  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL")
+    ? routePoskoId
+    : (session.poskoId && session.poskoId !== "POS-LOCAL"
+      ? session.poskoId
+      : (poskos[0]?.id || routePoskoId || ""));
 
   let activeId = "stock";
   if (pathname.includes("/distribute")) activeId = "distribute";
   else if (pathname.includes("/waybills")) activeId = "waybills";
 
-  const pendingTickets = needsTickets.filter((t) => t.status === "PENDING" || t.status === "ALLOCATED");
-  const inTransitWaybills = missionWaybills.filter((w) => w.status === "IN_TRANSIT");
+  const pendingTickets = needsTickets.filter(
+    (t) => (!poskoId || t.postId === poskoId) && (t.status === "PENDING" || t.status === "ALLOCATED")
+  );
+  const inTransitWaybills = missionWaybills.filter(
+    (w) => (!poskoId || w.targetPoskoId === poskoId) && w.status === "IN_TRANSIT"
+  );
 
   return (
   <div className="space-y-4">

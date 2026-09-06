@@ -2,9 +2,9 @@
 name = "sandya"
 version = "0.1.0-alpha.1"
 description = "Sandya - Offline-First Disaster Response Management Native Application"
-authors = ["Sandya Humanitarian Project <team@sandya.id>"]
-license = "Apache-2.0"
-repository = "https://github.com/sandya-org/sandya"
+authors = ["SkensaJaya"]
+license = "MIT"
+repository = "https://github.com/untacorp/sandya"
 edition = "2021"
 rust-version = "1.77.2"
 

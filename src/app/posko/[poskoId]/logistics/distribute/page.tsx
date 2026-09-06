@@ -72,6 +72,21 @@ export default function LogisticsDistributePage() {
   return;
   }
 
+  if (selectedTicketForAllocation.postId !== effectivePoskoId) {
+  setErrorMessage(`Akses ditolak: Tiket ${selectedTicketForAllocation.id} bukan milik posko aktif (${effectivePoskoId}).`);
+  return;
+  }
+
+  if (selectedTicketForAllocation.refugeeId) {
+  const targetRefugee = refugees.find((r) => r.id === selectedTicketForAllocation.refugeeId);
+  if (targetRefugee && targetRefugee.postId && targetRefugee.postId !== effectivePoskoId) {
+  setErrorMessage(
+  `Akses ditolak: Warga penerima (${targetRefugee.fullName}) terdaftar di posko lain (${targetRefugee.postId}). Alokasi stok posko ${effectivePoskoId} tidak diizinkan.`
+  );
+  return;
+  }
+  }
+
   setIsProcessing(true);
   setErrorMessage(null);
 
@@ -144,7 +159,10 @@ export default function LogisticsDistributePage() {
   };
 
   const handleCompleteDelivery = async (ticket: NeedsTicket) => {
-    completeDelivery(ticket.id);
+    if (ticket.postId !== effectivePoskoId) {
+      setErrorMessage(`Akses ditolak: Tiket ${ticket.id} bukan milik posko aktif (${effectivePoskoId}).`);
+      return;
+    }
 
     // Link ke Timeline Pengungsi via Event Sourcing (AID_RECEIVED)
     const targetRefugee = refugees.find(
@@ -152,6 +170,15 @@ export default function LogisticsDistributePage() {
         (ticket.refugeeId && r.id === ticket.refugeeId) ||
         r.fullName.toLowerCase() === ticket.refugeeName.toLowerCase()
     );
+
+    if (targetRefugee && targetRefugee.postId && targetRefugee.postId !== effectivePoskoId) {
+      setErrorMessage(
+        `Akses ditolak: Penerima bantuan (${targetRefugee.fullName}) terdaftar di posko lain (${targetRefugee.postId}). Penyerahan tidak dapat diselesaikan dari posko ${effectivePoskoId}.`
+      );
+      return;
+    }
+
+    completeDelivery(ticket.id);
 
     if (targetRefugee) {
       try {
@@ -517,6 +544,7 @@ export default function LogisticsDistributePage() {
     <AdHocDistributionModal
       open={adHocModalOpen}
       onOpenChange={setAdHocModalOpen}
+      poskoId={effectivePoskoId}
       onSuccess={(msg) => {
         setSuccessToast(msg);
         setTimeout(() => setSuccessToast(null), 5000);

@@ -39,13 +39,12 @@ export function LandingGatewayPage() {
               <span className="text-base font-bold tracking-tight text-text-main">
                 Sandya
               </span>
+              <span className="text-xs text-text-muted hidden sm:inline">• Portal Operasional Posko</span>
             </div>
           </div>
-          <Link href="/">
-            <Button variant="ghost" size="sm" icon="arrow-left" className="text-xs">
-              Halaman Utama Web
-            </Button>
-          </Link>
+          <Badge variant="neutral" size="sm">
+            Portal Mandiri
+          </Badge>
         </div>
       </header>
 
@@ -80,55 +79,55 @@ export function LandingGatewayPage() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-border flex flex-col sm:flex-row items-center gap-2">
+            <div className="pt-2.5 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               {session.userRole === "PEMIMPIN_ORGANISASI" && (
-                <Link href="/org" className="w-full sm:flex-1">
+                <Link href="/org" className="w-full sm:flex-1 min-w-0">
                   <Button
                     variant="primary"
                     size="md"
-                    className="w-full justify-center"
+                    className="w-full justify-center text-xs sm:text-sm font-bold min-w-0 px-3"
                     icon="buildings"
                     iconVariant="bold"
                     iconRight="arrow-right"
                   >
-                    Masuk Markas Lembaga
+                    <span className="truncate">Markas Lembaga</span>
                   </Button>
                 </Link>
               )}
               {session.poskoId && (
-                <Link href={`/posko/${session.poskoId}`} className="w-full sm:flex-1">
+                <Link href={`/posko/${session.poskoId}`} className="w-full sm:flex-1 min-w-0">
                   <Button
                     variant="primary"
                     size="md"
-                    className="w-full justify-center"
+                    className="w-full justify-center text-xs sm:text-sm font-bold min-w-0 px-3"
                     icon="home"
                     iconVariant="bold"
                     iconRight="arrow-right"
                   >
-                    Lanjutkan Tugas di Posko
+                    <span className="truncate">Masuk ke Posko</span>
                   </Button>
                 </Link>
               )}
               {session.missionId && (
-                <Link href={`/missions/${session.missionId}`} className="w-full sm:w-auto">
+                <Link href={`/missions/${session.missionId}`} className="w-full sm:w-auto min-w-0 shrink-0">
                   <Button
                     variant="secondary"
                     size="md"
-                    className="w-full justify-center"
+                    className="w-full sm:w-auto justify-center text-xs sm:text-sm font-semibold min-w-0 px-3"
                     icon="radar"
                     iconVariant="bold"
                   >
-                    Ruang Situasi Misi
+                    <span className="truncate">Situasi Misi</span>
                   </Button>
                 </Link>
               )}
-              <Link href="/activate" className="w-full sm:w-auto">
+              <Link href="/activate" className="w-full sm:w-auto min-w-0 shrink-0">
                 <Button
                   variant="ghost"
                   size="md"
-                  className="w-full justify-center text-xs text-text-muted hover:text-text-main"
+                  className="w-full sm:w-auto justify-center text-xs text-text-muted hover:text-text-main min-w-0 px-2.5"
                 >
-                  Ganti Kartu / Pindai Ulang
+                  <span className="truncate">Ganti Kartu</span>
                 </Button>
               </Link>
             </div>

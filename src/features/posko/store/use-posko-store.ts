@@ -1092,6 +1092,19 @@ export const usePoskoStore = create<PoskoState>()(
     const item = state.inventory.find((i) => i.id === itemId);
     if (!item || item.currentQuantity < qty) return false;
 
+    const ticket = state.needsTickets.find((t) => t.id === ticketId);
+    if (!ticket) return false;
+
+    const poskoId = item.postId || state.session.poskoId;
+    if (ticket.postId && ticket.postId !== poskoId) return false;
+
+    if (ticket.refugeeId) {
+      const recipient = state.refugees.find((r) => r.id === ticket.refugeeId);
+      if (recipient && recipient.postId && recipient.postId !== poskoId) {
+        return false;
+      }
+    }
+
     const updatedInventory = state.inventory.map((i) =>
       i.id === itemId
         ? { ...i, currentQuantity: i.currentQuantity - qty, lastUpdatedAt: Date.now() }
@@ -1107,7 +1120,7 @@ export const usePoskoStore = create<PoskoState>()(
     const tx: InventoryTransaction = {
       id: `TX-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_4_DIGIT_RANGE)}`,
       itemId,
-      postId: state.session.poskoId,
+      postId: poskoId,
       officerId: state.session.userId,
       officerName: state.session.userName,
       txType: "DISTRIBUTION",
@@ -1176,16 +1189,25 @@ export const usePoskoStore = create<PoskoState>()(
   },
 
   createNeedsTicket: (ticket) => {
-  const newTicket: NeedsTicket = {
-  ...ticket,
-  id: `TKT-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`,
-  status: "PENDING",
-  createdAt: Date.now(),
-  };
-  set((state) => ({
-  needsTickets: [newTicket, ...state.needsTickets],
-  pendingOutboxCount: state.pendingOutboxCount + 1,
-  }));
+    const state = get();
+    if (ticket.refugeeId) {
+      const refugee = state.refugees.find((r) => r.id === ticket.refugeeId);
+      if (refugee && refugee.postId && refugee.postId !== ticket.postId) {
+        throw new Error(
+          `Akses ditolak: Warga ${refugee.fullName} terdaftar di posko ${refugee.postId}, tidak dapat membuat tiket kebutuhan di posko ${ticket.postId}.`
+        );
+      }
+    }
+    const newTicket: NeedsTicket = {
+      ...ticket,
+      id: `TKT-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`,
+      status: "PENDING",
+      createdAt: Date.now(),
+    };
+    set((state) => ({
+      needsTickets: [newTicket, ...state.needsTickets],
+      pendingOutboxCount: state.pendingOutboxCount + 1,
+    }));
   },
 
   cancelNeedsTicket: (ticketId, reason) => {
@@ -1383,6 +1405,16 @@ export const usePoskoStore = create<PoskoState>()(
     const state = get();
     const targetItem = state.inventory.find((i) => i.id === data.itemId);
     const poskoId = targetItem?.postId || state.session.poskoId;
+
+    if (data.refugeeId) {
+      const refugee = state.refugees.find((r) => r.id === data.refugeeId);
+      if (refugee && refugee.postId && refugee.postId !== poskoId) {
+        throw new Error(
+          `Akses ditolak: Warga ${refugee.fullName} terdaftar di posko ${refugee.postId}, tidak dapat menerima alokasi stok dari posko ${poskoId}.`
+        );
+      }
+    }
+
     const ticketId = `TKT-DIR-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`;
     const now = Date.now();
 
@@ -1622,13 +1654,13 @@ export const usePoskoStore = create<PoskoState>()(
   pendingOutboxCount: 0,
   lastSyncedAt: Date.now(),
   cloudProvider: "MANAGED",
-  cloudEndpoint: "https://api.sandya.id",
+  cloudEndpoint: "https://sandya.skensa.web.id/api/v1",
   isCloudSyncing: false,
 
   setCloudProvider: (provider, endpoint) =>
     set({
       cloudProvider: provider,
-      cloudEndpoint: endpoint || "https://api.sandya.id",
+      cloudEndpoint: endpoint || "https://sandya.skensa.web.id/api/v1",
     }),
 
       triggerCloudSync: async () => {
@@ -1873,6 +1905,9 @@ export const usePoskoStore = create<PoskoState>()(
           state.peers = [];
           if (state.inventory && state.refugees) {
             state.inventory = syncInventoryBurnRates(state.inventory, state.refugees);
+          }
+          if (!state.cloudEndpoint || state.cloudEndpoint.includes("sandya.id")) {
+            state.cloudEndpoint = "https://sandya.skensa.web.id/api/v1";
           }
         }
       },

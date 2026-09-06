@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const result = await container.inventoryRepo.findByPoskoId(asPoskoId(poskoId));
   if (!result.ok) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/db-query-failed',
+  type: 'https://sandya.skensa.web.id/errors/db-query-failed',
   title: 'Gagal Membaca Data Stok Logistik',
   status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
   detail: result.error.message,
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   });
   } catch (error) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
+  type: 'https://sandya.skensa.web.id/errors/server-error',
   title: 'Kesalahan Server Internal',
   status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
   detail: (error as Error).message,

@@ -20,11 +20,18 @@ import { RefugeeEventProps } from "@/core/domain/refugees/refugee.aggregate";
 import { AddRefugeeEventModal } from "./add-refugee-event-modal";
 import { EditRefugeeModal } from "./edit-refugee-modal";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { AlertBanner } from "@/shared/ui/alert-banner";
 import { AdHocDistributionModal } from "@/features/logistics/components/adhoc-distribution-modal";
 
-export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
+interface RefugeeDetailViewProps {
+  refugeeId: string;
+  poskoId?: string;
+}
+
+export function RefugeeDetailView({ refugeeId, poskoId }: RefugeeDetailViewProps) {
   const router = useRouter();
   const { session, refugees, deleteRefugee } = usePoskoStore();
+  const effectivePoskoId = (poskoId && poskoId !== "POS-LOCAL") ? poskoId : session.poskoId;
 
   const person = refugees.find((r) => r.id === refugeeId);
   const [addEventOpen, setAddEventOpen] = React.useState(false);
@@ -82,24 +89,49 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   }, [person]);
 
   const handleCheckout = () => {
-  if (!person) return;
-  deleteRefugee(person.id);
-  setCheckoutModalOpen(false);
-  router.push(`/posko/${session.poskoId}/refugees`);
+    if (!person) return;
+    deleteRefugee(person.id);
+    setCheckoutModalOpen(false);
+    router.push(`/posko/${effectivePoskoId}/refugees`);
   };
 
   if (!person) {
-  return (
-  <div className="py-12 px-4 max-w-xl mx-auto">
-  <EmptyState
-  icon="user"
-  title="Data Warga Tidak Ditemukan"
-  description={`Data warga dengan identitas "${refugeeId}" tidak terdaftar di posko ini.`}
-  actionLabel="Kembali ke Daftar Warga"
-  actionHref={`/posko/${session.poskoId}/refugees`}
-  />
-  </div>
-  );
+    return (
+      <div className="py-12 px-4 max-w-xl mx-auto">
+        <EmptyState
+          icon="user"
+          title="Data Warga Tidak Ditemukan"
+          description={`Data warga dengan identitas "${refugeeId}" tidak terdaftar di posko ini.`}
+          actionLabel="Kembali ke Daftar Warga"
+          actionHref={`/posko/${effectivePoskoId}/refugees`}
+        />
+      </div>
+    );
+  }
+
+  if (person.postId && person.postId !== effectivePoskoId) {
+    return (
+      <div className="py-12 px-4 max-w-xl mx-auto space-y-4">
+        <AlertBanner
+          variant="danger"
+          title="Akses Ditolak: Warga Terdaftar di Posko Lain"
+          description={`Warga "${person.fullName}" (ID: ${person.id}) terdaftar di Posko ${person.postId}. Anda sedang mengakses melalui Posko ${effectivePoskoId}. Sesuai prinsip integritas data manusia dan buku kas logistik posko, data warga ini hanya dapat diakses dan dikelola dari posko pendaftarannya.`}
+          icon="shield"
+        />
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          <Link href={`/posko/${effectivePoskoId}/refugees`}>
+            <Button variant="outline" size="md" className="w-full sm:w-auto">
+              Kembali ke Posko {effectivePoskoId}
+            </Button>
+          </Link>
+          <Link href={`/posko/${person.postId}/refugees/${person.id}`}>
+            <Button variant="primary" size="md" className="w-full sm:w-auto">
+              Beralih ke Posko {person.postId}
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const formatEventTitle = (type: string) => {
@@ -165,7 +197,7 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   <div className="space-y-6">
   {/* Top Back & Action Header */}
   <div className="flex flex-wrap items-center justify-between gap-2">
-  <Link href={`/posko/${session.poskoId}/refugees`}>
+  <Link href={`/posko/${effectivePoskoId}/refugees`}>
   <Button variant="ghost" size="sm" icon="arrow-left" iconVariant="linear">
   Kembali ke Daftar Warga
   </Button>
@@ -407,6 +439,7 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
     <AdHocDistributionModal
       open={adHocLogisticsOpen}
       onOpenChange={setAdHocLogisticsOpen}
+      poskoId={effectivePoskoId}
       preselectedRefugeeId={person.id}
       onSuccess={() => {
         fetchEvents();

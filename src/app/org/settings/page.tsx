@@ -82,7 +82,7 @@ export default function OrgSettingsPage() {
   const handleSelectCloudType = (type: "MANAGED" | "BYOC") => {
     setCloudType(type);
     setTestResult(null);
-    const endpoint = type === "MANAGED" ? "https://api.sandya.id" : byocUrl;
+    const endpoint = type === "MANAGED" ? "https://sandya.skensa.web.id/api/v1" : byocUrl;
     setCloudProvider(type, endpoint);
   };
 
@@ -106,7 +106,7 @@ export default function OrgSettingsPage() {
   };
 
   const handleSaveCloud = () => {
-    const endpoint = cloudType === "MANAGED" ? "https://api.sandya.id" : byocUrl;
+    const endpoint = cloudType === "MANAGED" ? "https://sandya.skensa.web.id/api/v1" : byocUrl;
     setCloudProvider(cloudType, endpoint);
     setIsCloudSaved(true);
     setTimeout(() => setIsCloudSaved(false), 2000);
@@ -528,7 +528,7 @@ export default function OrgSettingsPage() {
                 </h4>
               </div>
               <p className="text-xs text-text-muted mt-1">
-                Server pusat terkelola resmi siap pakai (`https://api.sandya.id`).
+                Server pusat terkelola resmi siap pakai (`https://sandya.skensa.web.id/api/v1`).
               </p>
             </button>
 

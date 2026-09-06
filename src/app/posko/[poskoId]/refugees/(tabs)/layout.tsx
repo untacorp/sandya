@@ -8,12 +8,16 @@ import { Tabs } from "@/shared/ui/tabs";
 export default function RefugeesTabsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
-  const { session, refugees } = usePoskoStore();
+  const { session, poskos, refugees } = usePoskoStore();
 
-  const routePoskoId = (params?.poskoId as string) || (pathname.startsWith("/posko/") ? pathname.split("/")[2] : null);
-  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
+  const routePoskoId = (params?.poskoId as string) || (pathname?.startsWith("/posko/") ? pathname.split("/")[2] : null);
+  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL")
+    ? routePoskoId
+    : (session.poskoId && session.poskoId !== "POS-LOCAL"
+      ? session.poskoId
+      : (poskos[0]?.id || routePoskoId || ""));
 
-  const poskoRefugees = refugees.filter((r) => r.postId === poskoId);
+  const poskoRefugees = poskoId ? refugees.filter((r) => r.postId === poskoId) : refugees;
 
   let activeId = "list";
   if (pathname.includes("/triage")) activeId = "triage";

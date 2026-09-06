@@ -35,6 +35,18 @@ export class RecordRefugeeEventUseCase {
     }
 
     const refugee = refugeeResult.value;
+    const refugeeSnapshot = refugee.toSnapshot();
+
+    // Cross-posko guard: Warga hanya dapat menerima event di posko pendaftarannya
+    if (refugeeSnapshot.poskoId !== asPoskoId(input.poskoId)) {
+      return Err(
+        new DomainError(
+          'CROSS_POSKO_MUTATION_FORBIDDEN',
+          `Akses ditolak: Pengungsi terdaftar di posko '${refugeeSnapshot.poskoId}', tidak dapat mencatat aksi di posko '${input.poskoId}'.`,
+          HTTP_STATUS.FORBIDDEN
+        )
+      );
+    }
 
     // RBAC Guard: Event medis klinis (HEALTH_CHECK, TRIAGE_UPDATE) hanya untuk peran MEDIS
     if ((input.eventType === 'HEALTH_CHECK' || input.eventType === 'TRIAGE_UPDATE') && input.authorRole !== 'MEDIS') {

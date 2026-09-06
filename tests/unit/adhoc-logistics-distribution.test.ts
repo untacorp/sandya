@@ -174,6 +174,55 @@ async function runAdHocLogisticsDistributionTests() {
   assert.strictEqual(unauthDirect.error.code, 'UNAUTHORIZED_WRITER');
   console.log('  [PASS] RBAC correctly blocked unauthorized direct physical stock mutation\n');
 
+  // Test 5: Cross-Posko Isolation Guard on Refugee Event
+  console.log('Test 5: Cross-Posko Isolation Guard on Refugee Aid/Event Recording');
+  const posko2RefugeeId = asRefugeeId('REF-POSKO2-001');
+  const refugee2Res = RefugeeAggregate.create({
+    id: posko2RefugeeId,
+    poskoId: asPoskoId('POS-02'),
+    fullName: 'Joko Widodo Posko 2',
+    nationalId: '3201015505900002',
+    gender: 'M',
+    age: 45,
+    shelterLocation: 'Tenda Posko 2 - 01',
+    registeredByUserId: 'USR-REL-02',
+  });
+  assert.strictEqual(refugee2Res.ok, true);
+  await refugeeRepo.save(refugee2Res.value);
+
+  // Attempt to allocate/record AID_RECEIVED from POS-01 for citizen of POS-02
+  const crossPoskoEventRes = await recordRefugeeEventUseCase.execute({
+    refugeeId: 'REF-POSKO2-001',
+    poskoId: 'POS-01', // Mismatch: refugee is at POS-02
+    authorId: 'USR-LOG-01',
+    authorName: 'Petugas Logistik Budi',
+    authorRole: 'LOGISTIK',
+    eventType: 'AID_RECEIVED',
+    eventPayload: {
+      item: 'Beras Premium 5kg',
+      quantity: 1,
+      unit: 'KARUNG',
+    },
+  });
+  assert.strictEqual(crossPoskoEventRes.ok, false, 'Cross-posko refugee aid recording must be rejected');
+  assert.strictEqual(crossPoskoEventRes.error.code, 'CROSS_POSKO_MUTATION_FORBIDDEN');
+  console.log('  [PASS] Cross-posko refugee aid event rejected with CROSS_POSKO_MUTATION_FORBIDDEN\n');
+
+  // Test 6: Cross-Posko Isolation Guard on Stock Mutation
+  console.log('Test 6: Cross-Posko Isolation Guard on Inventory Mutation');
+  const crossPoskoStockRes = await mutateStockUseCase.execute({
+    poskoId: 'POS-02', // Mismatch: item POS-01-ITEM-BERAS belongs to POS-01
+    itemId: 'POS-01-ITEM-BERAS',
+    officerId: 'USR-LOG-02',
+    officerRole: 'PETUGAS_LOGISTIK',
+    txType: 'DISTRIBUTION',
+    quantityChange: -1,
+    logicalSeq: 5,
+  });
+  assert.strictEqual(crossPoskoStockRes.ok, false, 'Cross-posko inventory mutation must be rejected');
+  assert.strictEqual(crossPoskoStockRes.error.code, 'CROSS_POSKO_INVENTORY_FORBIDDEN');
+  console.log('  [PASS] Cross-posko stock mutation rejected with CROSS_POSKO_INVENTORY_FORBIDDEN\n');
+
   console.log('ALL AD-HOC LOGISTICS DISTRIBUTION & ANTI-HOARDING TESTS PASSED (100% VERIFIED)!');
 }
 

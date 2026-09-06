@@ -8,10 +8,14 @@ import { Tabs } from "@/shared/ui/tabs";
 export default function SyncLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const params = useParams();
-  const { session } = usePoskoStore();
+  const { session, poskos } = usePoskoStore();
 
-  const routePoskoId = (params?.poskoId as string) || (pathname.startsWith("/posko/") ? pathname.split("/")[2] : null);
-  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
+  const routePoskoId = (params?.poskoId as string) || (pathname?.startsWith("/posko/") ? pathname.split("/")[2] : null);
+  const poskoId = (routePoskoId && routePoskoId !== "POS-LOCAL")
+    ? routePoskoId
+    : (session.poskoId && session.poskoId !== "POS-LOCAL"
+      ? session.poskoId
+      : (poskos[0]?.id || routePoskoId || ""));
 
   let activeId = "hub";
   if (pathname.includes("/animated-qr")) activeId = "animated";

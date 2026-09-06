@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   if (!parseResult.success) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/invalid-payload',
+  type: 'https://sandya.skensa.web.id/errors/invalid-payload',
   title: 'Format Paket Tidak Valid',
   status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
   detail: 'Payload paket sinkronisasi tidak sesuai skema biner resmi.',
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   if (!originPublicKeyHex) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/missing-public-key',
+  type: 'https://sandya.skensa.web.id/errors/missing-public-key',
   title: 'Public Key Posko Pengirim Wajib Disertakan',
   status: HTTP_STATUS.BAD_REQUEST,
   detail: 'Header X-Origin-Pubkey diperlukan untuk memvalidasi tanda tangan digital paket.',
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   if (!result.ok) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/ingest-failed',
+  type: 'https://sandya.skensa.web.id/errors/ingest-failed',
   title: 'Gagal Memproses Paket Sinkronisasi',
   status: result.error.status || HTTP_STATUS.BAD_REQUEST,
   detail: result.error.message,
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   );
   } catch (error) {
   return createProblemResponse({
-  type: 'https://sandya.id/errors/server-error',
+  type: 'https://sandya.skensa.web.id/errors/server-error',
   title: 'Kesalahan Server Internal',
   status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
   detail: (error as Error).message,
