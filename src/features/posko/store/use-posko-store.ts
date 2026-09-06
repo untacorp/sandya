@@ -447,23 +447,26 @@ export const usePoskoStore = create<PoskoState>()(
   let newAddedCount = 0;
 
   for (const p of persons) {
-  const existingIdx = currentList.findIndex((r) => {
-  if (p.nik && r.nik && p.nik === r.nik) return true;
-  const matchName = r.fullName.trim().toLowerCase() === p.fullName.trim().toLowerCase();
-  const matchGender = r.gender === p.gender;
-  const matchAge = r.age === p.age;
-  const matchDomicile = (!p.domicileOrigin && !r.domicileOrigin) || (p.domicileOrigin === r.domicileOrigin);
-  return matchName && matchGender && matchAge && matchDomicile;
-  });
+        const existingIdx = currentList.findIndex((r) => {
+          if (p.id && r.id && p.id === r.id) return true;
+          if (p.nik && r.nik && p.nik === r.nik) return true;
+          const matchName = r.fullName.trim().toLowerCase() === p.fullName.trim().toLowerCase();
+          const matchGender = r.gender === p.gender;
+          const matchAge = r.age === p.age;
+          const matchDomicile = (!p.domicileOrigin && !r.domicileOrigin) || (p.domicileOrigin === r.domicileOrigin);
+          return matchName && matchGender && matchAge && matchDomicile;
+        });
 
-  if (existingIdx >= 0) {
-  // Idempotent upsert: perbarui status/kebutuhan tanpa menduplikasi baris
-  currentList[existingIdx] = {
-  ...currentList[existingIdx],
-  ...p,
-  id: currentList[existingIdx].id,
-  createdAt: currentList[existingIdx].createdAt,
-  };
+        if (existingIdx >= 0) {
+          // Idempotent upsert: perbarui status/kebutuhan tanpa menduplikasi baris
+          currentList[existingIdx] = {
+            ...currentList[existingIdx],
+            ...p,
+            id: currentList[existingIdx].id,
+            postId: p.postId || currentList[existingIdx].postId,
+            missingKinName: p.missingKinName !== undefined ? p.missingKinName : currentList[existingIdx].missingKinName,
+            createdAt: currentList[existingIdx].createdAt,
+          };
   } else {
   // Tambah warga baru
   const newPerson: DisasterPerson = {

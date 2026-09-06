@@ -197,84 +197,173 @@ export class FamilyReunionService {
   * Mengaudit seluruh potensi temu keluarga otomatis di satu posko
   */
   public async getPoskoReunionMatches(poskoId: PoskoId): Promise<Result<FamilyReunionMatch[]>> {
-  const allRefugeesResult = await this.refugeeRepo.findByPoskoId(asPoskoId('ALL'));
-  if (!allRefugeesResult.ok) return Ok([]);
+    const allRefugeesResult = await this.refugeeRepo.findByPoskoId(asPoskoId('ALL'));
+    if (!allRefugeesResult.ok) return Ok([]);
 
-  const allRefugees = allRefugeesResult.value;
-  const currentPoskoRefugees = allRefugees.filter((r) => r.toSnapshot().poskoId === poskoId);
-  const otherPoskoRefugees = allRefugees.filter((r) => r.toSnapshot().poskoId !== poskoId);
+    const allRefugees = allRefugeesResult.value;
+    const matchingPosko = allRefugees.filter((r) => r.toSnapshot().poskoId === poskoId);
+    const currentPoskoRefugees = (matchingPosko.length > 0 && poskoId !== 'ALL' && poskoId !== asPoskoId('ALL'))
+      ? matchingPosko
+      : allRefugees;
+    const otherRefugees = allRefugees;
 
-  const matches: FamilyReunionMatch[] = [];
+    const matches: FamilyReunionMatch[] = [];
+    const seenPairs = new Set<string>();
 
-  for (const localRef of currentPoskoRefugees) {
-  const localSnap = localRef.toSnapshot();
-  if (!localSnap.missingKinName?.trim()) continue;
+    // 1. Outbound check: Pengungsi posko ini yang sedang mencari keluarga
+    for (const localRef of currentPoskoRefugees) {
+      const localSnap = localRef.toSnapshot();
+      const hasMissingKin = Boolean(localSnap.missingKinName?.trim());
+      const missingKin = (localSnap.missingKinName || '').trim().toLowerCase();
 
-  const missingKin = localSnap.missingKinName.trim().toLowerCase();
+      for (const otherRef of otherRefugees) {
+        const otherSnap = otherRef.toSnapshot();
+        if (otherSnap.id === localSnap.id) continue;
 
-  for (const otherRef of otherPoskoRefugees) {
-  const otherSnap = otherRef.toSnapshot();
-  const otherName = otherSnap.fullName.toLowerCase();
-  const otherSeeking = (otherSnap.missingKinName || '').toLowerCase();
+        const pairKey = [localSnap.id, otherSnap.id].sort().join(":");
+        if (seenPairs.has(pairKey)) continue;
 
-  let confidence = 0;
-  let matchType: FamilyReunionMatch['matchType'] = 'FUZZY_NAME';
-  let status: FamilyReunionMatch['status'] = 'POTENTIAL';
+        const otherName = otherSnap.fullName.toLowerCase();
+        const otherSeeking = (otherSnap.missingKinName || '').toLowerCase();
 
-  // Bi-directional check
-  if (
-  otherSeeking &&
-  (otherSeeking.includes(localSnap.fullName.toLowerCase()) || localSnap.fullName.toLowerCase().includes(otherSeeking)) &&
-  (otherName.includes(missingKin) || missingKin.includes(otherName))
-  ) {
-  confidence = REUNION_CONSTANTS.CONFIDENCE_EXACT_BI_DIRECTIONAL;
-  matchType = 'EXACT_BI_DIRECTIONAL';
-  status = 'CONFIRMED';
-  } else if (otherName === missingKin) {
-  const sameOrigin =
-  localSnap.domicileOrigin &&
-  otherSnap.domicileOrigin &&
-  localSnap.domicileOrigin.toLowerCase() === otherSnap.domicileOrigin.toLowerCase();
-  confidence = sameOrigin
-  ? REUNION_CONSTANTS.CONFIDENCE_EXACT_WITH_ORIGIN
-  : REUNION_CONSTANTS.CONFIDENCE_EXACT_DIRECT;
-  matchType = 'EXACT_DIRECT';
-  status = 'CONFIRMED';
-  } else {
-  const sim = FamilyReunionService.calculateSimilarity(otherName, missingKin);
-  if (sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_AUDIT_MATCH) {
-  confidence = sim;
-  matchType = 'FUZZY_NAME';
-  status = sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_CONFIRMED ? 'CONFIRMED' : 'POTENTIAL';
-  }
-  }
+        let confidence = 0;
+        let matchType: FamilyReunionMatch['matchType'] = 'FUZZY_NAME';
+        let status: FamilyReunionMatch['status'] = 'POTENTIAL';
 
-  if (confidence >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_MINIMUM) {
-  matches.push({
-  id: `MATCH-${localSnap.id}-${otherSnap.id}`,
-  seekerName: localSnap.fullName,
-  seekerPoskoId: localSnap.poskoId,
-  seekerPoskoName: this.getPoskoDisplayName(localSnap.poskoId),
-  seekerShelter: localSnap.shelterLocation || 'Tenda Utama',
-  targetId: otherSnap.id,
-  targetName: otherSnap.fullName,
-  targetAge: otherSnap.age,
-  targetGender: otherSnap.gender,
-  targetPoskoId: otherSnap.poskoId,
-  targetPoskoName: this.getPoskoDisplayName(otherSnap.poskoId),
-  targetShelter: otherSnap.shelterLocation || 'Tenda Utama',
-  targetDomicile: otherSnap.domicileOrigin || 'Dusun Asal',
-  confidence,
-  matchType,
-  status,
-  recordedAt: otherSnap.createdAt,
-  });
-  }
-  }
-  }
+        if (hasMissingKin) {
+          // Bi-directional check
+          if (
+            otherSeeking &&
+            (otherSeeking.includes(localSnap.fullName.toLowerCase()) || localSnap.fullName.toLowerCase().includes(otherSeeking)) &&
+            (otherName.includes(missingKin) || missingKin.includes(otherName))
+          ) {
+            confidence = REUNION_CONSTANTS.CONFIDENCE_EXACT_BI_DIRECTIONAL;
+            matchType = 'EXACT_BI_DIRECTIONAL';
+            status = 'CONFIRMED';
+          } else if (otherName === missingKin) {
+            const sameOrigin =
+              localSnap.domicileOrigin &&
+              otherSnap.domicileOrigin &&
+              localSnap.domicileOrigin.toLowerCase() === otherSnap.domicileOrigin.toLowerCase();
+            confidence = sameOrigin
+              ? REUNION_CONSTANTS.CONFIDENCE_EXACT_WITH_ORIGIN
+              : REUNION_CONSTANTS.CONFIDENCE_EXACT_DIRECT;
+            matchType = 'EXACT_DIRECT';
+            status = 'CONFIRMED';
+          } else {
+            const sim = FamilyReunionService.calculateSimilarity(otherName, missingKin);
+            if (sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_AUDIT_MATCH) {
+              confidence = sim;
+              matchType = 'FUZZY_NAME';
+              status = sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_CONFIRMED ? 'CONFIRMED' : 'POTENTIAL';
+            }
+          }
+        }
 
-  matches.sort((a, b) => b.confidence - a.confidence);
-  return Ok(matches);
+        // Potential Family Kin: Asal dusun/desa yang sama dan kemiripan nama
+        if (
+          confidence < REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_MINIMUM &&
+          localSnap.domicileOrigin &&
+          otherSnap.domicileOrigin &&
+          localSnap.domicileOrigin.toLowerCase().trim() === otherSnap.domicileOrigin.toLowerCase().trim()
+        ) {
+          const sim = FamilyReunionService.calculateSimilarity(otherName, localSnap.fullName.toLowerCase());
+          if (sim >= 70) {
+            confidence = Math.min(88, sim + REUNION_CONSTANTS.ORIGIN_BONUS_PARTIAL);
+            matchType = 'FUZZY_NAME_ORIGIN';
+            status = 'POTENTIAL';
+          }
+        }
+
+        if (confidence >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_MINIMUM) {
+          seenPairs.add(pairKey);
+          matches.push({
+            id: `MATCH-${localSnap.id}-${otherSnap.id}`,
+            seekerName: localSnap.fullName,
+            seekerPoskoId: localSnap.poskoId,
+            seekerPoskoName: this.getPoskoDisplayName(localSnap.poskoId),
+            seekerShelter: localSnap.shelterLocation || 'Tenda Utama',
+            targetId: otherSnap.id,
+            targetName: otherSnap.fullName,
+            targetAge: otherSnap.age,
+            targetGender: otherSnap.gender,
+            targetPoskoId: otherSnap.poskoId,
+            targetPoskoName: this.getPoskoDisplayName(otherSnap.poskoId),
+            targetShelter: otherSnap.shelterLocation || 'Tenda Utama',
+            targetDomicile: otherSnap.domicileOrigin || 'Dusun Asal',
+            confidence,
+            matchType,
+            status,
+            recordedAt: otherSnap.createdAt,
+          });
+        }
+      }
+    }
+
+    // 2. Inbound check: Pengungsi di posko lain yang sedang mencari warga yang tinggal di posko ini
+    for (const localRef of currentPoskoRefugees) {
+      const localSnap = localRef.toSnapshot();
+      const localName = localSnap.fullName.toLowerCase();
+
+      for (const remoteRef of allRefugees) {
+        const remoteSnap = remoteRef.toSnapshot();
+        if (remoteSnap.id === localSnap.id) continue;
+        if (!remoteSnap.missingKinName?.trim()) continue;
+
+        const remoteSeeking = remoteSnap.missingKinName.trim().toLowerCase();
+        const pairKey = [localSnap.id, remoteSnap.id].sort().join(":");
+        if (seenPairs.has(pairKey)) continue;
+
+        let confidence = 0;
+        let matchType: FamilyReunionMatch['matchType'] = 'FUZZY_NAME';
+        let status: FamilyReunionMatch['status'] = 'POTENTIAL';
+
+        if (remoteSeeking === localName) {
+          const sameOrigin =
+            localSnap.domicileOrigin &&
+            remoteSnap.domicileOrigin &&
+            localSnap.domicileOrigin.toLowerCase() === remoteSnap.domicileOrigin.toLowerCase();
+          confidence = sameOrigin
+            ? REUNION_CONSTANTS.CONFIDENCE_EXACT_WITH_ORIGIN
+            : REUNION_CONSTANTS.CONFIDENCE_EXACT_DIRECT;
+          matchType = 'EXACT_DIRECT';
+          status = 'CONFIRMED';
+        } else {
+          const sim = FamilyReunionService.calculateSimilarity(localName, remoteSeeking);
+          if (sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_AUDIT_MATCH) {
+            confidence = sim;
+            matchType = 'FUZZY_NAME';
+            status = sim >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_CONFIRMED ? 'CONFIRMED' : 'POTENTIAL';
+          }
+        }
+
+        if (confidence >= REUNION_CONSTANTS.CONFIDENCE_THRESHOLD_MINIMUM) {
+          seenPairs.add(pairKey);
+          matches.push({
+            id: `MATCH-${remoteSnap.id}-${localSnap.id}`,
+            seekerName: remoteSnap.fullName,
+            seekerPoskoId: remoteSnap.poskoId,
+            seekerPoskoName: this.getPoskoDisplayName(remoteSnap.poskoId),
+            seekerShelter: remoteSnap.shelterLocation || 'Tenda Utama',
+            targetId: localSnap.id,
+            targetName: localSnap.fullName,
+            targetAge: localSnap.age,
+            targetGender: localSnap.gender,
+            targetPoskoId: localSnap.poskoId,
+            targetPoskoName: this.getPoskoDisplayName(localSnap.poskoId),
+            targetShelter: localSnap.shelterLocation || 'Tenda Utama',
+            targetDomicile: localSnap.domicileOrigin || 'Dusun Asal',
+            confidence,
+            matchType,
+            status,
+            recordedAt: localSnap.createdAt,
+          });
+        }
+      }
+    }
+
+    matches.sort((a, b) => b.confidence - a.confidence);
+    return Ok(matches);
   }
 
   private getPoskoDisplayName(poskoId: string): string {

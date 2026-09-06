@@ -8,6 +8,7 @@ import { BITWISE, RADIX, TIME_CONSTANTS } from "@/core/shared/constants";
 
 export interface DisasterPerson {
   id?: string;
+  poskoId?: string;
   fullName: string;
   nationalId?: string; // 16-digit (opsional / null)
   gender: "M" | "F";
@@ -66,6 +67,7 @@ export interface ManifestNeedsTicket {
 }
 
 export interface DisasterManifestV4 {
+  poskoId?: string;
   poskoName: string;
   defaultRegionCode: string; // 6 digit kode wilayah default (misal "320101")
   timestamp: number;
@@ -75,6 +77,7 @@ export interface DisasterManifestV4 {
   personIds?: string[];
   events?: ManifestRefugeeEvent[];
   tickets?: ManifestNeedsTicket[];
+  personPoskoIds?: string[];
 }
 
 export const BITPACKER_CONSTANTS = {
@@ -459,9 +462,13 @@ export function packManifestV4(manifest: DisasterManifestV4): Buffer {
   const hasPersonIds = personIds.length > 0;
   const hasEvents = Boolean(manifest.events && manifest.events.length > 0);
   const hasTickets = Boolean(manifest.tickets && manifest.tickets.length > 0);
+  const hasPoskoId = Boolean(manifest.poskoId && manifest.poskoId.trim().length > 0);
+  const personPoskoList = manifest.persons.map((p) => p.poskoId || manifest.poskoId || "");
+  const hasPersonPoskos = personPoskoList.some((pid) => pid.length > 0);
+  const hasPoskoMetadata = hasPoskoId || hasPersonPoskos;
 
   // Sisipkan padding txCount=0 jika ada seksi lanjutan tapi transaksi kosong
-  if (!hasTransactions && (hasPersonIds || hasEvents || hasTickets)) {
+  if (!hasTransactions && (hasPersonIds || hasEvents || hasTickets || hasPoskoMetadata)) {
     const emptyTxBuf = Buffer.alloc(BITPACKER_CONSTANTS.TRANSACTION_COUNT_BYTES);
     emptyTxBuf.writeUInt16BE(0, 0);
     chunks.push(emptyTxBuf);
@@ -480,7 +487,7 @@ export function packManifestV4(manifest: DisasterManifestV4): Buffer {
       pBuf.copy(itemBuf, 1, 0, pLenCapped);
       chunks.push(itemBuf);
     }
-  } else if (hasEvents || hasTickets) {
+  } else if (hasEvents || hasTickets || hasPoskoMetadata) {
     const emptyPIdBuf = Buffer.alloc(2);
     emptyPIdBuf.writeUInt16BE(0, 0);
     chunks.push(emptyPIdBuf);
@@ -542,7 +549,7 @@ export function packManifestV4(manifest: DisasterManifestV4): Buffer {
 
       chunks.push(evBuf);
     }
-  } else if (hasTickets) {
+  } else if (hasTickets || hasPoskoMetadata) {
     const emptyEvBuf = Buffer.alloc(2);
     emptyEvBuf.writeUInt16BE(0, 0);
     chunks.push(emptyEvBuf);
@@ -621,6 +628,35 @@ export function packManifestV4(manifest: DisasterManifestV4): Buffer {
       tOff += 4;
 
       chunks.push(tktBuf);
+    }
+  } else if (hasPoskoMetadata) {
+    const emptyTktBuf = Buffer.alloc(2);
+    emptyTktBuf.writeUInt16BE(0, 0);
+    chunks.push(emptyTktBuf);
+  }
+
+  // 10. Encode Posko Metadata (Opsional, Rekonsiliasi Temu Keluarga Lintas Posko)
+  if (hasPoskoMetadata) {
+    const posIdStr = manifest.poskoId || "";
+    const posIdBuf = Buffer.from(posIdStr, "utf8");
+    const posIdLen = Math.min(32, posIdBuf.length);
+
+    const metaHeader = Buffer.alloc(1 + posIdLen + 2);
+    metaHeader.writeUInt8(posIdLen, 0);
+    posIdBuf.copy(metaHeader, 1, 0, posIdLen);
+    metaHeader.writeUInt16BE(hasPersonPoskos ? manifest.persons.length : 0, 1 + posIdLen);
+    chunks.push(metaHeader);
+
+    if (hasPersonPoskos) {
+      for (const p of manifest.persons) {
+        const pPosStr = p.poskoId || posIdStr;
+        const pPosBuf = Buffer.from(pPosStr, "utf8");
+        const pLen = Math.min(32, pPosBuf.length);
+        const cellBuf = Buffer.alloc(1 + pLen);
+        cellBuf.writeUInt8(pLen, 0);
+        pPosBuf.copy(cellBuf, 1, 0, pLen);
+        chunks.push(cellBuf);
+      }
     }
   }
 
@@ -1026,16 +1062,52 @@ export function unpackManifestV4(buffer: Buffer): DisasterManifestV4 {
     }
   }
 
+  // 10. Decode Posko Metadata (Opsional, Rekonsiliasi Temu Keluarga Lintas Posko)
+  let poskoId: string | undefined;
+  if (offset < buffer.length) {
+    const posIdLen = buffer.readUInt8(offset);
+    offset += 1;
+    if (posIdLen > 0 && offset + posIdLen <= buffer.length) {
+      poskoId = buffer.toString("utf8", offset, offset + posIdLen);
+      offset += posIdLen;
+    }
+
+    if (offset + 2 <= buffer.length) {
+      const pPosCount = buffer.readUInt16BE(offset);
+      offset += 2;
+      for (let i = 0; i < pPosCount; i++) {
+        if (offset >= buffer.length) break;
+        const len = buffer.readUInt8(offset);
+        offset += 1;
+        const pPos = buffer.toString("utf8", offset, offset + len);
+        offset += len;
+        if (i < persons.length && pPos) {
+          persons[i]!.poskoId = pPos;
+        }
+      }
+    }
+  }
+
+  // Set default poskoId on persons if missing
+  if (poskoId) {
+    for (const p of persons) {
+      if (!p.poskoId) {
+        p.poskoId = poskoId;
+      }
+    }
+  }
+
   return {
-  poskoName,
-  defaultRegionCode,
-  timestamp,
-  persons,
-  inventory: inventory.length > 0 ? inventory : undefined,
-  transactions: transactions.length > 0 ? transactions : undefined,
-  personIds: personIds.length > 0 ? personIds : undefined,
-  events: events.length > 0 ? events : undefined,
-  tickets: tickets.length > 0 ? tickets : undefined,
+    poskoId,
+    poskoName,
+    defaultRegionCode,
+    timestamp,
+    persons,
+    inventory: inventory.length > 0 ? inventory : undefined,
+    transactions: transactions.length > 0 ? transactions : undefined,
+    personIds: personIds.length > 0 ? personIds : undefined,
+    events: events.length > 0 ? events : undefined,
+    tickets: tickets.length > 0 ? tickets : undefined,
   };
 }
 
