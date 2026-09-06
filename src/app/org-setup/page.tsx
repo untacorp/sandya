@@ -115,8 +115,7 @@ export default function OrgSetupPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Lembaga / Organisasi
   </label>
-  <Input
-  value={orgName}
+  <Input value={orgName}
   onChange={(e) => setOrgName(e.target.value)}
   placeholder="Contoh: BPBD / PMI / Yayasan"
   icon="buildings"
@@ -128,10 +127,9 @@ export default function OrgSetupPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Kategori
   </label>
-  <select
-  value={orgCategory}
-  onChange={(e) => setOrgCategory(e.target.value as any)}
-  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-sm text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+  <select value={orgCategory}
+  onChange={(e) => setOrgCategory(e.target.value as typeof orgCategory)}
+  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-text-main font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none focus:border-border-strong transition-colors"
   >
   <option value="PMI_LEMBAGA">PMI / Lembaga Kemanusiaan</option>
   <option value="BPBD_PEMERINTAH">BPBD / Pemerintah</option>
@@ -166,8 +164,7 @@ export default function OrgSetupPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Operasi Tanggap Bencana
   </label>
-  <Input
-  value={missionName}
+  <Input value={missionName}
   onChange={(e) => setMissionName(e.target.value)}
   placeholder="Contoh: Tanggap Gempa Cianjur"
   icon="shield"
@@ -179,8 +176,7 @@ export default function OrgSetupPage() {
   <label className="text-xs font-semibold text-text-muted block mb-1">
   Nama Posko Lapangan Pertama
   </label>
-  <Input
-  value={poskoName}
+  <Input value={poskoName}
   onChange={(e) => setPoskoName(e.target.value)}
   placeholder="Contoh: Posko Lapangan RW 03 Cijedil"
   icon="home"

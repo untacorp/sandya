@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import { usePoskoStore, type MacroWaybill } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
@@ -10,7 +11,6 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 import { QRCodeSVG } from "@/shared/ui/qr-code-svg";
 import { AlertBanner } from "@/shared/ui/alert-banner";
@@ -30,10 +30,19 @@ interface WaybillRecord {
 }
 
 export default function WaybillsPage() {
+  const params = useParams();
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, poskos, missionWaybills, issueMissionWaybill, receiveWaybill } = usePoskoStore();
+  const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
+  const currentPosko = poskos.find((p) => p.id === effectivePoskoId);
+  const targetMissionId = currentPosko?.missionId || session.missionId;
+
+  const poskoWaybills = missionWaybills.filter(
+    (wb) => wb.targetPoskoId === effectivePoskoId || wb.sourceHub === currentPosko?.name
+  );
 
   const [createOpen, setCreateOpen] = React.useState(false);
-  const [targetPoskoId, setTargetPoskoId] = React.useState(poskos[0]?.id || "");
+  const [targetPoskoId, setTargetPoskoId] = React.useState(poskos.find((p) => p.id !== effectivePoskoId)?.id || poskos[0]?.id || "");
   const [selectedCatalogId, setSelectedCatalogId] = React.useState<number>(0x01);
   const [requestQty, setRequestQty] = React.useState(50);
   const [unit, setUnit] = React.useState("KG");
@@ -57,10 +66,10 @@ export default function WaybillsPage() {
   const itemName = DISASTER_NEEDS_CATALOG[selectedCatalogId]?.nameId || "Bantuan Bencana";
 
   issueMissionWaybill({
-  missionId: session.missionId,
+  missionId: targetMissionId,
   sourceHub: targetP?.name || "Gudang Sentral Logistik",
-  targetPoskoId: session.poskoId,
-  targetPoskoName: session.poskoName,
+  targetPoskoId: effectivePoskoId,
+  targetPoskoName: currentPosko?.name || session.poskoName,
   itemName,
   quantity: Number(requestQty),
   unit: unit.toUpperCase(),
@@ -90,17 +99,7 @@ export default function WaybillsPage() {
   return (
   <div className="space-y-4">
   {/* 1. Sub-Tabs */}
-  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-  <Tabs
-  items={[
-  { id: "stock", label: "Stok Gudang", icon: "box", href: `/posko/${session.poskoId}/logistics` },
-  { id: "distribute", label: "Distribusi Bantuan", icon: "delivery", href: `/posko/${session.poskoId}/logistics/distribute` },
-  { id: "waybills", label: "Surat Jalan Antar-Posko", icon: "waybill", badgeCount: missionWaybills.filter(w => w.status === "IN_TRANSIT").length, href: `/posko/${session.poskoId}/logistics/waybills` },
-  ]}
-  activeId="waybills"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
+  <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
 
   <Button
   variant="primary"
@@ -140,11 +139,11 @@ export default function WaybillsPage() {
   Daftar Pengiriman Antar-Posko & Truk Suplai
   </h3>
   <span className="text-xs text-text-muted">
-  {missionWaybills.length} Surat Jalan
+  {poskoWaybills.length} Surat Jalan
   </span>
   </div>
 
-  {missionWaybills.length === 0 ? (
+  {poskoWaybills.length === 0 ? (
   <EmptyState
   icon="waybill"
   title="Belum Ada Surat Jalan Antar-Posko"
@@ -155,7 +154,7 @@ export default function WaybillsPage() {
   />
   ) : (
   <div className="grid grid-cols-1 gap-3">
-  {missionWaybills.map((wb) => (
+  {poskoWaybills.map((wb) => (
   <Card key={wb.id} className="p-4 sm:p-5 shadow-2xs border-border bg-surface">
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
   <div className="space-y-1.5 min-w-0">
@@ -237,10 +236,9 @@ export default function WaybillsPage() {
   <form onSubmit={handleCreateWaybill} className="space-y-3 pt-1 text-xs">
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Posko / Hub Sasaran Suplai</label>
-  <select
-  value={targetPoskoId}
+  <select value={targetPoskoId}
   onChange={(e) => setTargetPoskoId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {poskos.map((p) => (
   <option key={p.id} value={p.id}>
@@ -252,10 +250,9 @@ export default function WaybillsPage() {
 
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Komoditas Barang (Kamus uint8)</label>
-  <select
-  value={selectedCatalogId}
+  <select value={selectedCatalogId}
   onChange={(e) => setSelectedCatalogId(parseInt(e.target.value))}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {Object.values(DISASTER_NEEDS_CATALOG).map((c) => (
   <option key={c.id} value={c.id}>
@@ -268,21 +265,19 @@ export default function WaybillsPage() {
   <div className="grid grid-cols-2 gap-2">
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Jumlah</label>
-  <Input
-  type="number"
+  <Input type="number"
   value={requestQty}
   onChange={(e) => setRequestQty(Number(e.target.value))}
   min={1}
   required
-  className="h-9"
+  className="h-10"
   />
   </div>
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Satuan</label>
-  <select
-  value={unit}
+  <select value={unit}
   onChange={(e) => setUnit(e.target.value)}
-  className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   <option value="KG">KG</option>
   <option value="LITER">LITER</option>
@@ -300,11 +295,10 @@ export default function WaybillsPage() {
 
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Pengemudi / Nama Armada</label>
-  <Input
-  value={driverName}
+  <Input value={driverName}
   onChange={(e) => setDriverName(e.target.value)}
   placeholder="Contoh: Sopian (Truk Logistik #02)"
-  className="h-9"
+  className="h-10"
   />
   </div>
 

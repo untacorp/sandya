@@ -105,12 +105,10 @@ export class RolePassCodec {
   : 'PIM';
 
   const shortPosko = (payload.poskoId || 'POS')
-  .replace(/[^a-zA-Z0-9]/g, '')
-  .slice(-ROLE_PASS_CONSTANTS.SHORT_ID_LENGTH)
+  .replace(/^POS-/, '')
   .toUpperCase();
   const shortUser = (payload.userId || 'USR')
-  .replace(/[^a-zA-Z0-9]/g, '')
-  .slice(-ROLE_PASS_CONSTANTS.SHORT_ID_LENGTH)
+  .replace(/^USR-/, '')
   .toUpperCase();
   return `SAN-${rolePrefix}-${shortPosko}-${shortUser}`;
   }

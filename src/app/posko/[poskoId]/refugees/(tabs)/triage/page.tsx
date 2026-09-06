@@ -1,14 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { asRefugeeId, asPoskoId } from "@/core/shared/branded-types";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -22,11 +24,23 @@ interface PrescriptionFormItem {
 }
 
 export default function TriagePage() {
+  const params = useParams();
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, refugees, updateRefugeeTriage, createNeedsTicket } = usePoskoStore();
+  const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
 
   const [selectedPatient, setSelectedPatient] = React.useState<DisasterPerson | null>(null);
   const [examOpen, setExamOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  
+  // Optimasi Papan Kanban
+  const [visibleCounts, setVisibleCounts] = React.useState<Record<TriageCategory, number>>({
+  RED: 15,
+  YELLOW: 15,
+  GREEN: 15,
+  BLACK: 15,
+  });
+  const [isCompact, setIsCompact] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [successToast, setSuccessToast] = React.useState<string | null>(null);
@@ -109,12 +123,34 @@ export default function TriagePage() {
   );
   };
 
+  const ensureRefugeeInRepo = async (container: ServiceContainer, person: DisasterPerson) => {
+  const existing = await container.refugeeRepo.findById(asRefugeeId(person.id));
+  if (!existing.ok || !existing.value) {
+  const agg = RefugeeAggregate.reconstitute({
+  id: asRefugeeId(person.id),
+  poskoId: asPoskoId(effectivePoskoId),
+  fullName: person.fullName,
+  nationalId: person.nik || null,
+  gender: person.gender,
+  age: person.age,
+  domicileOrigin: person.domicileOrigin || null,
+  shelterLocation: person.shelterLocation || null,
+  missingKinName: person.missingKinName || null,
+  currentTriage: person.triageStatus || "GREEN",
+  registeredByUserId: person.registeredByUserId,
+  createdAt: person.createdAt,
+  version: 1,
+  });
+  await container.refugeeRepo.save(agg);
+  }
+  };
+
   const handleSaveExam = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!selectedPatient) return;
 
   if (!isAuthorized) {
-  setErrorMessage("Akses ditolak: Hanya Petugas Medis Berlisensi atau Pimpinan Posko yang berwenang menetapkan triase medis.");
+  setErrorMessage("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang menetapkan triase dan resep.");
   return;
   }
 
@@ -123,6 +159,8 @@ export default function TriagePage() {
 
   try {
   const container = ServiceContainer.getInstance();
+  await ensureRefugeeInRepo(container, selectedPatient);
+
   const validPrescriptions = prescribeMedicine
   ? prescriptions.map((rx) => ({
   needTokenId: rx.needTokenId,
@@ -164,80 +202,85 @@ export default function TriagePage() {
   // 2. Dispatch Tickets to Local Store for immediate warehouse fulfillment visibility
   if (prescribeMedicine && validPrescriptions.length > 0) {
   validPrescriptions.forEach((rx) => {
-  createNeedsTicket({
-  refugeeId: selectedPatient.id,
-  refugeeName: selectedPatient.fullName,
-  shelterLocation: selectedPatient.shelterLocation,
-  postId: session.poskoId,
-  itemName: rx.medicineName,
-  quantity: rx.quantity,
-  unit: rx.unit,
-  urgency: triageColor === "RED" ? "HIGH" : triageColor === "YELLOW" ? "MEDIUM" : "LOW",
-  createdByUserId: session.userId,
-  createdByUserName: session.userName,
-  });
-  });
-  }
+            createNeedsTicket({
+              refugeeId: selectedPatient.id,
+              refugeeName: selectedPatient.fullName,
+              shelterLocation: selectedPatient.shelterLocation,
+              postId: effectivePoskoId,
+              itemName: rx.medicineName,
+              quantity: rx.quantity,
+              unit: rx.unit,
+              urgency: triageColor === "RED" ? "HIGH" : triageColor === "YELLOW" ? "MEDIUM" : "LOW",
+              createdByUserId: session.userId,
+              createdByUserName: session.userName,
+            });
+          });
+        }
 
-  setSuccessToast(
-  `Triase ${selectedPatient.fullName} berhasil diperbarui ke ${triageColor}${
-  validPrescriptions.length > 0 ? ` (+${validPrescriptions.length} tiket obat diterbitkan)` : ""
-  }`
-  );
-  setTimeout(() => setSuccessToast(null), 4000);
+        setSuccessToast(
+          `Triase ${selectedPatient.fullName} berhasil diperbarui ke ${triageColor}${
+            validPrescriptions.length > 0 ? ` (+${validPrescriptions.length} tiket obat diterbitkan)` : ""
+          }`
+        );
+        setTimeout(() => setSuccessToast(null), 4000);
 
-  setExamOpen(false);
-  } catch (err: any) {
-  setErrorMessage(err?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
-  } finally {
-  setIsSubmitting(false);
-  }
-  };
+        setExamOpen(false);
+      } catch (err: any) {
+        setErrorMessage(err?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
-  const handleQuickTriageChange = async (
-  patient: DisasterPerson,
-  newTriage: TriageCategory,
-  e: React.MouseEvent
-  ) => {
-  e.stopPropagation();
-  if (!isAuthorized) {
-  alert("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang mengubah klasifikasi triase.");
-  return;
-  }
+    const handleQuickTriageChange = async (
+      patient: DisasterPerson,
+      newTriage: TriageCategory,
+      e: React.MouseEvent
+    ) => {
+      e.stopPropagation();
+      if (!isAuthorized) {
+        alert("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang mengubah klasifikasi triase.");
+        return;
+      }
 
-  try {
-  const container = ServiceContainer.getInstance();
-  const res = await container.recordTriageExamUseCase.execute({
-  refugeeId: patient.id,
-  poskoId: session.poskoId,
-  authorId: session.userId,
-  authorName: session.userName,
-  authorRole: session.userRole,
-  triageCategory: newTriage,
-  vitalSigns: {
-  complaint: `Penyesuaian cepat status triase lapangan ke ${newTriage}`,
-  },
-  });
+      try {
+        const container = ServiceContainer.getInstance();
+        await ensureRefugeeInRepo(container, patient);
+        const res = await container.recordTriageExamUseCase.execute({
+          refugeeId: patient.id,
+          poskoId: effectivePoskoId,
+          authorId: session.userId,
+          authorName: session.userName,
+          authorRole: session.userRole,
+          triageCategory: newTriage,
+          vitalSigns: {
+            complaint: `Penyesuaian cepat status triase lapangan ke ${newTriage}`,
+          },
+        });
 
-  if (res.ok) {
-  updateRefugeeTriage(patient.id, newTriage);
-  }
-  } catch (err) {
-  console.error("Failed quick triage change", err);
-  }
-  };
+        if (res.ok) {
+          updateRefugeeTriage(patient.id, newTriage);
+        }
+      } catch (err) {
+        console.error("Failed quick triage change", err);
+      }
+    };
 
-  const filteredRefugees = React.useMemo(() => {
-  if (!searchQuery.trim()) return refugees;
-  const q = searchQuery.toLowerCase();
-  return refugees.filter(
-  (r) =>
-  r.fullName.toLowerCase().includes(q) ||
-  r.shelterLocation?.toLowerCase().includes(q) ||
-  r.domicileOrigin?.toLowerCase().includes(q) ||
-  (r.nik && r.nik.includes(q))
-  );
-  }, [refugees, searchQuery]);
+    const poskoRefugees = React.useMemo(() => {
+      return refugees.filter((r) => r.postId === effectivePoskoId);
+    }, [refugees, effectivePoskoId]);
+
+    const filteredRefugees = React.useMemo(() => {
+      if (!searchQuery.trim()) return poskoRefugees;
+      const q = searchQuery.toLowerCase();
+      return poskoRefugees.filter(
+        (r) =>
+          r.fullName.toLowerCase().includes(q) ||
+          r.shelterLocation?.toLowerCase().includes(q) ||
+          r.domicileOrigin?.toLowerCase().includes(q) ||
+          (r.nik && r.nik.includes(q))
+      );
+    }, [poskoRefugees, searchQuery]);
 
   const getPatientsByTriage = (color: TriageCategory) => {
   return filteredRefugees.filter((r) => (r.triageStatus || "GREEN") === color);
@@ -292,18 +335,6 @@ export default function TriagePage() {
 
   return (
   <div className="space-y-4">
-  {/* 1. Sub-Navigasi */}
-  <Tabs
-  items={[
-  { id: "list", label: "Daftar Warga", icon: "users", href: `/posko/${session.poskoId}/refugees` },
-  { id: "triage", label: "Pemeriksaan Medis (START)", icon: "health", badgeCount: refugees.length, href: `/posko/${session.poskoId}/refugees/triage` },
-  { id: "reunion", label: "Pencarian Keluarga", icon: "search", href: `/posko/${session.poskoId}/refugees/reunion` },
-  ]}
-  activeId="triage"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
-
   {/* 2. Banner Notifikasi RBAC & Sukses */}
   {!isAuthorized && (
   <AlertBanner
@@ -332,15 +363,21 @@ export default function TriagePage() {
   size={16}
   className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
   />
-  <Input
-  value={searchQuery}
+  <Input value={searchQuery}
   onChange={(e) => setSearchQuery(e.target.value)}
   placeholder="Cari pasien berdasarkan nama, NIK, atau lokasi tenda..."
   className="pl-9 text-xs h-10"
   />
   </div>
   <div className="flex items-center gap-2">
-  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-subtle border border-border text-xs font-semibold text-text-main">
+  <button 
+  onClick={() => setIsCompact(!isCompact)}
+  className="flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border text-xs font-semibold hover:bg-surface-subtle transition-colors text-text-main"
+  >
+  <Icon name="filter" variant="linear" size={14} />
+  <span className="hidden sm:inline">{isCompact ? "Tampilan Detail" : "Tampilan Ringkas"}</span>
+  </button>
+  <div className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-surface-subtle border border-border text-xs font-semibold text-text-main">
   <Icon name="heart-pulse" variant="bold" size={14} className="text-primary" />
   <span>Total Pasien: {refugees.length}</span>
   </div>
@@ -404,11 +441,12 @@ export default function TriagePage() {
   <p className="text-xs">Tidak ada pasien dalam status ini</p>
   </div>
   ) : (
-  patientList.map((patient) => (
+  <React.Fragment>
+  {patientList.slice(0, visibleCounts[cat.color]).map((patient) => (
   <div
   key={patient.id}
   onClick={() => openExam(patient)}
-  className="p-3 rounded-lg border border-border hover:border-primary/60 transition-all bg-surface hover:shadow-xs cursor-pointer space-y-2 group"
+  className={`p-3 rounded-lg border border-border hover:border-primary/60 transition-all bg-surface hover:shadow-xs cursor-pointer group ${isCompact ? "space-y-1" : "space-y-2"}`}
   >
   {/* Header Pasien */}
   <div className="flex items-start justify-between gap-2">
@@ -425,6 +463,8 @@ export default function TriagePage() {
   </Badge>
   </div>
 
+  {!isCompact && (
+  <React.Fragment>
   {/* Lokasi & Asal */}
   <p className="text-[11px] text-text-muted truncate">
   <span className="font-semibold text-text-main">{patient.shelterLocation}</span> • Asal {patient.domicileOrigin}
@@ -442,6 +482,8 @@ export default function TriagePage() {
   </span>
   ))}
   </div>
+  )}
+  </React.Fragment>
   )}
 
   {/* Baris Tombol Aksi Cepat */}
@@ -478,7 +520,19 @@ export default function TriagePage() {
   </div>
   </div>
   </div>
-  ))
+  ))}
+
+  {patientList.length > visibleCounts[cat.color] && (
+  <Button
+  variant="secondary"
+  size="sm"
+  className="w-full mt-1 text-xs py-1 h-8"
+  onClick={() => setVisibleCounts(prev => ({ ...prev, [cat.color]: prev[cat.color] + 15 }))}
+  >
+  Tampilkan Lebih ({patientList.length - visibleCounts[cat.color]} lagi)
+  </Button>
+  )}
+  </React.Fragment>
   )}
   </div>
   </div>
@@ -536,53 +590,50 @@ export default function TriagePage() {
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted block">Suhu Tubuh (°C)</label>
-  <Input
-  type="number"
+  <Input type="number"
   step="0.1"
   value={temp}
   onChange={(e) => setTemp(e.target.value)}
   placeholder="36.5"
-  className="h-9"
+  className="h-10"
   />
   </div>
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted block">Tekanan Darah (TD)</label>
-  <div className="flex items-center gap-1">
-  <Input
+  <div className="flex h-9 w-full items-center rounded-lg border-[1.5px] border-border bg-surface px-1 focus-within:border-border-strong focus-within:ring-2 focus-within:ring-primary hover:border-border-hover transition-colors">
+  <input
   type="number"
   value={systolic}
   onChange={(e) => setSystolic(e.target.value)}
   placeholder="120"
-  className="h-9 text-center"
+  className="w-full bg-transparent text-center text-sm text-text-main outline-none placeholder:text-text-subtle"
   />
-  <span className="text-text-muted font-bold">/</span>
-  <Input
+  <span className="text-text-subtle font-bold px-0.5">/</span>
+  <input
   type="number"
   value={diastolic}
   onChange={(e) => setDiastolic(e.target.value)}
   placeholder="80"
-  className="h-9 text-center"
+  className="w-full bg-transparent text-center text-sm text-text-main outline-none placeholder:text-text-subtle"
   />
   </div>
   </div>
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted block">Nadi (bpm)</label>
-  <Input
-  type="number"
+  <Input type="number"
   value={pulse}
   onChange={(e) => setPulse(e.target.value)}
   placeholder="80"
-  className="h-9 text-center"
+  className="h-10 text-center"
   />
   </div>
   <div className="space-y-1">
   <label className="text-[11px] font-semibold text-text-muted block">SpO2 (%)</label>
-  <Input
-  type="number"
+  <Input type="number"
   value={spo2}
   onChange={(e) => setSpo2(e.target.value)}
   placeholder="98"
-  className="h-9 text-center"
+  className="h-10 text-center"
   />
   </div>
   </div>
@@ -592,20 +643,18 @@ export default function TriagePage() {
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Keluhan Utama (Chief Complaint)</label>
-  <Input
-  value={complaint}
+  <Input value={complaint}
   onChange={(e) => setComplaint(e.target.value)}
   placeholder="Contoh: Demam tinggi 3 hari, batuk, pusing"
-  className="h-9"
+  className="h-10"
   />
   </div>
   <div className="space-y-1">
   <label className="font-semibold text-text-main block">Diagnosa Medis Singkat</label>
-  <Input
-  value={diagnosis}
+  <Input value={diagnosis}
   onChange={(e) => setDiagnosis(e.target.value)}
   placeholder="Contoh: ISPA Akut / Hipertensi Primer"
-  className="h-9"
+  className="h-10"
   />
   </div>
   </div>
@@ -694,12 +743,11 @@ export default function TriagePage() {
   <label className="text-[10px] font-semibold text-text-muted block">
   Nama Obat (uint8 Token)
   </label>
-  <select
-  value={rx.needTokenId}
+  <select value={rx.needTokenId}
   onChange={(e) =>
   handleUpdatePrescription(idx, "needTokenId", parseInt(e.target.value))
   }
-  className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {medicalCatalog.map((item) => (
   <option key={item.id} value={item.id}>
@@ -715,8 +763,7 @@ export default function TriagePage() {
   <label className="text-[10px] font-semibold text-text-muted block">
   Jumlah
   </label>
-  <Input
-  type="number"
+  <Input type="number"
   min="1"
   value={rx.quantity}
   onChange={(e) =>
@@ -726,19 +773,18 @@ export default function TriagePage() {
   parseInt(e.target.value) || 1
   )
   }
-  className="h-9 text-center"
+  className="h-10 text-center"
   />
   </div>
   <div>
   <label className="text-[10px] font-semibold text-text-muted block">
   Satuan
   </label>
-  <select
-  value={rx.unit}
+  <select value={rx.unit}
   onChange={(e) =>
   handleUpdatePrescription(idx, "unit", e.target.value)
   }
-  className="w-full h-9 rounded-lg border border-border bg-surface px-1.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-1.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   <option value="STRIP">STRIP</option>
   <option value="BOTOL">BOTOL</option>
@@ -757,8 +803,7 @@ export default function TriagePage() {
   <label className="text-[10px] font-semibold text-text-muted block">
   Aturan Pakai / Dosis Medis
   </label>
-  <Input
-  value={rx.dosage}
+  <Input value={rx.dosage}
   onChange={(e) => handleUpdatePrescription(idx, "dosage", e.target.value)}
   placeholder="Contoh: 3x1 tablet sesudah makan"
   className="h-8 text-xs"

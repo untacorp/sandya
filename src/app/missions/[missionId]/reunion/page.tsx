@@ -89,8 +89,7 @@ export default function MissionReunionRadarPage() {
   {/* Search Input */}
   <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2 max-w-lg">
   <div className="flex-1">
-  <Input
-  placeholder="Cari nama warga, pengungsi, atau posko..."
+  <Input placeholder="Cari nama warga, pengungsi, atau posko..."
   value={search}
   onChange={(e) => setSearch(e.target.value)}
   icon="search"

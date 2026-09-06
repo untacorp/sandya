@@ -6,12 +6,12 @@
 "use client";
 
 import * as React from "react";
+import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Tabs } from "@/shared/ui/tabs";
 import { Icon } from "@/shared/ui/icon";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { asPoskoId } from "@/core/shared/branded-types";
@@ -20,7 +20,10 @@ import { FamilyReunionPassModal } from "@/features/refugees/components/family-re
 import { EmptyState } from "@/shared/ui/empty-state";
 
 export default function FamilyReunionPage() {
+  const params = useParams();
+  const routePoskoId = (params?.poskoId as string) || "";
   const { session, refugees } = usePoskoStore();
+  const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
 
   const [searchName, setSearchName] = React.useState("");
   const [searchVillage, setSearchVillage] = React.useState("");
@@ -30,39 +33,39 @@ export default function FamilyReunionPage() {
   const [selectedMatch, setSelectedMatch] = React.useState<FamilyReunionMatch | null>(null);
 
   const fetchPoskoMatches = React.useCallback(async () => {
-  setIsSearching(true);
-  try {
-  const container = ServiceContainer.getInstance();
-  const result = await container.familyReunionService.getPoskoReunionMatches(asPoskoId(session.poskoId));
-  if (result.ok) {
-  setMatches(result.value);
-  }
-  } catch (err) {
-  console.error("Failed to load posko reunion matches:", err);
-  } finally {
-  setIsSearching(false);
-  }
-  }, [session.poskoId]);
+    setIsSearching(true);
+    try {
+      const container = ServiceContainer.getInstance();
+      const result = await container.familyReunionService.getPoskoReunionMatches(asPoskoId(effectivePoskoId));
+      if (result.ok) {
+        setMatches(result.value);
+      }
+    } catch (err) {
+      console.error("Failed to load posko reunion matches:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [effectivePoskoId]);
 
   React.useEffect(() => {
-  fetchPoskoMatches();
+    fetchPoskoMatches();
   }, [fetchPoskoMatches]);
 
   const handleManualSearch = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!searchName.trim()) {
-  fetchPoskoMatches();
-  return;
-  }
+    e.preventDefault();
+    if (!searchName.trim()) {
+      fetchPoskoMatches();
+      return;
+    }
 
-  setIsSearching(true);
-  try {
-  const container = ServiceContainer.getInstance();
-  const result = await container.familyReunionService.searchRelatives({
-  targetName: searchName.trim(),
-  domicileOrigin: searchVillage.trim() || undefined,
-  currentPoskoId: session.poskoId,
-  });
+    setIsSearching(true);
+    try {
+      const container = ServiceContainer.getInstance();
+      const result = await container.familyReunionService.searchRelatives({
+        targetName: searchName.trim(),
+        domicileOrigin: searchVillage.trim() || undefined,
+        currentPoskoId: effectivePoskoId,
+      });
 
   if (result.ok) {
   setMatches(result.value);
@@ -81,18 +84,6 @@ export default function FamilyReunionPage() {
 
   return (
   <div className="space-y-5">
-  {/* Sub-Tabs */}
-  <Tabs
-  items={[
-  { id: "list", label: "Daftar Pengungsi", icon: "users", href: `/posko/${session.poskoId}/refugees` },
-  { id: "triage", label: "Triase Medis", icon: "health", href: `/posko/${session.poskoId}/refugees/triage` },
-  { id: "reunion", label: "Temu Keluarga", icon: "search", badgeCount: matches.length, href: `/posko/${session.poskoId}/refugees/reunion` },
-  ]}
-  activeId="reunion"
-  variant="segmented"
-  className="w-full sm:w-auto"
-  />
-
   {/* Family Search Card */}
   <Card>
   <CardHeader>
@@ -104,8 +95,7 @@ export default function FamilyReunionPage() {
   <CardContent>
   <form onSubmit={handleManualSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
   <div className="sm:col-span-5">
-  <Input
-  placeholder="Nama kerabat yang dicari..."
+  <Input placeholder="Nama kerabat yang dicari..."
   value={searchName}
   onChange={(e) => setSearchName(e.target.value)}
   icon="search"
@@ -113,8 +103,7 @@ export default function FamilyReunionPage() {
   />
   </div>
   <div className="sm:col-span-4">
-  <Input
-  placeholder="Asal dusun / desa (opsional)..."
+  <Input placeholder="Asal dusun / desa (opsional)..."
   value={searchVillage}
   onChange={(e) => setSearchVillage(e.target.value)}
   icon="pin"

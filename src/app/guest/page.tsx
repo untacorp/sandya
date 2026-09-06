@@ -13,6 +13,7 @@ import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
 import { Icon } from "@/shared/ui/icon";
 import { Dialog } from "@/shared/ui/dialog";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { FamilyReunionMatch } from "@/core/services/family-reunion.service";
 import { FamilyReunionPassModal } from "@/features/refugees/components/family-reunion-pass-modal";
@@ -106,8 +107,7 @@ export default function PublicGuestPage() {
   <label className="text-xs font-bold text-text-main block">
   Nama Keluarga yang Dicari
   </label>
-  <Input
-  placeholder="misal: Siti Rahmawati"
+  <Input placeholder="misal: Siti Rahmawati"
   value={searchName}
   onChange={(e) => setSearchName(e.target.value)}
   icon="search"
@@ -120,8 +120,7 @@ export default function PublicGuestPage() {
   <label className="text-xs font-bold text-text-main block">
   Asal Dusun / Desa (Opsional)
   </label>
-  <Input
-  placeholder="misal: Dusun Cijedil"
+  <Input placeholder="misal: Dusun Cijedil"
   value={searchOrigin}
   onChange={(e) => setSearchOrigin(e.target.value)}
   icon="pin"
@@ -159,77 +158,71 @@ export default function PublicGuestPage() {
   {/* Hasil Pencarian */}
   {hasSearched && (
   <div className="space-y-3">
-  {results.length > 0 ? (
-  <div className="space-y-3">
-  <div className="flex items-center justify-between">
-  <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
-  Ditemukan {results.length} Kecocokan
-  </span>
-  </div>
+          {results.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+                  Ditemukan {results.length} Kecocokan
+                </span>
+              </div>
 
-  {results.map((match) => (
-  <Card
-  key={match.id}
-  className="p-4 border-[1.5px] border-status-safe-border bg-status-safe-bg/20 space-y-3 shadow-2xs"
-  >
-  <div className="flex items-center justify-between">
-  <span className="text-xs font-bold text-status-safe flex items-center gap-1.5">
-  <Icon name="check" variant="bold" size={16} />
-  Kecocokan {match.confidence}% ({match.status === "CONFIRMED" ? "Terverifikasi" : "Potensial"})
-  </span>
-  <span className="text-[11px] text-text-muted">
-  Terdata di Database Lokal
-  </span>
-  </div>
+              {results.map((match) => (
+                <Card
+                  key={match.id}
+                  className="p-4 border-[1.5px] border-status-safe-border bg-status-safe-bg/20 space-y-3 shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-status-safe flex items-center gap-1.5">
+                      <Icon name="check" variant="bold" size={16} />
+                      Kecocokan {match.confidence}% ({match.status === "CONFIRMED" ? "Terverifikasi" : "Potensial"})
+                    </span>
+                    <span className="text-[11px] text-text-muted">
+                      Terdata di Database Lokal
+                    </span>
+                  </div>
 
-  <div className="space-y-1">
-  <h2 className="text-base font-bold text-text-main">
-  {match.targetName} ({match.targetAge} Thn)
-  </h2>
-  <p className="text-xs text-text-muted">
-  Jenis Kelamin: {match.targetGender === "M" ? "Laki-laki" : "Perempuan"} • Asal: {match.targetDomicile}
-  </p>
-  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-base font-bold text-text-main">
+                      {match.targetName} ({match.targetAge} Thn)
+                    </h2>
+                    <p className="text-xs text-text-muted">
+                      Jenis Kelamin: {match.targetGender === "M" ? "Laki-laki" : "Perempuan"} • Asal: {match.targetDomicile}
+                    </p>
+                  </div>
 
-  <div className="p-3 rounded-lg bg-surface border border-border space-y-1 text-xs">
-  <div className="flex items-center justify-between">
-  <span className="text-text-muted font-medium">Lokasi Posko:</span>
-  <strong className="text-text-main">{match.targetPoskoName}</strong>
-  </div>
-  <div className="flex items-center justify-between">
-  <span className="text-text-muted font-medium">Tenda / Ruangan:</span>
-  <strong className="text-primary">{match.targetShelter}</strong>
-  </div>
-  </div>
+                  <div className="p-3 rounded-lg bg-surface border border-border space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted font-medium">Lokasi Posko:</span>
+                      <strong className="text-text-main">{match.targetPoskoName}</strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted font-medium">Tenda / Ruangan:</span>
+                      <strong className="text-primary">{match.targetShelter}</strong>
+                    </div>
+                  </div>
 
-  <Button
-  variant="primary"
-  size="sm"
-  className="w-full justify-center"
-  icon="printer"
-  iconVariant="linear"
-  onClick={() => handleOpenPass(match)}
-  >
-  Lihat / Cetak Surat Keterangan Reuni
-  </Button>
-  </Card>
-  ))}
-  </div>
-  ) : (
-  <Card className="p-5 text-center space-y-2 border-border bg-surface">
-  <div className="w-10 h-10 mx-auto rounded-full bg-surface-muted flex items-center justify-center text-text-muted">
-  <Icon name="search" variant="linear" size={20} />
-  </div>
-  <h3 className="text-sm font-bold text-text-main">
-  Data Belum Ditemukan
-  </h3>
-  <p className="text-xs text-text-muted max-w-xs mx-auto">
-  Kerabat bernama &quot;{searchName}&quot; belum terdaftar di posko-posko yang tersinkronisasi. Silakan coba kembali setelah relawan melakukan sinkronisasi data mule baru.
-  </p>
-  </Card>
-  )}
-  </div>
-  )}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full justify-center"
+                    icon="printer"
+                    iconVariant="linear"
+                    onClick={() => handleOpenPass(match)}
+                  >
+                    Lihat / Cetak Surat Keterangan Reuni
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon="search"
+              title="Data Belum Ditemukan"
+              description={`Kerabat bernama "${searchName}" belum terdaftar di posko-posko yang tersinkronisasi. Silakan coba kembali setelah relawan melakukan sinkronisasi data mule baru.`}
+            />
+          )}
+        </div>
+      )}
   </main>
 
   {/* Footer */}

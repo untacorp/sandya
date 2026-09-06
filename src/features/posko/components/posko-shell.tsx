@@ -9,8 +9,154 @@ import {
 import { FastIntakeFAB } from "@/features/refugees/components/fast-intake-modal";
 import { PoskoSwitcherModal } from "@/features/posko/components/posko-switcher";
 
+import { useParams, usePathname } from "next/navigation";
+import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { ServiceContainer } from "@/infrastructure/services/service-container";
+import { asPoskoId, asItemId, asRefugeeId } from "@/core/shared/branded-types";
+import { InventoryAggregate } from "@/core/domain/logistics/inventory.aggregate";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
+import { type ItemCategory } from "@/shared/types";
+
 export function PoskoShell({ children }: { children: React.ReactNode }) {
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
+  const params = useParams();
+  const pathname = usePathname();
+  const { session, poskos, inventory, refugees, hydrateStore, setSessionPosko } = usePoskoStore();
+
+  const routePoskoId = (params?.poskoId as string) || (pathname?.startsWith("/posko/") ? pathname.split("/")[2] : "");
+  const activePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : (session.poskoId && session.poskoId !== "POS-LOCAL" ? session.poskoId : (routePoskoId || "POS-01"));
+
+  const matchedPosko = poskos.find((p) => p.id === routePoskoId);
+  const targetPoskoName = matchedPosko?.name || `Posko ${routePoskoId}`;
+
+  React.useEffect(() => {
+  if (routePoskoId && routePoskoId !== "POS-LOCAL" && (session.poskoId !== routePoskoId || session.poskoName !== targetPoskoName)) {
+  setSessionPosko(routePoskoId, targetPoskoName);
+  }
+  }, [routePoskoId, session.poskoId, session.poskoName, targetPoskoName, setSessionPosko]);
+
+  React.useEffect(() => {
+  let isCancelled = false;
+
+  const syncWithBackend = async () => {
+  try {
+  const container = ServiceContainer.getInstance();
+  const poskoId = asPoskoId(activePoskoId);
+
+  // 1. Pastikan data dari state tersimpan ke backend SQLite jika belum terdaftar
+  for (const item of inventory) {
+    if (item.postId && item.postId !== activePoskoId) continue;
+    const check = await container.inventoryRepo.findById(asItemId(item.id));
+    if (!check.ok || !check.value) {
+      const agg = InventoryAggregate.reconstitute({
+        id: asItemId(item.id),
+        poskoId: asPoskoId(item.postId || activePoskoId),
+        itemName: item.itemName,
+        category: item.category as any,
+        currentQuantity: item.currentQuantity,
+        unit: item.unit,
+        lastUpdatedAt: item.lastUpdatedAt,
+        version: 1,
+      });
+      await container.inventoryRepo.save(agg);
+    }
+  }
+
+  for (const person of refugees) {
+    if (person.postId && person.postId !== activePoskoId) continue;
+    const check = await container.refugeeRepo.findById(asRefugeeId(person.id));
+    if (!check.ok || !check.value) {
+      const agg = RefugeeAggregate.reconstitute({
+        id: asRefugeeId(person.id),
+        poskoId: asPoskoId(person.postId || activePoskoId),
+        fullName: person.fullName,
+        nationalId: person.nik || null,
+        gender: person.gender,
+        age: person.age,
+        domicileOrigin: person.domicileOrigin || null,
+        shelterLocation: person.shelterLocation || null,
+        missingKinName: person.missingKinName || null,
+        currentTriage: person.triageStatus || "GREEN",
+        registeredByUserId: person.registeredByUserId,
+        createdAt: person.createdAt,
+        version: 1,
+      });
+      await container.refugeeRepo.save(agg);
+    }
+  }
+
+  // 2. Tarik data dari backend SQLite ke Zustand jika ada data dari backend
+  const [invRes, refRes] = await Promise.all([
+  container.inventoryRepo.findByPoskoId(poskoId),
+  container.refugeeRepo.findByPoskoId(poskoId),
+  ]);
+
+  if (isCancelled) return;
+
+  const toItemCategory = (cat: string): ItemCategory => {
+  if (cat === "INFANT") return "BABY_SUPPLIES";
+  if (["FOOD", "CLOTHING", "MEDICAL", "HYGIENE", "SHELTER", "BABY_SUPPLIES"].includes(cat)) {
+  return cat as ItemCategory;
+  }
+  return "FOOD";
+  };
+
+  const backendInventory = invRes.ok
+  ? invRes.value.map((agg) => {
+  const snap = agg.toSnapshot();
+  return {
+  id: snap.id,
+  postId: snap.poskoId,
+  itemName: snap.itemName,
+  category: toItemCategory(snap.category),
+  currentQuantity: snap.currentQuantity,
+  unit: snap.unit,
+  burnRateDays: 5,
+  lastUpdatedAt: snap.lastUpdatedAt,
+  };
+  })
+  : [];
+
+  const backendRefugees = refRes.ok
+  ? refRes.value.map((agg) => {
+  const snap = agg.toSnapshot();
+  return {
+  id: snap.id,
+  postId: snap.poskoId,
+  fullName: snap.fullName,
+  nik: snap.nationalId,
+  gender: snap.gender,
+  age: snap.age,
+  domicileOrigin: snap.domicileOrigin || "",
+  shelterLocation: snap.shelterLocation || "",
+  missingKinName: snap.missingKinName || undefined,
+  vulnerabilities: [],
+  urgentNeeds: [],
+  registeredByUserId: snap.registeredByUserId,
+  registeredByUserName: "Petugas",
+  triageStatus: snap.currentTriage,
+  createdAt: snap.createdAt,
+  };
+  })
+  : [];
+
+  if (backendInventory.length > 0 || backendRefugees.length > 0) {
+  hydrateStore({
+  inventory: backendInventory.length > 0 ? backendInventory : undefined,
+  refugees: backendRefugees.length > 0 ? backendRefugees : undefined,
+  });
+  }
+  } catch (err) {
+  console.error("Hydration sync error:", err);
+  }
+  };
+
+  syncWithBackend();
+
+  return () => {
+  isCancelled = true;
+  };
+  }, [activePoskoId]);
 
   return (
   <div className="min-h-screen flex bg-canvas text-text-main">

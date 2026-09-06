@@ -18,6 +18,7 @@ import { type VulnerabilityCategory } from "@/shared/types";
 interface FastIntakeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  poskoId?: string;
 }
 
 const VULNERABILITY_OPTIONS: { id: VulnerabilityCategory; label: string }[] = [
@@ -46,8 +47,9 @@ const INTAKE_MODAL_CONSTANTS = {
   MAX_AGE: 127,
 } as const;
 
-export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
+export function FastIntakeModal({ open, onOpenChange, poskoId }: FastIntakeModalProps) {
   const { session, addRefugee } = usePoskoStore();
+  const effectivePoskoId = poskoId || session.poskoId;
 
   const [fullName, setFullName] = React.useState("");
   const [age, setAge] = React.useState<number | "">("");
@@ -63,89 +65,90 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const toggleVulnerability = (id: VulnerabilityCategory) => {
-  setVulnerabilities((prev) =>
-  prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-  );
+    setVulnerabilities((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
   };
 
   const toggleNeed = (need: string) => {
-  setUrgentNeeds((prev) =>
-  prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
-  );
+    setUrgentNeeds((prev) =>
+      prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!fullName.trim() || age === "") return;
+    e.preventDefault();
+    if (!fullName.trim() || age === "") return;
 
-  setIsSubmitting(true);
-  const cleanName = fullName.trim();
-  const cleanNik =
-  hasKtp && nik.trim().length === INTAKE_MODAL_CONSTANTS.NIK_LENGTH ? nik.trim() : null;
-  const cleanAge = Number(age);
-  const cleanOrigin = domicileOrigin.trim();
-  const cleanShelter = shelterLocation.trim();
-  const cleanKin = missingKinName.trim() || undefined;
+    setIsSubmitting(true);
+    const cleanName = fullName.trim();
+    const cleanNik =
+      hasKtp && nik.trim().length === INTAKE_MODAL_CONSTANTS.NIK_LENGTH ? nik.trim() : null;
+    const cleanAge = Number(age);
+    const cleanOrigin = domicileOrigin.trim();
+    const cleanShelter = shelterLocation.trim();
+    const cleanKin = missingKinName.trim() || undefined;
 
-  try {
-  const container = ServiceContainer.getInstance();
+    try {
+      const container = ServiceContainer.getInstance();
 
-  // 1. Eksekusi Use Case Domain & Simpan ke SQLite
-  const intakeResult = await container.fastIntakeUseCase.execute({
-  poskoId: session.poskoId,
-  fullName: cleanName,
-  nationalId: cleanNik,
-  gender,
-  age: cleanAge,
-  domicileOrigin: cleanOrigin,
-  shelterLocation: cleanShelter,
-  missingKinName: cleanKin,
-  registeredByUserId: session.userId,
-  });
+      // 1. Eksekusi Use Case Domain & Simpan ke SQLite
+      const intakeResult = await container.fastIntakeUseCase.execute({
+        poskoId: effectivePoskoId,
+        fullName: cleanName,
+        nationalId: cleanNik,
+        gender,
+        age: cleanAge,
+        domicileOrigin: cleanOrigin,
+        shelterLocation: cleanShelter,
+        missingKinName: cleanKin,
+        registeredByUserId: session.userId,
+      });
 
-  if (intakeResult.ok) {
-  // 2. Sinkronkan ke Zustand reactive state
-  addRefugee({
-  postId: session.poskoId,
-  fullName: cleanName,
-  nik: cleanNik,
-  gender,
-  age: cleanAge,
-  domicileOrigin: cleanOrigin,
-  shelterLocation: cleanShelter,
-  missingKinName: cleanKin,
-  vulnerabilities,
-  urgentNeeds,
-  registeredByUserId: session.userId,
-  registeredByUserName: session.userName,
-  triageStatus: vulnerabilities.includes("LUKA_BERAT") ? "RED" : "GREEN",
-  });
+      if (intakeResult.ok) {
+        // 2. Sinkronkan ke Zustand reactive state
+        addRefugee({
+          id: intakeResult.value.refugeeId,
+          postId: effectivePoskoId,
+          fullName: cleanName,
+          nik: cleanNik,
+          gender,
+          age: cleanAge,
+          domicileOrigin: cleanOrigin,
+          shelterLocation: cleanShelter,
+          missingKinName: cleanKin,
+          vulnerabilities,
+          urgentNeeds,
+          registeredByUserId: session.userId,
+          registeredByUserName: session.userName,
+          triageStatus: vulnerabilities.includes("LUKA_BERAT") ? "RED" : "GREEN",
+        });
 
-  // 3. Deteksi Temu Keluarga Lintas Posko secara Nyata
-  if (cleanKin) {
-  const matchResult = await container.familyReunionService.searchRelatives({
-  targetName: cleanKin,
-  seekerName: cleanName,
-  domicileOrigin: cleanOrigin,
-  currentPoskoId: session.poskoId,
-  });
+        // 3. Deteksi Temu Keluarga Lintas Posko secara Nyata
+        if (cleanKin) {
+          const matchResult = await container.familyReunionService.searchRelatives({
+            targetName: cleanKin,
+            seekerName: cleanName,
+            domicileOrigin: cleanOrigin,
+            currentPoskoId: effectivePoskoId,
+          });
 
-  if (matchResult.ok && matchResult.value.length > 0) {
-  const topMatch = matchResult.value[0];
-  setReunionAlert(
-  ` Potensi Reuni Ditemukan! Kerabat "${topMatch.targetName}" terdata di ${topMatch.targetPoskoName} (${topMatch.targetShelter}) dengan tingkat kecocokan ${topMatch.confidence}%.`
-  );
-  return;
-  }
-  }
+          if (matchResult.ok && matchResult.value.length > 0) {
+            const topMatch = matchResult.value[0];
+            setReunionAlert(
+              `Potensi Reuni Ditemukan: Kerabat "${topMatch.targetName}" terdata di ${topMatch.targetPoskoName} (${topMatch.targetShelter}) dengan tingkat kecocokan ${topMatch.confidence}%.`
+            );
+            return;
+          }
+        }
 
-  handleClose();
-  }
-  } catch (err) {
-  console.error("Failed to execute fast intake:", err);
-  } finally {
-  setIsSubmitting(false);
-  }
+        handleClose();
+      }
+    } catch (err) {
+      console.error("Failed to execute fast intake:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -190,16 +193,14 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   <label className="text-xs font-bold uppercase tracking-wider text-text-muted">
   1. Identitas Pokok
   </label>
-  <Input
-  placeholder="Nama Lengkap (Contoh: Muhammad Budi Santoso)"
+  <Input placeholder="Nama Lengkap (Contoh: Muhammad Budi Santoso)"
   value={fullName}
   onChange={(e) => setFullName(e.target.value)}
   icon="user"
   required
   />
   <div className="grid grid-cols-2 gap-3">
-  <Input
-  type="number"
+  <Input type="number"
   placeholder="Usia (Tahun)"
   value={age}
   onChange={(e) =>
@@ -261,8 +262,7 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   </div>
 
   {hasKtp ? (
-  <Input
-  placeholder="16 Digit NIK KTP (Contoh: 3203011205900001)"
+  <Input placeholder="16 Digit NIK KTP (Contoh: 3203011205900001)"
   value={nik}
   onChange={(e) =>
   setNik(
@@ -286,8 +286,7 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   <label className="text-[11px] font-bold text-text-muted uppercase">
   Lokasi Tenda / Ruangan
   </label>
-  <Input
-  placeholder="Contoh: Tenda Darurat 01"
+  <Input placeholder="Contoh: Tenda Darurat 01"
   value={shelterLocation}
   onChange={(e) => setShelterLocation(e.target.value)}
   icon="pin"
@@ -299,8 +298,7 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   <label className="text-[11px] font-bold text-text-muted uppercase">
   Asal Dusun / Desa
   </label>
-  <Input
-  placeholder="Contoh: Dusun Cijedil (RW 03)"
+  <Input placeholder="Contoh: Dusun Cijedil (RW 03)"
   value={domicileOrigin}
   onChange={(e) => setDomicileOrigin(e.target.value)}
   icon="pin"
@@ -367,8 +365,7 @@ export function FastIntakeModal({ open, onOpenChange }: FastIntakeModalProps) {
   <Icon name="search" variant="bold" size={14} className="text-primary" />
   <span>Mencari Anggota Keluarga Terpisah? (Opsional)</span>
   </label>
-  <Input
-  placeholder="Nama lengkap kerabat yang dicari (misal: Siti Rahmawati)"
+  <Input placeholder="Nama lengkap kerabat yang dicari (misal: Siti Rahmawati)"
   value={missingKinName}
   onChange={(e) => setMissingKinName(e.target.value)}
   className="text-xs"

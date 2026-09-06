@@ -49,8 +49,30 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   }, [person]);
 
   React.useEffect(() => {
-  fetchEvents();
-  }, [fetchEvents]);
+  let isCancelled = false;
+  if (!person) return;
+
+  const loadData = async () => {
+  try {
+  const container = ServiceContainer.getInstance();
+  const result = await container.refugeeRepo.getEventsByRefugeeId(asRefugeeId(person.id));
+  if (result.ok && !isCancelled) {
+  setDbEvents(result.value);
+  }
+  } catch (err) {
+  console.error("Failed to load refugee events:", err);
+  } finally {
+  if (!isCancelled) {
+  setIsLoadingEvents(false);
+  }
+  }
+  };
+
+  loadData();
+  return () => {
+  isCancelled = true;
+  };
+  }, [person]);
 
   const handleCheckout = () => {
   if (!person) return;
