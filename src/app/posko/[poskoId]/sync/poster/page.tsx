@@ -464,7 +464,7 @@ export default function ParityPosterSyncPage() {
   </div>
 
   {/* Printable Physical Paper Canvas */}
-  <div className="max-w-3xl mx-auto p-6 sm:p-8 rounded-2xl bg-white border border-border shadow-xs space-y-5 text-slate-900 print:max-w-none print:border-none print:p-0 print:shadow-none">
+  <div className="max-w-3xl mx-auto p-4 sm:p-8 rounded-2xl bg-white border border-border shadow-xs space-y-5 text-slate-900 print:max-w-none print:border-none print:p-0 print:shadow-none">
   {/* Header Posko */}
   <div className="border-b-2 border-slate-900 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
   <div>
@@ -522,12 +522,12 @@ export default function ParityPosterSyncPage() {
   {/* Dynamic Grid Layout (N+1 QR Cells) */}
   {posterSpec && (
   <div
-  className={`grid gap-4 pt-1 ${
+  className={`grid gap-3 sm:gap-4 pt-1 ${
   posterSpec.totalGridCells <= 4
-  ? "grid-cols-2"
+  ? "grid-cols-1 sm:grid-cols-2"
   : posterSpec.totalGridCells <= 6
-  ? "grid-cols-2 sm:grid-cols-3"
-  : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
   }`}
   >
   {posterSpec.cells.map((cell, idx) => (
@@ -579,7 +579,7 @@ export default function ParityPosterSyncPage() {
   ) : (
   /* MODE 2: SCAN & RESTORE POSTER */
   <div className="max-w-xl mx-auto space-y-4">
-  <Card className="p-5 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs">
+  <Card className="p-4 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs">
   <div className="text-center space-y-1">
   <h3 className="text-base font-bold text-text-main">
   Pemindai Lembar Cetak Posko
@@ -619,8 +619,8 @@ export default function ParityPosterSyncPage() {
   <div
   className={`grid gap-2 ${
   posterSpec.totalGridCells <= 4
-  ? "grid-cols-2"
-  : "grid-cols-2 sm:grid-cols-3"
+  ? "grid-cols-1 sm:grid-cols-2"
+  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
   }`}
   >
   {posterSpec.cells.map((cell, idx) => {
@@ -674,7 +674,7 @@ export default function ParityPosterSyncPage() {
   <Button
   variant="outline"
   size="sm"
-  className="flex-1"
+  className="w-full sm:flex-1"
   icon="shield"
   iconVariant="linear"
   onClick={handleSimulateTornPosterDrill}
@@ -684,6 +684,7 @@ export default function ParityPosterSyncPage() {
   <Button
   variant="secondary"
   size="sm"
+  className="w-full sm:w-auto"
   icon="sync"
   iconVariant="linear"
   onClick={handleResetScan}

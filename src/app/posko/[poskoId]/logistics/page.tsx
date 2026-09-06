@@ -209,13 +209,13 @@ export default function LogisticsPage() {
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 space-y-4 min-w-0">
         {/* 1. Sub-Navigasi Logistik */}
-  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-  <div></div> {/* Spacer pengganti tabs agar tombol aksi tetap di kanan */}
+  <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
   <Button
   variant="primary"
   size="sm"
   disabled={!isLogisticsOfficer}
   onClick={handleOpenRestock}
+  className="w-full sm:w-auto justify-center"
   >
   <Icon name="add-circle" variant="bold" size={14} className="mr-1" />
   Catat Barang Masuk
@@ -318,10 +318,8 @@ export default function LogisticsPage() {
       </div>
 
       {/* Modal Ledger Mobile */}
-      <Dialog open={isLedgerOpen} onOpenChange={setIsLedgerOpen} title="Catatan Keluar-Masuk">
-        <div className="max-h-[70vh] overflow-y-auto">
-          <LogisticsLedger transactions={poskoTransactions} />
-        </div>
+      <Dialog open={isLedgerOpen} onOpenChange={setIsLedgerOpen} title="Catatan Keluar-Masuk" maxWidth="lg">
+        <LogisticsLedger transactions={poskoTransactions} />
       </Dialog>
 
   {/* 5. Modal Terima Barang Masuk (Restock Single-Writer) */}
@@ -440,12 +438,12 @@ export default function LogisticsPage() {
   />
   </div>
 
-  <div className="pt-2 flex items-center gap-2">
+  <div className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center gap-2">
   <Button
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1"
+  className="w-full sm:flex-1"
   onClick={() => setRestockOpen(false)}
   >
   Batal
@@ -455,7 +453,7 @@ export default function LogisticsPage() {
   variant="primary"
   size="md"
   disabled={isSubmitting || !isLogisticsOfficer}
-  className="flex-1 justify-center"
+  className="w-full sm:flex-1 justify-center font-bold"
   >
   {isSubmitting ? "Menyimpan..." : "Simpan Stok Masuk"}
   </Button>

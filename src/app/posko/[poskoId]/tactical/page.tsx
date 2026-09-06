@@ -222,7 +222,7 @@ export default function TacticalChatPage() {
   {/* 2. Tata Letak 2-Kolom: Obrolan Taktis (Kiri) + Petugas Aktif di Sekitar (Kanan) */}
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
   {/* Kolom Utama: Obrolan & Transmisi Suara PTT (Col 1-2) */}
-  <div className="lg:col-span-2 rounded-xl border border-border bg-surface overflow-hidden flex flex-col h-[580px] shadow-2xs">
+  <div className="lg:col-span-2 rounded-xl border border-border bg-surface overflow-hidden flex flex-col h-[460px] sm:h-[520px] lg:h-[580px] shadow-2xs">
   {/* Header Saluran Obrolan */}
   <div className="px-4 py-2.5 bg-surface-subtle border-b border-border flex items-center justify-between text-xs">
   <div className="flex items-center gap-2">
@@ -390,29 +390,30 @@ export default function TacticalChatPage() {
   onMouseLeave={cancelPTT}
   onTouchStart={startPTT}
   onTouchEnd={() => stopPTT(true)}
-  className={`h-10 px-3.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none border-[1.5px] ${
+  className={`h-10 px-2.5 sm:px-3.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none border-[1.5px] ${
   isRecording
   ? "bg-status-danger text-text-inverse border-status-danger ring-2 ring-status-danger/40 scale-105"
   : "bg-surface-subtle text-text-main border-border hover:bg-surface-muted active:scale-95"
   }`}
   >
   <Icon name="microphone" variant="bold" size={16} />
-  <span>{isRecording ? "Lepas untuk Kirim" : "Tahan Suara (PTT)"}</span>
+  <span className="hidden sm:inline">{isRecording ? "Lepas untuk Kirim" : "Tahan Suara (PTT)"}</span>
+  <span className="inline sm:hidden">{isRecording ? "Lepas" : "PTT"}</span>
   </button>
 
   {/* Input Teks Biasa */}
-  <form onSubmit={handleSendText} className="flex-1 flex items-center gap-2">
-  <Input placeholder={`Ketik pesan instruksi ke #${activeChannel.toLowerCase().replace(/_/g, " ")}...`}
+  <form onSubmit={handleSendText} className="flex-1 flex items-center gap-2 min-w-0">
+  <Input placeholder={`Ketik pesan ke #${activeChannel.toLowerCase().replace(/_/g, " ")}...`}
   value={inputMsg}
   onChange={(e) => setInputMsg(e.target.value)}
-  className="text-xs h-10"
+  className="text-base sm:text-xs h-10 flex-1 min-w-0"
   />
   <Button
   type="submit"
   variant="primary"
   size="md"
   disabled={!inputMsg.trim()}
-  className="h-10 px-4 font-bold"
+  className="h-10 px-3 sm:px-4 font-bold shrink-0"
   >
   Kirim
   </Button>
@@ -422,7 +423,7 @@ export default function TacticalChatPage() {
   </div>
 
   {/* Kolom Samping: Petugas Aktif di Sekitar Posko (Col 3) */}
-  <div className="rounded-xl border border-border bg-surface flex flex-col h-[580px] shadow-2xs overflow-hidden">
+  <div className="rounded-xl border border-border bg-surface flex flex-col h-[360px] sm:h-[420px] lg:h-[580px] shadow-2xs overflow-hidden">
   {/* Header Panel Rekan Tim */}
   <div className="p-3 bg-surface-subtle border-b border-border flex items-center justify-between">
   <div className="flex items-center gap-2">
@@ -546,12 +547,12 @@ export default function TacticalChatPage() {
   </div>
   </div>
 
-  <div className="pt-2 flex items-center gap-2">
+  <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
   <Button
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1"
+  className="w-full sm:flex-1"
   onClick={() => setSosModalOpen(false)}
   >
   Batal
@@ -560,7 +561,7 @@ export default function TacticalChatPage() {
   type="button"
   variant="danger"
   size="md"
-  className="flex-1 justify-center font-bold"
+  className="w-full sm:flex-1 justify-center font-bold"
   onClick={handleTriggerSOS}
   >
   <Icon name="sos" variant="bold" size={16} className="mr-1.5" />

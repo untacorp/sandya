@@ -227,7 +227,7 @@ export default function LogisticsDistributePage() {
   ) : (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
   {/* Kolom 1: Permintaan Masuk (PENDING) */}
-  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[480px] shadow-2xs overflow-hidden">
+  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[280px] lg:min-h-[480px] shadow-2xs overflow-hidden">
   <div className="p-3 border-b border-status-warning-border bg-status-warning-bg/20 flex items-center justify-between">
   <div>
   <h3 className="text-xs font-black uppercase tracking-wider text-status-warning flex items-center gap-1.5">
@@ -245,7 +245,7 @@ export default function LogisticsDistributePage() {
 
   <div className="p-2.5 flex-1 space-y-2.5 overflow-y-auto max-h-[640px]">
   {pendingTickets.length === 0 ? (
-  <div className="flex flex-col items-center justify-center py-16 text-center text-text-subtle space-y-1">
+  <div className="flex flex-col items-center justify-center py-12 text-center text-text-subtle space-y-1">
   <Icon name="check" variant="linear" size={24} className="text-border" />
   <p className="text-xs">Tidak ada permintaan tertunda</p>
   </div>
@@ -295,7 +295,7 @@ export default function LogisticsDistributePage() {
   </div>
 
   {/* Kolom 2: Siap Diantar (ALLOCATED) */}
-  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[480px] shadow-2xs overflow-hidden">
+  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[280px] lg:min-h-[480px] shadow-2xs overflow-hidden">
   <div className="p-3 border-b border-status-safe-border bg-status-safe-bg/20 flex items-center justify-between">
   <div>
   <h3 className="text-xs font-black uppercase tracking-wider text-status-safe flex items-center gap-1.5">
@@ -313,7 +313,7 @@ export default function LogisticsDistributePage() {
 
   <div className="p-2.5 flex-1 space-y-2.5 overflow-y-auto max-h-[640px]">
   {allocatedTickets.length === 0 ? (
-  <div className="flex flex-col items-center justify-center py-16 text-center text-text-subtle space-y-1">
+  <div className="flex flex-col items-center justify-center py-12 text-center text-text-subtle space-y-1">
   <Icon name="delivery" variant="linear" size={24} className="text-border" />
   <p className="text-xs">Tidak ada barang siap antar</p>
   </div>
@@ -354,7 +354,7 @@ export default function LogisticsDistributePage() {
   </div>
 
   {/* Kolom 3: Telah Diterima (COMPLETED) */}
-  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[480px] shadow-2xs overflow-hidden">
+  <div className="rounded-xl border border-border bg-surface flex flex-col min-h-[280px] lg:min-h-[480px] shadow-2xs overflow-hidden">
   <div className="p-3 border-b border-border bg-surface-muted flex items-center justify-between">
   <div>
   <h3 className="text-xs font-black uppercase tracking-wider text-text-muted flex items-center gap-1.5">
@@ -372,7 +372,7 @@ export default function LogisticsDistributePage() {
 
   <div className="p-2.5 flex-1 space-y-2.5 overflow-y-auto max-h-[640px]">
   {completedTickets.length === 0 ? (
-  <div className="flex flex-col items-center justify-center py-16 text-center text-text-subtle space-y-1">
+  <div className="flex flex-col items-center justify-center py-12 text-center text-text-subtle space-y-1">
   <Icon name="box" variant="linear" size={24} className="text-border" />
   <p className="text-xs">Belum ada bantuan selesai</p>
   </div>
@@ -434,7 +434,7 @@ export default function LogisticsDistributePage() {
   </label>
   <select value={selectedItemId}
   onChange={(e) => setSelectedItemId(e.target.value)}
-  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
+  className="w-full h-10 rounded-lg border border-border bg-surface px-3.5 text-base sm:text-xs font-semibold text-text-main focus:ring-2 focus:ring-primary outline-none appearance-none focus:border-border-strong transition-colors"
   >
   {poskoInventory.map((item) => (
   <option key={item.id} value={item.id}>
@@ -444,12 +444,12 @@ export default function LogisticsDistributePage() {
   </select>
   </div>
 
-  <div className="pt-2 flex items-center gap-2">
+  <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
   <Button
   type="button"
   variant="secondary"
   size="md"
-  className="flex-1"
+  className="w-full sm:flex-1"
   onClick={() => setSelectedTicketForAllocation(null)}
   >
   Batal
@@ -459,7 +459,7 @@ export default function LogisticsDistributePage() {
   variant="primary"
   size="md"
   disabled={isProcessing}
-  className="flex-1 justify-center font-bold"
+  className="w-full sm:flex-1 justify-center font-bold"
   >
   {isProcessing ? "Memproses Pemotongan..." : "Setujui & Potong Stok"}
   </Button>

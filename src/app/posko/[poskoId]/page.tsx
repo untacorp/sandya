@@ -72,14 +72,14 @@ export default function PoskoDashboardPage() {
   </div>
 
   {/* Tombol Aksi Cepat */}
-  <div className="flex items-center gap-2 shrink-0">
-  <Link href={`/posko/${effectivePoskoId}/refugees`}>
-  <Button variant="primary" size="sm" icon="users" iconVariant="bold">
+  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0 w-full sm:w-auto">
+  <Link href={`/posko/${effectivePoskoId}/refugees`} className="flex-1 sm:flex-initial">
+  <Button variant="primary" size="sm" icon="users" iconVariant="bold" className="w-full sm:w-auto justify-center">
   Lihat Daftar Warga
   </Button>
   </Link>
-  <Link href={`/posko/${effectivePoskoId}/logistics`}>
-  <Button variant="secondary" size="sm" icon="box" iconVariant="bold">
+  <Link href={`/posko/${effectivePoskoId}/logistics`} className="flex-1 sm:flex-initial">
+  <Button variant="secondary" size="sm" icon="box" iconVariant="bold" className="w-full sm:w-auto justify-center">
   Stok Barang
   </Button>
   </Link>

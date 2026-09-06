@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 
 export const viewport: Viewport = {
   themeColor: [
-  { media: "(prefers-color-scheme: light)", color: "#0f172a" },
-  { media: "(prefers-color-scheme: dark)", color: "#020617" },
+    { media: "(prefers-color-scheme: light)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
 };
 
@@ -110,7 +110,7 @@ export default function RootLayout({
   lang="id"
   className={`${plusJakartaSans.variable} ${geistMono.variable} h-full antialiased`}
   >
-  <body className="min-h-full flex flex-col bg-canvas text-text-main font-sans">{children}</body>
+  <body className="min-h-[100dvh] flex flex-col bg-canvas text-text-main font-sans">{children}</body>
   </html>
   );
 }

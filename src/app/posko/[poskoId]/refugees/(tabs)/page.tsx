@@ -123,9 +123,9 @@ export default function RefugeesPage() {
           </div>
 
           {/* Filter Dropdowns & Intake Button */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             {/* Filter Triase */}
-            <div className="w-36">
+            <div className="flex-1 min-w-[130px] sm:w-36">
               <Select
                 value={selectedTriage}
                 onChange={(e) => setSelectedTriage(e.target.value)}
@@ -140,7 +140,7 @@ export default function RefugeesPage() {
             </div>
 
             {/* Filter Kerentanan */}
-            <div className="w-40">
+            <div className="flex-1 min-w-[140px] sm:w-40">
               <Select
                 value={selectedVulnerability}
                 onChange={(e) => setSelectedVulnerability(e.target.value)}
@@ -161,7 +161,7 @@ export default function RefugeesPage() {
               icon="user"
               iconVariant="bold"
               onClick={() => setFastIntakeOpen(true)}
-              className="whitespace-nowrap ml-auto md:ml-0"
+              className="w-full sm:w-auto whitespace-nowrap ml-auto md:ml-0 justify-center"
             >
               + Intake Warga
             </Button>
@@ -216,7 +216,53 @@ export default function RefugeesPage() {
         </div>
       ) : (
         <div className="bg-surface rounded-xl border border-border shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Card List View (Phones & Small Viewports) */}
+          <div className="block md:hidden divide-y divide-border">
+            {filteredRefugees.map((person) => (
+              <div
+                key={person.id}
+                onClick={() => handleRowClick(person)}
+                className="p-3.5 space-y-2 hover:bg-surface-subtle transition-colors cursor-pointer active:bg-surface-muted"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-text-main truncate">
+                      {person.fullName}
+                    </h3>
+                    <p className="text-[11px] font-mono text-text-muted">
+                      {person.nik ? `NIK: ${person.nik}` : "Tanpa KTP/NIK"}
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    {getTriageBadge(person.triageStatus)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-text-muted pt-0.5">
+                  <div>
+                    <span className="text-text-subtle block text-[10px]">Demografi:</span>
+                    <span className="font-semibold text-text-main">{person.age} Thn</span> ({person.gender === "M" ? "L" : "P"})
+                  </div>
+                  <div>
+                    <span className="text-text-subtle block text-[10px]">Lokasi Hunian:</span>
+                    <span className="font-semibold text-text-main truncate block">{person.shelterLocation}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <div className="flex-1 min-w-0 pr-2">
+                    {getVulnerabilityBadges(person.vulnerabilities)}
+                  </div>
+                  <span className="text-primary font-bold inline-flex items-center gap-0.5 text-xs shrink-0">
+                    Detail <Icon name="arrow-right" size={13} />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border bg-surface-subtle sticky top-0 z-10 text-[11px] font-bold uppercase tracking-wider text-text-muted">
@@ -314,7 +360,7 @@ export default function RefugeesPage() {
             </div>
 
             {/* Atribut Hunian & Asal */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-lg bg-surface-subtle border border-border">
                 <span className="text-text-muted text-[11px] block">Titik Tinggal / Tenda:</span>
                 <span className="font-semibold text-text-main block mt-0.5">
@@ -389,22 +435,22 @@ export default function RefugeesPage() {
             </div>
 
             {/* Tombol Aksi Langsung */}
-            <div className="pt-2 border-t border-border flex items-center gap-2">
+            <div className="pt-2 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center gap-2">
               <Link
                 href={`/posko/${effectivePoskoId}/logistics/distribute`}
-                className="flex-1"
+                className="w-full sm:flex-1"
                 onClick={() => setDetailModalOpen(false)}
               >
-                <Button variant="primary" size="sm" className="w-full justify-center">
+                <Button variant="primary" size="md" className="w-full justify-center">
                   Beri Bantuan
                 </Button>
               </Link>
               <Link
                 href={`/posko/${effectivePoskoId}/refugees/${selectedPerson.id}`}
-                className="flex-1"
+                className="w-full sm:flex-1"
                 onClick={() => setDetailModalOpen(false)}
               >
-                <Button variant="secondary" size="sm" className="w-full justify-center">
+                <Button variant="secondary" size="md" className="w-full justify-center">
                   Buka Riwayat
                 </Button>
               </Link>

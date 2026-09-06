@@ -83,7 +83,7 @@ export function MissionShell({
   const isRootMission = pathname === `/missions/${missionId}`;
 
   return (
-  <div className="min-h-screen flex bg-canvas text-text-main">
+    <div className="min-h-[100dvh] flex bg-canvas text-text-main">
   {/* Desktop Sidebar */}
   <aside className="hidden md:flex flex-col w-60 border-r border-border bg-surface shrink-0 min-h-screen">
   {/* Brand Header */}
@@ -169,16 +169,16 @@ export function MissionShell({
   </aside>
 
   {/* Main Content Area */}
-  <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-8">
+  <div className="flex-1 flex flex-col min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
   {/* Sticky Minimal Header */}
-  <header className="sticky top-0 z-30 w-full bg-surface border-b border-border shadow-2xs">
-  <div className="flex items-center justify-between px-3 sm:px-6 py-2.5 max-w-7xl mx-auto">
+  <header className="sticky top-0 z-30 w-full bg-surface border-b border-border shadow-2xs pt-[env(safe-area-inset-top,0px)]">
+  <div className="flex items-center justify-between px-3 sm:px-6 py-2 max-w-7xl mx-auto min-h-[52px]">
   {/* Left: Minimal Back Button */}
   <div className="flex items-center gap-2 min-w-0">
   {!isRootMission ? (
   <Link
   href={`/missions/${missionId}`}
-  className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors py-1 px-2 rounded-lg hover:bg-surface-muted"
+  className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors min-h-[40px] px-2.5 rounded-lg hover:bg-surface-muted shrink-0"
   >
   <Icon name="arrow-left" variant="linear" size={16} />
   <span>Kembali</span>
@@ -186,7 +186,7 @@ export function MissionShell({
   ) : (
   <Link
   href="/org"
-  className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors py-1 px-2 rounded-lg hover:bg-surface-muted"
+  className="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors min-h-[40px] px-2.5 rounded-lg hover:bg-surface-muted shrink-0"
   >
   <Icon name="arrow-left" variant="linear" size={16} />
   <span>Markas Lembaga</span>
@@ -201,13 +201,14 @@ export function MissionShell({
   </div>
 
   {/* Right: Quick Settings Link (Mobile only, desktop has it in sidebar) */}
-  <div className="flex items-center gap-2 md:hidden">
+  <div className="flex items-center gap-1 md:hidden">
   <Link
   href={`/missions/${missionId}/settings`}
-  className="flex items-center gap-1.5 p-1.5 rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-surface-muted border border-transparent hover:border-border transition-colors"
+  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium text-text-muted hover:text-text-main hover:bg-surface-muted border border-transparent hover:border-border transition-colors"
   title="Pengaturan Wilayah"
+  aria-label="Pengaturan Wilayah"
   >
-  <Icon name="settings" variant="linear" size={18} />
+  <Icon name="settings" variant="linear" size={20} />
   </Link>
   </div>
   </div>
@@ -219,7 +220,7 @@ export function MissionShell({
   </main>
 
   {/* Mobile Bottom Navigation (Icon-only) */}
-  <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:hidden shadow-sm safe-area-bottom">
+  <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border md:hidden shadow-sm safe-area-bottom pb-[env(safe-area-inset-bottom,0px)]">
   <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
   {mainNavItems.map((item) => {
   const isActive = item.exact
@@ -233,7 +234,7 @@ export function MissionShell({
   aria-label={item.label}
   title={item.label}
   className={cn(
-  "flex items-center justify-center flex-1 h-full transition-colors select-none",
+  "flex items-center justify-center flex-1 h-full min-h-[44px] transition-colors select-none",
   isActive
   ? "text-primary"
   : "text-text-muted hover:text-text-main"
@@ -241,7 +242,7 @@ export function MissionShell({
   >
   <div
   className={cn(
-  "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+  "w-11 h-11 rounded-xl flex items-center justify-center transition-all",
   isActive
   ? "bg-primary/10 text-primary"
   : "hover:bg-surface-muted"

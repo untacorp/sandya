@@ -415,7 +415,7 @@ export default function AnimatedQRPage() {
   />
   ) : (
   /* TRANSMIT MODE */
-  <Card className="max-w-md mx-auto p-5 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs text-center">
+  <Card className="max-w-md mx-auto p-4 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs text-center">
   <div>
   <h3 className="text-base font-bold text-text-main">
   Pancaran QR Animasi Layar (Fountain Stream)
@@ -426,7 +426,7 @@ export default function AnimatedQRPage() {
   </div>
 
   {/* Real QR SVG Display */}
-  <div className="w-64 h-64 mx-auto p-3 rounded-2xl bg-white border border-border flex flex-col items-center justify-center shadow-xs">
+  <div className="w-56 h-56 sm:w-64 sm:h-64 mx-auto p-3 rounded-2xl bg-white border border-border flex flex-col items-center justify-center shadow-xs">
   {activeFrame ? (
   <QRCodeSVG
   value={activeFrame.frameString}
@@ -469,7 +469,7 @@ export default function AnimatedQRPage() {
   )}
 
   {/* Play/Pause & FPS Controls */}
-  <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
+  <div className="flex flex-wrap items-center justify-center gap-2 pt-2 border-t border-border">
   <Button
   variant={isPlaying ? "secondary" : "primary"}
   size="sm"
@@ -502,7 +502,7 @@ export default function AnimatedQRPage() {
   )
   ) : (
   /* RECEIVE MODE */
-  <Card className="max-w-md mx-auto p-5 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs">
+  <Card className="max-w-md mx-auto p-4 sm:p-6 space-y-4 border border-border bg-surface shadow-2xs">
   <div className="text-center space-y-0.5">
   <h3 className="text-base font-bold text-text-main">
   Penerima Kamera QR Animasi
@@ -580,11 +580,11 @@ export default function AnimatedQRPage() {
   )}
 
   {/* Actions */}
-  <div className="flex gap-2 pt-1">
+  <div className="flex flex-col sm:flex-row gap-2 pt-1">
   <Button
   variant="outline"
   size="sm"
-  className="flex-1"
+  className="w-full sm:flex-1"
   icon="search"
   iconVariant="linear"
   onClick={handleFastReceiveSimulation}
@@ -594,6 +594,7 @@ export default function AnimatedQRPage() {
   <Button
   variant="secondary"
   size="sm"
+  className="w-full sm:w-auto"
   icon="sync"
   iconVariant="linear"
   onClick={handleResetReceiver}

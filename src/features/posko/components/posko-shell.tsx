@@ -202,12 +202,12 @@ export function PoskoShell({ children }: { children: React.ReactNode }) {
   }, [activePoskoId]);
 
   return (
-  <div className="min-h-screen flex bg-canvas text-text-main">
-  {/* Desktop Sidebar */}
-  <PoskoDesktopSidebar />
+    <div className="min-h-[100dvh] flex bg-canvas text-text-main">
+      {/* Desktop Sidebar */}
+      <PoskoDesktopSidebar />
 
-  {/* Main Content Area */}
-  <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-8">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
   {/* Sticky Header */}
   <PoskoHeader />
 

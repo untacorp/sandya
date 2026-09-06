@@ -247,7 +247,7 @@ export default function FamilyReunionPage() {
   </div>
   </div>
 
-  <div className="flex sm:flex-col items-center justify-end gap-2 shrink-0">
+  <div className="flex sm:flex-col items-center justify-end gap-2 shrink-0 w-full sm:w-auto">
   <Button
   variant="primary"
   size="sm"
