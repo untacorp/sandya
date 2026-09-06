@@ -13,6 +13,7 @@ import { QRCameraScanner } from "@/features/auth/components/qr-camera-scanner";
 import { RolePassCodec, RolePassPayload } from "@/core/codecs/role-pass-codec";
 import { type UserRole } from "@/shared/types";
 import { StaffRole } from "@/core/shared/roles";
+import { getRoleDisplayName, getRoleDefaultPath } from "@/features/auth/utils/role-routing";
 
 export default function ActivatePassPage() {
   const router = useRouter();
@@ -59,35 +60,14 @@ export default function ActivatePassPage() {
         orgName: verifiedPass.orgName || session.orgName || `Organisasi ${verifiedPass.orgId}`,
       });
 
-      if (role === "PEMIMPIN_ORGANISASI") {
-        router.push("/org");
-      } else if (role === "KOMANDAN_MISI") {
-        router.push(`/missions/${verifiedPass.missionId || session.missionId}`);
-      } else {
-        router.push(`/posko/${verifiedPass.poskoId || session.poskoId}`);
-      }
+      const targetPath = getRoleDefaultPath(role, {
+        missionId: verifiedPass.missionId || session.missionId,
+        poskoId: verifiedPass.poskoId || session.poskoId,
+      });
+      router.push(targetPath);
     } else {
-      router.push(`/posko/${session.poskoId}`);
+      router.push(getRoleDefaultPath(session.userRole, { poskoId: session.poskoId }));
     }
-  };
-
-  const getRoleDisplayName = (role: StaffRole | UserRole) => {
-  switch (role) {
-  case "PETUGAS_MEDIS":
-  return "Petugas Medis (Kesehatan & Triase)";
-  case "PETUGAS_LOGISTIK":
-  return "Petugas Logistik (Gudang & Single-Writer)";
-  case "RELAWAN_LAPANGAN":
-  return "Relawan Lapangan (Pendataan 30s & Antar Bantuan)";
-  case "KOORDINATOR_POSKO":
-  return "Koordinator Posko (Otoritas Tenda)";
-  case "KOMANDAN_MISI":
-  return "Komandan Misi (Operasi Wilayah)";
-  case "PEMIMPIN_ORGANISASI":
-  return "Pimpinan Lembaga Induk";
-  default:
-  return "Petugas Lapangan";
-  }
   };
 
   return (

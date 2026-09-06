@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { Badge } from "@/shared/ui/badge";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { getRoleDisplayName } from "@/features/auth/utils/role-routing";
 
 export default function LandingGatewayPage() {
   const { session } = usePoskoStore();
@@ -16,25 +17,6 @@ export default function LandingGatewayPage() {
   }, []);
 
   const hasActiveSession = isMounted && Boolean(session.poskoId || session.missionId);
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "PETUGAS_MEDIS":
-        return "Petugas Medis (Klinis & Triase)";
-      case "PETUGAS_LOGISTIK":
-        return "Petugas Logistik (Gudang Single-Writer)";
-      case "RELAWAN_LAPANGAN":
-        return "Relawan Lapangan (Pendataan & Bantuan)";
-      case "KOORDINATOR_POSKO":
-        return "Koordinator Posko (Otoritas Tenda)";
-      case "KOMANDAN_MISI":
-        return "Komandan Misi (Operasi Wilayah)";
-      case "PEMIMPIN_ORGANISASI":
-        return "Pemimpin Lembaga Induk";
-      default:
-        return "Petugas Lapangan";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-canvas text-text-main flex flex-col justify-between">

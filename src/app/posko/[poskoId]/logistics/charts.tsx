@@ -130,7 +130,10 @@ export function LogisticsCharts({ inventory }: LogisticsChartsProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => [`${value?.toLocaleString()} items`, "Total"]}
+                  formatter={(value: unknown) => [
+                    `${Number(value || 0).toLocaleString()} items`,
+                    "Total",
+                  ]}
                   contentStyle={{ fontSize: "12px", borderRadius: "8px" }}
                 />
                 <Legend
@@ -176,8 +179,8 @@ export function LogisticsCharts({ inventory }: LogisticsChartsProps) {
                   width={90}
                 />
                 <Tooltip
-                  formatter={(value: any, name: any, props: any) => [
-                    `${value?.toLocaleString()} (Tahan ${props.payload.burnRate} hari)`,
+                  formatter={(value: unknown, _name: unknown, item) => [
+                    `${Number(value || 0).toLocaleString()} (Tahan ${(item as { payload?: { burnRate?: number } })?.payload?.burnRate ?? 0} hari)`,
                     "Kuantitas",
                   ]}
                   contentStyle={{ fontSize: "12px", borderRadius: "8px" }}

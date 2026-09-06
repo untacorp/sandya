@@ -50,6 +50,15 @@ export function RolePassModal({
   const [passString, setPassString] = React.useState<string>("");
   const [manualCode, setManualCode] = React.useState<string>("");
   const [copied, setCopied] = React.useState(false);
+  const copyTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   React.useEffect(() => {
     if (!open) return;
@@ -113,11 +122,16 @@ export function RolePassModal({
   ]);
 
   const handleCopyCode = () => {
-  if (manualCode && typeof navigator !== "undefined") {
-  navigator.clipboard.writeText(manualCode);
-  setCopied(true);
-  setTimeout(() => setCopied(false), ROLE_PASS_MODAL_CONSTANTS.COPY_FEEDBACK_TIMEOUT_MS);
-  }
+    if (manualCode && typeof navigator !== "undefined") {
+      navigator.clipboard.writeText(manualCode);
+      setCopied(true);
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = setTimeout(() => {
+        setCopied(false);
+      }, ROLE_PASS_MODAL_CONSTANTS.COPY_FEEDBACK_TIMEOUT_MS);
+    }
   };
 
   const getRoleBadge = (r: StaffRole) => {

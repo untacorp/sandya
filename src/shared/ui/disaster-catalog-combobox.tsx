@@ -114,7 +114,7 @@ export function DisasterCatalogCombobox({ value, onChange }: DisasterCatalogComb
           <div className="overflow-y-auto flex-1 p-1">
             {filteredItems.length === 0 ? (
               <div className="py-6 text-center text-xs text-text-muted">
-                Komoditas "{search}" tidak ditemukan dalam filter ini.
+                Komoditas &quot;{search}&quot; tidak ditemukan dalam filter ini.
               </div>
             ) : (
               filteredItems.map((item) => (

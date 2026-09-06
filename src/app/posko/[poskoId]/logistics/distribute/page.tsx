@@ -5,7 +5,15 @@ import { useParams } from "next/navigation";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { asPoskoId, asItemId } from "@/core/shared/branded-types";
-import { InventoryAggregate } from "@/core/domain/logistics/inventory.aggregate";
+import { InventoryAggregate, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
+
+const toInventoryCategory = (cat: string): InventoryCategory => {
+  if (cat === "BABY_SUPPLIES") return "INFANT";
+  if (["FOOD", "CLOTHING", "MEDICAL", "HYGIENE", "SHELTER", "INFANT", "ASSISTIVE", "EMERGENCY_TOOLS"].includes(cat)) {
+    return cat as InventoryCategory;
+  }
+  return "OTHER";
+};
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -95,7 +103,7 @@ export default function LogisticsDistributePage() {
   id: asItemId(targetItem.id),
   poskoId: asPoskoId(effectivePoskoId),
   itemName: targetItem.itemName,
-  category: targetItem.category as any,
+  category: toInventoryCategory(targetItem.category),
   currentQuantity: targetItem.currentQuantity,
   unit: targetItem.unit,
   lastUpdatedAt: targetItem.lastUpdatedAt,
