@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePoskoStore } from "@/features/posko/store/use-posko-store";
+import { usePoskoStore, type MacroWaybill } from "@/features/posko/store/use-posko-store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -21,7 +21,7 @@ export default function MissionLogisticsHubPage() {
   const [qty, setQty] = React.useState(1);
   const [driverName, setDriverName] = React.useState("");
 
-  const [waybillModal, setWaybillModal] = React.useState<any | null>(null);
+  const [waybillModal, setWaybillModal] = React.useState<MacroWaybill | null>(null);
 
   const handleCreateDispatch = (e: React.FormEvent) => {
   e.preventDefault();

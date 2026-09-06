@@ -4,8 +4,17 @@ import * as React from "react";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
 import { DISASTER_NEEDS_CATALOG } from "@/core/codecs/needs-catalog";
-import { InventoryAggregate, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
+import { InventoryAggregate, INVENTORY_CATEGORIES, type InventoryCategory } from "@/core/domain/logistics/inventory.aggregate";
 import { asItemId, asPoskoId } from "@/core/shared/branded-types";
+
+const mapClusterToCategory = (cluster: string): InventoryCategory => {
+  if (cluster === "FOOD_WATER") return "FOOD";
+  if (cluster === "CLOTHING_BEDDING") return "CLOTHING";
+  if (INVENTORY_CATEGORIES.includes(cluster as InventoryCategory)) {
+    return cluster as InventoryCategory;
+  }
+  return "OTHER";
+};
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Dialog } from "@/shared/ui/dialog";
@@ -15,6 +24,7 @@ import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { Badge } from "@/shared/ui/badge";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { type ItemCategory } from "@/shared/types";
 
 export default function LogisticsPage() {
   const { session, inventory, transactions, addRestock } = usePoskoStore();
@@ -139,7 +149,7 @@ export default function LogisticsPage() {
   }
 
   // Update zustand store
-  addRestock(finalItemName, category as any, quantityNumber, unit.toUpperCase());
+  addRestock(finalItemName, category as ItemCategory, quantityNumber, unit.toUpperCase());
 
   setSuccessToast(`Stok ${quantityNumber} ${unit.toUpperCase()} ${finalItemName} berhasil ditambahkan.`);
   setTimeout(() => setSuccessToast(null), 4000);
@@ -147,8 +157,8 @@ export default function LogisticsPage() {
   setCustomItemName("");
   setQty("");
   setRestockOpen(false);
-  } catch (err: any) {
-  setErrorMessage(err?.message || "Terjadi kesalahan saat memproses stok masuk.");
+  } catch (err: unknown) {
+  setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat memproses stok masuk.");
   } finally {
   setIsSubmitting(false);
   }
@@ -406,7 +416,7 @@ export default function LogisticsPage() {
   setSelectedCatalogId(id);
   const item = DISASTER_NEEDS_CATALOG[id];
   if (item) {
-  setCategory(item.cluster as any);
+  setCategory(mapClusterToCategory(item.cluster));
   }
   }}
   className="w-full h-10 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
@@ -433,7 +443,7 @@ export default function LogisticsPage() {
   <label className="font-semibold text-text-main block">Kategori Komoditas</label>
   <select
   value={category}
-  onChange={(e) => setCategory(e.target.value as any)}
+  onChange={(e) => setCategory(e.target.value as InventoryCategory)}
   className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-text-main focus:ring-1 focus:ring-primary outline-none"
   >
   <option value="FOOD">Pangan & Air Minum (FOOD)</option>

@@ -8,7 +8,7 @@ import { RecordTriageExamUseCase } from '@/core/use-cases/refugees/record-triage
 import { MutateStockUseCase } from '@/core/use-cases/logistics/mutate-stock.usecase';
 import { InventoryAggregate } from '@/core/domain/logistics/inventory.aggregate';
 import { CloudSyncService } from '@/infrastructure/sync/cloud-sync.service';
-import { asPoskoId, asItemId, asRefugeeId } from '@/core/shared/branded-types';
+import { asPoskoId, asItemId } from '@/core/shared/branded-types';
 import { ServiceContainer } from '@/infrastructure/services/service-container';
 
 async function runLocalSqliteCloudSyncTests() {
@@ -137,7 +137,7 @@ async function runLocalSqliteCloudSyncTests() {
   refugeeRepo,
   inventoryRepo,
   outboxRepo,
-  } as any
+  } as unknown as ServiceContainer
   );
 
   const syncResult = await cloudSync.syncAll('POS-CIJEDIL-01');

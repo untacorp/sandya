@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@/shared/ui/dialog";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { type UserRole } from "@/shared/types";
 
@@ -12,7 +12,7 @@ interface PoskoSwitcherProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const ROLES: { id: UserRole; label: string; desc: string; icon: any; level: string }[] = [
+const ROLES: { id: UserRole; label: string; desc: string; icon: SolarIconName; level: string }[] = [
   {
   id: "PEMIMPIN_ORGANISASI",
   label: "Pengurus Induk Lembaga",

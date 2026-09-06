@@ -102,8 +102,8 @@ export default function LogisticsDistributePage() {
   setTimeout(() => setSuccessToast(null), 4500);
 
   setSelectedTicketForAllocation(null);
-  } catch (err: any) {
-  setErrorMessage(err?.message || "Terjadi kesalahan saat memproses alokasi stok.");
+  } catch (err: unknown) {
+  setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat memproses alokasi stok.");
   } finally {
   setIsProcessing(false);
   }

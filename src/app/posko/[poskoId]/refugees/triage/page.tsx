@@ -102,7 +102,7 @@ export default function TriagePage() {
   const handleUpdatePrescription = (
   index: number,
   field: keyof PrescriptionFormItem,
-  val: any
+  val: string | number
   ) => {
   setPrescriptions((prev) =>
   prev.map((item, i) => (i === index ? { ...item, [field]: val } : item))
@@ -187,8 +187,8 @@ export default function TriagePage() {
   setTimeout(() => setSuccessToast(null), 4000);
 
   setExamOpen(false);
-  } catch (err: any) {
-  setErrorMessage(err?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
+  } catch (err: unknown) {
+  setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
   } finally {
   setIsSubmitting(false);
   }

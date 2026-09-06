@@ -179,7 +179,7 @@ export class RefugeeAggregate {
   refugeeId: this.id,
   authorId,
   authorName,
-  authorRole: authorRole as any,
+  authorRole,
   eventType: 'TRIAGE_UPDATE',
   eventPayload: {
   triageCategory,

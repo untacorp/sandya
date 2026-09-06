@@ -2,7 +2,6 @@ import assert from 'node:assert';
 import {
   splitPayloadToAnimatedFrames,
   OutOfOrderFrameAssembler,
-  computeCrc16,
 } from '@/core/codecs/animated-qr-codec';
 import { PosterGenerator } from '@/core/codecs/poster-generator';
 import { XorParityEngine } from '@/core/codecs/parity-xor';
