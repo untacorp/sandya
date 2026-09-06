@@ -146,22 +146,22 @@ Pendekatan utama yang diterapkan Sandya:
 
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-situational-dashboard.png" alt="Situational Awareness Dashboard" width="850"/>
+  <img src="./docs/showcase/situational-dashboard.png" alt="Situational Awareness Dashboard" width="850"/>
   <p><em>1. Situational Awareness & Posko Dashboard - Pemantauan triase, hunian pengungsi, dan ketersediaan logistik secara real-time.</em></p>
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-refugees-intake.png" alt="Fast Mobile Intake" width="850"/>
+  <img src="./docs/showcase/refugees-intake.png" alt="Fast Mobile Intake" width="850"/>
   <p><em>2. Pendaftaran Cepat Pengungsi - Pendaftaran warga pengungsi dengan pemilahan demografi kelompok rentan.</em></p>
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-medical-triage.png" alt="START Medical Triage" width="850"/>
+  <img src="./docs/showcase/medical-triage.png" alt="START Medical Triage" width="850"/>
   <p><em>3. Triase Medis START - Klasifikasi pasien IGD darurat, pencatatan tanda vital, dan e-resep farmasi bencana.</em></p>
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-logistics-resilience.png" alt="Logistics Warehouse & Resilience" width="850"/>
+  <img src="./docs/showcase/logistics-resilience.png" alt="Logistics Warehouse & Resilience" width="850"/>
   <p><em>4. Gudang Logistik & Ketahanan SPHERE - Pelacakan stok fisik single-writer dan proyeksi sisa hari konsumsi per komoditas.</em></p>
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-family-reunion.png" alt="Offline Family Reunion" width="850"/>
+  <img src="./docs/showcase/family-reunion.png" alt="Offline Family Reunion" width="850"/>
   <p><em>5. Pencarian Keluarga Terpisah - Rekonsiliasi kerabat hilang dengan algoritma toleran kesalahan eja.</em></p>
 
-  <img src="https://raw.githubusercontent.com/untacorp/sandya/main/docs/design/screenshots/mockup-tactical-intercom.png" alt="Tactical Intercom PTT" width="850"/>
+  <img src="./docs/showcase/tactical-intercom.png" alt="Tactical Intercom PTT" width="850"/>
   <p><em>6. Komunikasi Push-to-Talk - Push-to-Talk (PTT) suara darurat 4 kanal dan tombol sirene darurat SOS.</em></p>
 
 </div>

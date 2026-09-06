@@ -52,6 +52,9 @@ docs/
 │       ├── 06-relawan-lapangan.md               # Relawan Lapangan (Field Volunteer)
 │       └── 07-warga-dan-tamu.md                 # Warga Pengungsi & Tamu Publik (Guest)
 │
+├── showcase/                                    # Showcase tangkapan layar aplikasi nyata untuk README
+│   └── README.md                                # Katalog slot tangkapan layar & panduan resolusi
+│
 └── archive/                                     # Arsip Dokumen Historis & Riset Awal
     ├── README.md                                # Indeks dokumen terarsip / deprecated
     ├── idea.md                                  # Catatan konsep awal & problem statement
@@ -83,6 +86,7 @@ docs/
 - **[Blueprint Arsitektur Frontend](./design/ui-ux/01-arsitektur-frontend-sandya.md)**: Struktur rute Next.js 16 App Router, batasan RSC/Client Components, dan matriks 6-status UI.
 - **[Pedoman Standar Solar Icons](./design/ui-ux/02-pedoman-solar-icons.md)**: Aturan penggunaan varian `linear` dan `bold` serta katalog pemetaan ikon resmi.
 - **[Sistem Desain & Token Warna](./design/ui-ux/03-sistem-desain-dan-token-warna.md)**: Variabel CSS semantik, palet triase START, dan integrasi Tailwind CSS v4.
+- **[Katalog Showcase Tangkapan Layar](./showcase/README.md)**: Direktori aset tangkapan layar aplikasi operasional nyata untuk README dan portofolio.
 
 ### 5. Alur Pengguna (User Flow)
 - **[Peta Induk User Flow](./userflow/00-arsitektur-dan-peta-userflow.md)**: Diagram makro alur perjalanan sistem, taksonomi peran, dan isolasi akses publik.
