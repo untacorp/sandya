@@ -59,7 +59,7 @@ export interface ManifestNeedsTicket {
   itemName: string;
   quantity: number;
   unit: string;
-  status: "PENDING" | "ALLOCATED" | "COMPLETED" | "REJECTED";
+  status: "PENDING" | "ALLOCATED" | "COMPLETED" | "REJECTED" | "CANCELLED";
   urgency: "HIGH" | "MEDIUM" | "LOW";
   createdByUserName?: string;
   createdAt?: number;
@@ -147,6 +147,7 @@ export const BITPACKER_CONSTANTS = {
     ALLOCATED: 1,
     COMPLETED: 2,
     REJECTED: 3,
+    CANCELLED: 3,
   } as Record<string, number>,
   TICKET_STATUS_ARRAY: ["PENDING", "ALLOCATED", "COMPLETED", "REJECTED"] as const,
   TICKET_URGENCY_MAP: {

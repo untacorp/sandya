@@ -133,64 +133,76 @@ export default function PoskoDashboardPage() {
   </Link>
   </div>
 
-  <div className="divide-y divide-border text-xs">
-  {inventory.slice(0, 4).map((item) => (
-  <div
-  key={item.id}
-  className="py-2.5 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
-  >
-  <div>
-  <p className="font-semibold text-text-main">{item.itemName}</p>
-  <p className="text-[11px] text-text-muted">
-  Estimasi cukup untuk ~{item.burnRateDays} hari
-  </p>
-  </div>
-  <div className="text-right">
-  <span className="font-bold text-text-main text-sm">
-  {item.currentQuantity} {item.unit}
-  </span>
-  </div>
-  </div>
-  ))}
-  </div>
+    <div className="divide-y divide-border text-xs">
+      {poskoInventory.length === 0 ? (
+        <div className="py-6 text-center text-xs text-text-subtle">
+          Belum ada data stok bantuan di posko ini.
+        </div>
+      ) : (
+        poskoInventory.slice(0, 4).map((item) => (
+          <div
+            key={item.id}
+            className="py-2.5 flex items-center justify-between gap-3 first:pt-0 last:pb-0"
+          >
+            <div>
+              <p className="font-semibold text-text-main">{item.itemName}</p>
+              <p className="text-[11px] text-text-muted">
+                Estimasi cukup untuk ~{item.burnRateDays} hari
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="font-bold text-text-main text-sm">
+                {item.currentQuantity} {item.unit}
+              </span>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
   </div>
 
   {/* Panel Kanan: Petugas Terhubung di Sekitar (5 Kolom) */}
   <div className="md:col-span-5 p-4 rounded-xl bg-surface border border-border shadow-2xs space-y-3">
-  <div className="flex items-center justify-between">
-  <div className="flex items-center gap-2">
-  <span className="w-2 h-2 rounded-full bg-status-safe" />
-  <h2 className="text-xs font-bold uppercase tracking-wider text-text-main">
-  Petugas di Sekitar ({peers.length})
-  </h2>
-  </div>
-  <Link href={`/posko/${effectivePoskoId}/tactical`}>
-  <span className="text-xs text-primary font-semibold hover:underline">
-  Buka Obrolan
-  </span>
-  </Link>
-  </div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-status-safe" />
+        <h2 className="text-xs font-bold uppercase tracking-wider text-text-main">
+          Petugas di Sekitar ({peers.length})
+        </h2>
+      </div>
+      <Link href={`/posko/${effectivePoskoId}/tactical`}>
+        <span className="text-xs text-primary font-semibold hover:underline">
+          Buka Obrolan
+        </span>
+      </Link>
+    </div>
 
-  <div className="divide-y divide-border text-xs">
-  {peers.map((peer) => (
-  <div
-  key={peer.peerId}
-  className="py-2.5 flex items-center justify-between gap-2 first:pt-0 last:pb-0"
-  >
-  <div>
-  <span className="font-semibold text-text-main block">
-  {peer.aliasName}
-  </span>
-  <span className="text-[11px] text-text-muted">
-  {peer.role.replace(/_/g, " ")}
-  </span>
-  </div>
-  <span className="text-[11px] text-text-muted">
-  Terhubung
-  </span>
-  </div>
-  ))}
-  </div>
+    <div className="divide-y divide-border text-xs">
+      {peers.length === 0 ? (
+        <div className="py-6 text-center text-xs text-text-subtle">
+          Belum ada petugas lain yang terdeteksi di sekitar.
+        </div>
+      ) : (
+        peers.map((peer) => (
+          <div
+            key={peer.peerId}
+            className="py-2.5 flex items-center justify-between gap-2 first:pt-0 last:pb-0"
+          >
+            <div>
+              <span className="font-semibold text-text-main block">
+                {peer.aliasName}
+              </span>
+              <span className="text-[11px] text-text-muted">
+                {peer.role.replace(/_/g, " ")}
+              </span>
+            </div>
+            <span className="text-[11px] text-text-muted">
+              Terhubung
+            </span>
+          </div>
+        ))
+      )}
+    </div>
   </div>
   </div>
   </div>

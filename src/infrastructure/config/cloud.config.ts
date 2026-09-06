@@ -37,22 +37,22 @@ export interface CloudConfig {
 export const DEFAULT_CLOUD_CONFIG: CloudConfig = {
   driver: (process.env.NEXT_PUBLIC_CLOUD_DRIVER as CloudDriverType) || "LOCAL_FIRST_OFFLINE",
   supabase: {
-  url: process.env.NEXT_PUBLIC_SUPABASE_URL || "https://sandya-cloud.supabase.co",
-  anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.sandya-anonymous-edge-key",
-  serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  schema: "public",
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL || "https://sandya-cloud.supabase.co",
+    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.sandya-anonymous-edge-key",
+    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    schema: "public",
   },
   postgresVps: {
-  endpoint: process.env.NEXT_PUBLIC_VPS_SYNC_ENDPOINT || "https://vps.bpbd.go.id/api/v1/sync",
-  apiKey: process.env.VPS_SYNC_API_KEY,
-  postgresUrl: process.env.DATABASE_URL || "postgresql://sandya_admin:sandya_secret@localhost:5432/sandya_db",
-  ssl: process.env.NODE_ENV === "production",
+    endpoint: process.env.NEXT_PUBLIC_VPS_SYNC_ENDPOINT || "https://vps.bpbd.go.id/api/v1/sync",
+    apiKey: process.env.VPS_SYNC_API_KEY,
+    postgresUrl: process.env.DATABASE_URL || "postgresql://sandya_admin:sandya_secret@localhost:5432/sandya_db",
+    ssl: process.env.NODE_ENV === "production",
   },
   syncOptions: {
-  batchSize: 50,
-  autoSyncIntervalMs: 30000, // 30 seconds
-  maxRetryAttempts: 3,
-  retryBackoffBaseMs: 1000,
-  timeoutMs: 10000,
+    batchSize: process.env.NEXT_PUBLIC_SYNC_BATCH_SIZE ? parseInt(process.env.NEXT_PUBLIC_SYNC_BATCH_SIZE, 10) : 50,
+    autoSyncIntervalMs: process.env.NEXT_PUBLIC_SYNC_INTERVAL_MS ? parseInt(process.env.NEXT_PUBLIC_SYNC_INTERVAL_MS, 10) : 30000,
+    maxRetryAttempts: 3,
+    retryBackoffBaseMs: 1000,
+    timeoutMs: process.env.NEXT_PUBLIC_SYNC_TIMEOUT_MS ? parseInt(process.env.NEXT_PUBLIC_SYNC_TIMEOUT_MS, 10) : 10000,
   },
 };

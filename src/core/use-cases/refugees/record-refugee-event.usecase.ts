@@ -30,11 +30,22 @@ export class RecordRefugeeEventUseCase {
   const refugeeId = asRefugeeId(input.refugeeId);
   const refugeeResult = await this.refugeeRepo.findById(refugeeId);
 
-  if (!refugeeResult.ok || !refugeeResult.value) {
-  return Err(new DomainError('REFUGEE_NOT_FOUND', 'Data pengungsi tidak ditemukan.', HTTP_STATUS.NOT_FOUND));
-  }
+    if (!refugeeResult.ok || !refugeeResult.value) {
+      return Err(new DomainError('REFUGEE_NOT_FOUND', 'Data pengungsi tidak ditemukan.', HTTP_STATUS.NOT_FOUND));
+    }
 
-  const refugee = refugeeResult.value;
+    const refugee = refugeeResult.value;
+
+    // RBAC Guard: Event medis klinis (HEALTH_CHECK, TRIAGE_UPDATE) hanya untuk peran MEDIS
+    if ((input.eventType === 'HEALTH_CHECK' || input.eventType === 'TRIAGE_UPDATE') && input.authorRole !== 'MEDIS') {
+      return Err(
+        new DomainError(
+          'UNAUTHORIZED_ROLE',
+          `Akses ditolak: Pemeriksaan dan penetapan triase klinis hanya dapat dicatat oleh Petugas Medis. Peran Anda: ${input.authorRole}`,
+          HTTP_STATUS.FORBIDDEN
+        )
+      );
+    }
 
   // Ambil riwayat event lama untuk menentukan logical sequence dan causal parent
   const eventsResult = await this.refugeeRepo.getEventsByRefugeeId(refugeeId);

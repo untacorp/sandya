@@ -14,11 +14,12 @@ import { Icon, type SolarIconName } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { type TacticalChannel, type TacticalMessage } from "@/shared/types";
 import { TIME_CONSTANTS } from "@/core/shared/constants";
+import { useTacticalChatSync } from "@/features/posko/hooks/use-tactical-chat-sync";
+import { useAudioRecorder } from "@/features/posko/hooks/use-audio-recorder";
 
 export const TACTICAL_PAGE_CONSTANTS = {
   MAX_RECORDING_SECONDS: 5,
   TIMER_INTERVAL_MS: 1000,
-  VOICE_PLAYBACK_TIMEOUT_MS: 4500,
   DEFAULT_VOICE_DURATION_MS: 4000,
   MIN_WAVEFORM_HEIGHT_PERCENT: 20,
   PERCENT_BASE: 100,
@@ -29,148 +30,217 @@ export const TACTICAL_PAGE_CONSTANTS = {
   DIRECT_HOP_COUNT: 1,
 } as const;
 
+function playSirenSound() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.7);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 1.05);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 1.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.4);
+  } catch {
+    // Audio synthesis fallback
+  }
+}
+
+function playRadioTone(durationMs: number, onEnd: () => void) {
+  if (typeof window === "undefined") {
+    onEnd();
+    return;
+  }
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      setTimeout(onEnd, durationMs);
+      return;
+    }
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(650, ctx.currentTime);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + durationMs / 1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + durationMs / 1000);
+    osc.onended = onEnd;
+  } catch {
+    setTimeout(onEnd, durationMs);
+  }
+}
+
 export default function TacticalChatPage() {
   const {
-  session,
-  activeChannel,
-  setActiveChannel,
-  messages,
-  sendTextMessage,
-  sendVoiceMessage,
-  triggerSOS,
-  peers,
+    session,
+    activeChannel,
+    setActiveChannel,
+    messages,
+    sendTextMessage,
+    sendVoiceMessage,
+    triggerSOS,
+    peers,
   } = usePoskoStore();
 
   const { meshRadioStatus, isMeshActive, setIsMeshActive } = useMeshSync();
+  const { isRefreshing, refreshNow } = useTacticalChatSync(session.poskoId);
+
+  const {
+    isRecording,
+    recordingSeconds,
+    hasPermissionError,
+    currentWaveform,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useAudioRecorder();
 
   const [inputMsg, setInputMsg] = React.useState("");
   const [sosModalOpen, setSosModalOpen] = React.useState(false);
   const [hazardType, setHazardType] = React.useState("Gempa Bumi Susulan");
   const [playingVoiceId, setPlayingVoiceId] = React.useState<string | null>(null);
 
-  // PTT Recording state
-  const [isRecording, setIsRecording] = React.useState(false);
-  const [recordingSeconds, setRecordingSeconds] = React.useState(0);
-  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
-  const playbackTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const audioElementRef = React.useRef<HTMLAudioElement | null>(null);
 
   const channelMessages = messages.filter((m) => m.channel === activeChannel);
 
   const getProximityStatus = (rssi: number, hops: number) => {
-  if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_VERY_CLOSE_THRESHOLD) {
-  return {
-  label: "Sangat Dekat (< 15m)",
-  color: "text-status-safe",
-  bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
-  dot: "bg-status-safe",
-  hopDesc: "Koneksi Langsung (1 Hop)",
-  };
-  }
-  if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_CLOSE_THRESHOLD) {
-  return {
-  label: "Dekat (15-50m)",
-  color: "text-status-safe",
-  bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
-  dot: "bg-status-safe",
-  hopDesc: hops === TACTICAL_PAGE_CONSTANTS.DIRECT_HOP_COUNT ? "Koneksi Langsung (1 Hop)" : `Relay Mesh (${hops} Hops)`,
-  };
-  }
-  if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_MEDIUM_THRESHOLD) {
-  return {
-  label: "Jarak Sedang",
-  color: "text-status-warning",
-  bgBadge: "bg-status-warning-bg text-status-warning border-status-warning-border",
-  dot: "bg-status-warning",
-  hopDesc: `Relay Mesh (${hops} Hops)`,
-  };
-  }
-  return {
-  label: "Jarak Jauh / Sinyal Lemah",
-  color: "text-status-danger",
-  bgBadge: "bg-status-danger-bg text-status-danger border-status-danger-border",
-  dot: "bg-status-danger",
-  hopDesc: `Relay Mesh (${hops} Hops)`,
-  };
+    if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_VERY_CLOSE_THRESHOLD) {
+      return {
+        label: "Sangat Dekat (< 15m)",
+        color: "text-status-safe",
+        bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
+        dot: "bg-status-safe",
+        hopDesc: "Koneksi Langsung (1 Hop)",
+      };
+    }
+    if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_CLOSE_THRESHOLD) {
+      return {
+        label: "Dekat (15-50m)",
+        color: "text-status-safe",
+        bgBadge: "bg-status-safe-bg text-status-safe border-status-safe-border",
+        dot: "bg-status-safe",
+        hopDesc: hops === TACTICAL_PAGE_CONSTANTS.DIRECT_HOP_COUNT ? "Koneksi Langsung (1 Hop)" : `Relay Mesh (${hops} Hops)`,
+      };
+    }
+    if (rssi >= TACTICAL_PAGE_CONSTANTS.RSSI_MEDIUM_THRESHOLD) {
+      return {
+        label: "Jarak Sedang",
+        color: "text-status-warning",
+        bgBadge: "bg-status-warning-bg text-status-warning border-status-warning-border",
+        dot: "bg-status-warning",
+        hopDesc: `Relay Mesh (${hops} Hops)`,
+      };
+    }
+    return {
+      label: "Jarak Jauh / Sinyal Lemah",
+      color: "text-status-danger",
+      bgBadge: "bg-status-danger-bg text-status-danger border-status-danger-border",
+      dot: "bg-status-danger",
+      hopDesc: `Relay Mesh (${hops} Hops)`,
+    };
   };
 
   const handleSendText = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!inputMsg.trim()) return;
-  const trimmed = inputMsg.trim();
-  sendTextMessage(activeChannel, trimmed);
-  meshRuntime.sendTextMessage(activeChannel, trimmed).catch(() => {
-    // Graceful offline mesh handling
-  });
-  setInputMsg("");
+    e.preventDefault();
+    if (!inputMsg.trim()) return;
+    const trimmed = inputMsg.trim();
+    sendTextMessage(activeChannel, trimmed);
+    meshRuntime.sendTextMessage(activeChannel, trimmed).catch(() => {
+      // Graceful offline mesh handling
+    });
+    setInputMsg("");
   };
 
   const handleSendQuickChip = (text: string) => {
-  sendTextMessage(activeChannel, text);
-  meshRuntime.sendTextMessage(activeChannel, text).catch(() => {
-    // Graceful offline mesh handling
-  });
-  };
-
-  const startPTT = (e: React.MouseEvent | React.TouchEvent) => {
-  e.preventDefault();
-  setIsRecording(true);
-  setRecordingSeconds(0);
-  timerRef.current = setInterval(() => {
-  setRecordingSeconds((s) => {
-  if (s >= TACTICAL_PAGE_CONSTANTS.MAX_RECORDING_SECONDS) {
-  stopPTT(true);
-  return TACTICAL_PAGE_CONSTANTS.MAX_RECORDING_SECONDS;
-  }
-  return s + 1;
-  });
-  }, TACTICAL_PAGE_CONSTANTS.TIMER_INTERVAL_MS);
-  };
-
-  const stopPTT = (broadcast = true) => {
-  if (timerRef.current) clearInterval(timerRef.current);
-  setIsRecording(false);
-  if (broadcast && recordingSeconds > 0) {
-    const duration = recordingSeconds * TIME_CONSTANTS.MS_PER_SECOND;
-    sendVoiceMessage(activeChannel, duration);
-    // Broadcast sample PCM byte buffer over real mesh runtime
-    const sampleBytes = Buffer.alloc(Math.min(300, recordingSeconds * 60), 140);
-    meshRuntime.sendVoiceNote(activeChannel, duration, sampleBytes).catch(() => {
+    sendTextMessage(activeChannel, text);
+    meshRuntime.sendTextMessage(activeChannel, text).catch(() => {
       // Graceful offline mesh handling
     });
-  }
-  setRecordingSeconds(0);
   };
 
-  const cancelPTT = () => {
-  if (timerRef.current) clearInterval(timerRef.current);
-  setIsRecording(false);
-  setRecordingSeconds(0);
+  const startPTT = async (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    await startRecording();
   };
 
-  const handlePlayVoice = (msgId: string) => {
-  if (playingVoiceId === msgId) {
-  setPlayingVoiceId(null);
-  if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current);
-  return;
-  }
+  const stopPTT = async (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) e.preventDefault();
+    const result = await stopRecording();
+    if (result && result.durationMs >= 300) {
+      sendVoiceMessage(activeChannel, result.durationMs, result.audioBase64, result.waveform);
+      // Also broadcast over BLE mesh runtime
+      const sampleBytes = Buffer.alloc(Math.min(300, Math.floor(result.durationMs / 50)), 140);
+      meshRuntime.sendVoiceNote(activeChannel, result.durationMs, sampleBytes).catch(() => {
+        // Graceful offline mesh handling
+      });
+    }
+  };
 
-  setPlayingVoiceId(msgId);
-  if (playbackTimerRef.current) clearTimeout(playbackTimerRef.current);
-  playbackTimerRef.current = setTimeout(() => {
-  setPlayingVoiceId(null);
-  }, TACTICAL_PAGE_CONSTANTS.VOICE_PLAYBACK_TIMEOUT_MS);
+  const handleCancelPTT = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) e.preventDefault();
+    cancelRecording();
+  };
+
+  const handlePlayVoice = (msg: TacticalMessage) => {
+    if (playingVoiceId === msg.id) {
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current = null;
+      }
+      setPlayingVoiceId(null);
+      return;
+    }
+
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current = null;
+    }
+
+    setPlayingVoiceId(msg.id);
+
+    if (msg.audioBase64) {
+      const audio = new Audio(msg.audioBase64);
+      audioElementRef.current = audio;
+      audio.onended = () => {
+        setPlayingVoiceId(null);
+        audioElementRef.current = null;
+      };
+      audio.onerror = () => {
+        setPlayingVoiceId(null);
+        audioElementRef.current = null;
+      };
+      audio.play().catch(() => {
+        setPlayingVoiceId(null);
+      });
+    } else {
+      playRadioTone(msg.audioDurationMs || 3000, () => setPlayingVoiceId(null));
+    }
   };
 
   const handleTriggerSOS = () => {
-  triggerSOS(hazardType);
-  meshRuntime.triggerSOS(hazardType).catch(() => {
-    // Graceful offline mesh handling
-  });
-  setSosModalOpen(false);
+    playSirenSound();
+    triggerSOS(hazardType);
+    meshRuntime.triggerSOS(hazardType).catch(() => {
+      // Graceful offline mesh handling
+    });
+    setSosModalOpen(false);
   };
 
   const handleCancelSOS = () => {
-  sendTextMessage("SOS", "ALARM DARURAT DIBATALKAN: Situasi telah terkendali oleh Koordinator Posko.", false);
+    sendTextMessage("SOS", "ALARM DARURAT DIBATALKAN: Situasi telah terkendali oleh Koordinator Posko.", false);
   };
 
   const channels: { id: TacticalChannel; label: string; icon: SolarIconName; desc: string }[] = [
@@ -287,9 +357,20 @@ export default function TacticalChatPage() {
   • {channels.find((c) => c.id === activeChannel)?.desc}
   </span>
   </div>
-  <span className="text-[11px] font-semibold text-text-muted">
-  {channelMessages.length} Pesan Lapangan
-  </span>
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] font-semibold text-text-muted">
+        {channelMessages.length} Pesan Lapangan
+      </span>
+      <button
+        type="button"
+        onClick={refreshNow}
+        disabled={isRefreshing}
+        className="p-1 text-text-muted hover:text-text-main transition-colors rounded hover:bg-surface cursor-pointer"
+        title="Perbarui transmisi obrolan"
+      >
+        <Icon name="sync" variant="bold" size={12} className={isRefreshing ? "animate-spin text-primary" : ""} />
+      </button>
+    </div>
   </div>
 
   {/* Banner SOS jika di Saluran SOS */}
@@ -365,7 +446,7 @@ export default function TacticalChatPage() {
   <div className="flex items-center justify-between gap-2">
   <button
   type="button"
-  onClick={() => handlePlayVoice(msg.id)}
+  onClick={() => handlePlayVoice(msg)}
   className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 cursor-pointer hover:opacity-90 transition-opacity shadow-xs"
   >
   <Icon
@@ -389,7 +470,7 @@ export default function TacticalChatPage() {
   </div>
 
   <span className="text-[11px] font-mono font-bold text-text-muted shrink-0">
-  {isPlaying ? "00:03" : `${Math.round((msg.audioDurationMs || TACTICAL_PAGE_CONSTANTS.DEFAULT_VOICE_DURATION_MS) / TIME_CONSTANTS.MS_PER_SECOND)}s`}
+  {isPlaying ? "Memutar..." : `${Math.round((msg.audioDurationMs || TACTICAL_PAGE_CONSTANTS.DEFAULT_VOICE_DURATION_MS) / TIME_CONSTANTS.MS_PER_SECOND)}s`}
   </span>
   </div>
   <p className="text-[10px] text-text-muted italic">
@@ -424,12 +505,27 @@ export default function TacticalChatPage() {
 
   {/* Input Bar & Tombol PTT */}
   <div className="p-2.5 bg-surface border-t border-border space-y-2">
+  {hasPermissionError && (
+  <div className="p-2 rounded-lg bg-status-danger-bg border border-status-danger-border text-xs text-status-danger flex items-center justify-between">
+  <span>Izin mikrofon diperlukan untuk merekam suara Push-to-Talk.</span>
+  </div>
+  )}
+
   {isRecording && (
   <div className="p-2.5 rounded-lg bg-status-danger-bg border border-status-danger-border flex items-center justify-between text-xs text-status-danger font-bold">
-  <span className="flex items-center gap-2">
+  <div className="flex items-center gap-2">
   <span className="w-2.5 h-2.5 rounded-full bg-status-danger animate-ping" />
-  Merekam Suara: 00:0{recordingSeconds} / 00:0{TACTICAL_PAGE_CONSTANTS.MAX_RECORDING_SECONDS} detik
-  </span>
+  <span>Merekam: 00:0{recordingSeconds} / 00:0{TACTICAL_PAGE_CONSTANTS.MAX_RECORDING_SECONDS} detik</span>
+  </div>
+  <div className="flex items-center gap-1 h-4">
+  {currentWaveform.map((bar, i) => (
+  <div
+  key={i}
+  className="w-1 bg-status-danger rounded-full transition-all duration-75"
+  style={{ height: `${Math.max(20, bar)}%` }}
+  />
+  ))}
+  </div>
   <span className="text-[11px] font-normal">Lepas untuk memancarkan</span>
   </div>
   )}
@@ -437,21 +533,22 @@ export default function TacticalChatPage() {
   <div className="flex items-center gap-2">
   {/* Tombol Push-to-Talk (PTT) */}
   <button
-  type="button"
-  onMouseDown={startPTT}
-  onMouseUp={() => stopPTT(true)}
-  onMouseLeave={cancelPTT}
-  onTouchStart={startPTT}
-  onTouchEnd={() => stopPTT(true)}
-  className={`h-10 px-2.5 sm:px-3.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none border-[1.5px] ${
-  isRecording
-  ? "bg-status-danger text-text-inverse border-status-danger ring-2 ring-status-danger/40 scale-105"
-  : "bg-surface-subtle text-text-main border-border hover:bg-surface-muted active:scale-95"
-  }`}
+    type="button"
+    onMouseDown={startPTT}
+    onMouseUp={stopPTT}
+    onMouseLeave={handleCancelPTT}
+    onTouchStart={startPTT}
+    onTouchEnd={stopPTT}
+    className={`h-10 px-2.5 sm:px-3.5 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer select-none border-[1.5px] ${
+      isRecording
+        ? "bg-status-danger text-text-inverse border-status-danger ring-2 ring-status-danger/40 scale-105"
+        : "bg-surface-subtle text-text-main border-border hover:bg-surface-muted active:scale-95"
+    }`}
+    title="Tekan dan tahan untuk bicara (Push-to-Talk)"
   >
-  <Icon name="microphone" variant="bold" size={16} />
-  <span className="hidden sm:inline">{isRecording ? "Lepas untuk Kirim" : "Tahan Suara (PTT)"}</span>
-  <span className="inline sm:hidden">{isRecording ? "Lepas" : "PTT"}</span>
+    <Icon name="microphone" variant="bold" size={16} />
+    <span className="hidden sm:inline">{isRecording ? "Lepas untuk Kirim" : "Tahan Suara (PTT)"}</span>
+    <span className="inline sm:hidden">{isRecording ? "Lepas" : "PTT"}</span>
   </button>
 
   {/* Input Teks Biasa */}
@@ -505,9 +602,6 @@ export default function TacticalChatPage() {
   {session.userRole.replace(/_/g, " ")}
   </Badge>
   </div>
-  <p className="text-[11px] text-text-muted">
-  Mode Siaga Transmisi BLE Mesh Aktif
-  </p>
   </div>
 
   <div className="pt-1">

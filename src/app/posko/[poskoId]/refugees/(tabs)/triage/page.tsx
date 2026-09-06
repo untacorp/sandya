@@ -16,6 +16,7 @@ import { Icon } from "@/shared/ui/icon";
 import { AlertBanner } from "@/shared/ui/alert-banner";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { type TriageCategory, type DisasterPerson } from "@/shared/types";
+import { canConductTriage } from "@/core/permissions/posko-permissions";
 
 interface PrescriptionFormItem {
   needTokenId: number;
@@ -24,15 +25,30 @@ interface PrescriptionFormItem {
   dosage: string;
 }
 
-export default function TriagePage() {
+export default function PoskoTriagePage() {
   const params = useParams();
   const routePoskoId = (params?.poskoId as string) || "";
-  const { session, refugees, updateRefugeeTriage, createNeedsTicket } = usePoskoStore();
+  const {
+    session,
+    refugees,
+    needsTickets,
+    updateRefugeeTriage,
+    createNeedsTicket,
+    handleRefugeeDeceasedResolution,
+  } = usePoskoStore();
   const effectivePoskoId = (routePoskoId && routePoskoId !== "POS-LOCAL") ? routePoskoId : session.poskoId;
 
+  const [triageFilter, setTriageFilter] = React.useState<string>("ALL");
   const [selectedPatient, setSelectedPatient] = React.useState<DisasterPerson | null>(null);
   const [examOpen, setExamOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Deceased / Triase Hitam Resolution State
+  const [deceasedModalOpen, setDeceasedModalOpen] = React.useState(false);
+  const [deceasedTargetPatient, setDeceasedTargetPatient] = React.useState<DisasterPerson | null>(null);
+  const [generalLogisticsAction, setGeneralLogisticsAction] = React.useState<"CANCEL_ALL" | "TRANSFER_TO_KIN">("CANCEL_ALL");
+  const [targetKinName, setTargetKinName] = React.useState("");
+  const [issueMortuaryKit, setIssueMortuaryKit] = React.useState(true);
   
   // Optimasi Papan Kanban
   const [visibleCounts, setVisibleCounts] = React.useState<Record<TriageCategory, number>>({
@@ -45,10 +61,10 @@ export default function TriagePage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [successToast, setSuccessToast] = React.useState<string | null>(null);
+  const [selectedRefugeeId, setSelectedRefugeeId] = React.useState<string>("");
 
   // RBAC Permission Check
-  const authorizedRoles = ["PETUGAS_MEDIS", "KOORDINATOR_POSKO", "KOMANDAN_MISI", "PEMIMPIN_ORGANISASI"];
-  const isAuthorized = authorizedRoles.includes(session.userRole);
+  const isAuthorized = canConductTriage(session.userRole);
 
   // Form State
   const [temp, setTemp] = React.useState("37.0");
@@ -60,7 +76,7 @@ export default function TriagePage() {
   const [diagnosis, setDiagnosis] = React.useState("");
   const [triageColor, setTriageColor] = React.useState<TriageCategory>("GREEN");
 
-  // Pharmacy Prescriptions State (uint8 DISASTER_NEEDS_CATALOG)
+  // Pharmacy Prescriptions State (Katalog Medis & Obat)
   const [prescribeMedicine, setPrescribeMedicine] = React.useState(false);
   const [prescriptions, setPrescriptions] = React.useState<PrescriptionFormItem[]>([
   {
@@ -147,125 +163,205 @@ export default function TriagePage() {
   };
 
   const handleSaveExam = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!selectedPatient) return;
+    e.preventDefault();
+    if (!selectedPatient) return;
 
-  if (!isAuthorized) {
-  setErrorMessage("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang menetapkan triase dan resep.");
-  return;
-  }
+    if (!isAuthorized) {
+      setErrorMessage("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang menetapkan triase dan resep.");
+      return;
+    }
 
-  setIsSubmitting(true);
-  setErrorMessage(null);
-
-  try {
-  const container = ServiceContainer.getInstance();
-  await ensureRefugeeInRepo(container, selectedPatient);
-
-  const validPrescriptions = prescribeMedicine
-  ? prescriptions.map((rx) => ({
-  needTokenId: rx.needTokenId,
-  medicineName: DISASTER_NEEDS_CATALOG[rx.needTokenId]?.nameId || "Obat Medis",
-  quantity: Math.max(1, rx.quantity),
-  unit: rx.unit,
-  dosage: rx.dosage,
-  }))
-  : [];
-
-  const result = await container.recordTriageExamUseCase.execute({
-  refugeeId: selectedPatient.id,
-  poskoId: session.poskoId,
-  authorId: session.userId,
-  authorName: session.userName,
-  authorRole: session.userRole,
-  triageCategory: triageColor,
-  vitalSigns: {
-  systolic: systolic ? parseInt(systolic) : undefined,
-  diastolic: diastolic ? parseInt(diastolic) : undefined,
-  temperature: temp ? parseFloat(temp) : undefined,
-  pulse: pulse ? parseInt(pulse) : undefined,
-  spo2: spo2 ? parseInt(spo2) : undefined,
-  complaint: complaint.trim() || undefined,
-  diagnosis: diagnosis.trim() || undefined,
-  },
-  prescriptions: validPrescriptions.length > 0 ? validPrescriptions : undefined,
-  });
-
-  if (!result.ok) {
-  setErrorMessage(result.error.message);
-  setIsSubmitting(false);
-  return;
-  }
-
-  // 1. Update Posko Store Triage
-  updateRefugeeTriage(selectedPatient.id, triageColor);
-
-  // 2. Dispatch Tickets to Local Store for immediate warehouse fulfillment visibility
-  if (prescribeMedicine && validPrescriptions.length > 0) {
-  validPrescriptions.forEach((rx) => {
-            createNeedsTicket({
-              refugeeId: selectedPatient.id,
-              refugeeName: selectedPatient.fullName,
-              shelterLocation: selectedPatient.shelterLocation,
-              postId: effectivePoskoId,
-              itemName: rx.medicineName,
-              quantity: rx.quantity,
-              unit: rx.unit,
-              urgency: triageColor === "RED" ? "HIGH" : triageColor === "YELLOW" ? "MEDIUM" : "LOW",
-              createdByUserId: session.userId,
-              createdByUserName: session.userName,
-            });
-          });
-        }
-
-        setSuccessToast(
-          `Triase ${selectedPatient.fullName} berhasil diperbarui ke ${triageColor}${
-            validPrescriptions.length > 0 ? ` (+${validPrescriptions.length} tiket obat diterbitkan)` : ""
-          }`
-        );
-        setTimeout(() => setSuccessToast(null), 4000);
-
+    // Jika Triase Hitam dan terdapat tiket aktif, alihkan ke modal resolusi jenazah
+    if (triageColor === "BLACK") {
+      const activeTickets = needsTickets.filter(
+        (t) =>
+          (t.refugeeId === selectedPatient.id ||
+            t.refugeeName.toLowerCase() === selectedPatient.fullName.toLowerCase()) &&
+          (t.status === "PENDING" || t.status === "ALLOCATED")
+      );
+      if (activeTickets.length > 0) {
         setExamOpen(false);
-      } catch (err: unknown) {
-        setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
-      } finally {
-        setIsSubmitting(false);
+        setDeceasedTargetPatient(selectedPatient);
+        setTargetKinName(selectedPatient.missingKinName || `Keluarga ${selectedPatient.fullName}`);
+        setGeneralLogisticsAction("CANCEL_ALL");
+        setIssueMortuaryKit(true);
+        setDeceasedModalOpen(true);
+        return;
       }
-    };
+    }
 
-    const handleQuickTriageChange = async (
-      patient: DisasterPerson,
-      newTriage: TriageCategory,
-      e: React.MouseEvent
-    ) => {
-      e.stopPropagation();
-      if (!isAuthorized) {
-        alert("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang mengubah klasifikasi triase.");
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      const container = ServiceContainer.getInstance();
+      await ensureRefugeeInRepo(container, selectedPatient);
+
+      const validPrescriptions = prescribeMedicine
+        ? prescriptions.map((rx) => ({
+            needTokenId: rx.needTokenId,
+            medicineName: DISASTER_NEEDS_CATALOG[rx.needTokenId]?.nameId || "Obat Medis",
+            quantity: Math.max(1, rx.quantity),
+            unit: rx.unit,
+            dosage: rx.dosage,
+          }))
+        : [];
+
+      const result = await container.recordTriageExamUseCase.execute({
+        refugeeId: selectedPatient.id,
+        poskoId: session.poskoId,
+        authorId: session.userId,
+        authorName: session.userName,
+        authorRole: session.userRole,
+        triageCategory: triageColor,
+        vitalSigns: {
+          systolic: systolic ? parseInt(systolic) : undefined,
+          diastolic: diastolic ? parseInt(diastolic) : undefined,
+          temperature: temp ? parseFloat(temp) : undefined,
+          pulse: pulse ? parseInt(pulse) : undefined,
+          spo2: spo2 ? parseInt(spo2) : undefined,
+          complaint: complaint.trim() || undefined,
+          diagnosis: diagnosis.trim() || undefined,
+        },
+        prescriptions: validPrescriptions.length > 0 ? validPrescriptions : undefined,
+      });
+
+      if (!result.ok) {
+        setErrorMessage(result.error.message);
+        setIsSubmitting(false);
         return;
       }
 
-      try {
-        const container = ServiceContainer.getInstance();
-        await ensureRefugeeInRepo(container, patient);
-        const res = await container.recordTriageExamUseCase.execute({
-          refugeeId: patient.id,
-          poskoId: effectivePoskoId,
-          authorId: session.userId,
-          authorName: session.userName,
-          authorRole: session.userRole,
-          triageCategory: newTriage,
-          vitalSigns: {
-            complaint: `Penyesuaian cepat status triase lapangan ke ${newTriage}`,
-          },
-        });
+      // 1. Update Posko Store Triage
+      updateRefugeeTriage(selectedPatient.id, triageColor);
 
-        if (res.ok) {
-          updateRefugeeTriage(patient.id, newTriage);
-        }
-      } catch (err) {
-        console.error("Failed quick triage change", err);
+      // 2. Dispatch Tickets to Local Store for immediate warehouse fulfillment visibility
+      if (prescribeMedicine && validPrescriptions.length > 0) {
+        validPrescriptions.forEach((rx) => {
+          createNeedsTicket({
+            refugeeId: selectedPatient.id,
+            refugeeName: selectedPatient.fullName,
+            shelterLocation: selectedPatient.shelterLocation,
+            postId: effectivePoskoId,
+            itemName: rx.medicineName,
+            quantity: rx.quantity,
+            unit: rx.unit,
+            urgency: triageColor === "RED" ? "HIGH" : triageColor === "YELLOW" ? "MEDIUM" : "LOW",
+            createdByUserId: session.userId,
+            createdByUserName: session.userName,
+          });
+        });
       }
-    };
+
+      setSuccessToast(
+        `Triase ${selectedPatient.fullName} berhasil diperbarui ke ${triageColor}${
+          validPrescriptions.length > 0 ? ` (+${validPrescriptions.length} tiket obat diterbitkan)` : ""
+        }`
+      );
+      setTimeout(() => setSuccessToast(null), 4000);
+
+      setExamOpen(false);
+    } catch (err: unknown) {
+      setErrorMessage((err as Error)?.message || "Terjadi kesalahan saat menyimpan rekam triase.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickTriageChange = async (
+    patient: DisasterPerson,
+    newTriage: TriageCategory,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    if (!isAuthorized) {
+      alert("Akses ditolak: Hanya Petugas Medis Berlisensi yang berwenang mengubah klasifikasi triase.");
+      return;
+    }
+
+    // Jika perubahan cepat ke Hitam dan ada tiket aktif, buka dialog resolusi
+    if (newTriage === "BLACK") {
+      const activeTickets = needsTickets.filter(
+        (t) =>
+          (t.refugeeId === patient.id ||
+            t.refugeeName.toLowerCase() === patient.fullName.toLowerCase()) &&
+          (t.status === "PENDING" || t.status === "ALLOCATED")
+      );
+      if (activeTickets.length > 0) {
+        setDeceasedTargetPatient(patient);
+        setTargetKinName(patient.missingKinName || `Keluarga ${patient.fullName}`);
+        setGeneralLogisticsAction("CANCEL_ALL");
+        setIssueMortuaryKit(true);
+        setDeceasedModalOpen(true);
+        return;
+      }
+    }
+
+    try {
+      const container = ServiceContainer.getInstance();
+      await ensureRefugeeInRepo(container, patient);
+      const res = await container.recordTriageExamUseCase.execute({
+        refugeeId: patient.id,
+        poskoId: effectivePoskoId,
+        authorId: session.userId,
+        authorName: session.userName,
+        authorRole: session.userRole,
+        triageCategory: newTriage,
+        vitalSigns: {
+          complaint: `Penyesuaian cepat status triase lapangan ke ${newTriage}`,
+        },
+      });
+
+      if (res.ok) {
+        updateRefugeeTriage(patient.id, newTriage);
+      }
+    } catch (err) {
+      console.error("Failed quick triage change", err);
+    }
+  };
+
+  const handleConfirmDeceasedResolution = async () => {
+    if (!deceasedTargetPatient) return;
+    setIsSubmitting(true);
+    try {
+      const container = ServiceContainer.getInstance();
+      await ensureRefugeeInRepo(container, deceasedTargetPatient);
+
+      // 1. Record triage event in repository & outbox
+      await container.recordTriageExamUseCase.execute({
+        refugeeId: deceasedTargetPatient.id,
+        poskoId: effectivePoskoId,
+        authorId: session.userId,
+        authorName: session.userName,
+        authorRole: session.userRole,
+        triageCategory: "BLACK",
+        vitalSigns: {
+          complaint: "Warga dinyatakan meninggal dunia (Triase Hitam). Resolusi tiket kebutuhan diterapkan.",
+        },
+      });
+
+      // 2. Execute resolution on store (rollbacks allocated inventory, cancels medical, handles general logistics, issues mortuary kit)
+      handleRefugeeDeceasedResolution({
+        refugeeId: deceasedTargetPatient.id,
+        cancelMedicalTickets: true,
+        generalLogisticsAction,
+        targetKinName: generalLogisticsAction === "TRANSFER_TO_KIN" ? targetKinName : undefined,
+        issueMortuaryKit,
+      });
+
+      setSuccessToast(
+        `Triase ${deceasedTargetPatient.fullName} ditetapkan ke Hitam. Resolusi kebutuhan berhasil diterapkan.`
+      );
+      setTimeout(() => setSuccessToast(null), 4000);
+      setDeceasedModalOpen(false);
+      setDeceasedTargetPatient(null);
+    } catch (err: unknown) {
+      console.error("Failed deceased resolution:", err);
+      alert("Terjadi kesalahan saat menyelesaikan resolusi jenazah.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
     const poskoRefugees = React.useMemo(() => {
       return refugees.filter((r) => r.postId === effectivePoskoId);
@@ -547,7 +643,7 @@ export default function TriagePage() {
   open={examOpen}
   onOpenChange={setExamOpen}
   title={`Pemeriksaan Klinis & Triase: ${selectedPatient?.fullName || ""}`}
-  description="Catat tanda vital, keluhan klinis, penyesuaian triase START 4-warna, dan penerbitan resep obat ke gudang logistik."
+  description="Catat tanda vital, keluhan klinis, penyesuaian triase, dan penerbitan resep obat ke gudang logistik."
   >
   {selectedPatient && (
   <form onSubmit={handleSaveExam} className="space-y-4 pt-1 text-xs">
@@ -558,7 +654,7 @@ export default function TriagePage() {
   {selectedPatient.fullName} ({selectedPatient.gender === "M" ? "Laki-laki" : "Perempuan"}, {selectedPatient.age} th)
   </span>
   <span className="text-[11px] text-text-muted">
-  Lokasi: {selectedPatient.shelterLocation} • NIK: {selectedPatient.nik || "Tidak ada (Bypass 0-byte)"}
+  Lokasi: {selectedPatient.shelterLocation}
   </span>
   </div>
   <Badge
@@ -742,14 +838,15 @@ export default function TriagePage() {
   {/* Selector Item Medis */}
   <div className="sm:col-span-2 space-y-1">
   <label className="text-[10px] font-semibold text-text-muted block">
-  Nama Obat (uint8 Token)
+  Nama Obat / Kebutuhan Medis
   </label>
-  <Select value={rx.needTokenId.toString()}
-  onChange={(val) => handleUpdatePrescription(idx, "needTokenId", parseInt(val))}
-  options={medicalCatalog.map((item) => ({
-    value: item.id.toString(),
-    label: `[0x${item.id.toString(16).padStart(2, "0")}] ${item.nameId}`
-  }))}
+  <Select
+    value={rx.needTokenId.toString()}
+    onChange={(val) => handleUpdatePrescription(idx, "needTokenId", parseInt(val))}
+    options={medicalCatalog.map((item) => ({
+      value: item.id.toString(),
+      label: `[0x${item.id.toString(16).padStart(2, "0")}] ${item.nameId} (${item.nameEn})`,
+    }))}
   />
   </div>
 
@@ -833,9 +930,206 @@ export default function TriagePage() {
   : "Akses Khusus Petugas Medis"}
   </Button>
   </div>
-  </form>
-  )}
-  </Dialog>
+        </form>
+      )}
+    </Dialog>
+
+    {/* 4. Modal Resolusi Kebutuhan Warga Meninggal (Triase Hitam) */}
+    {deceasedTargetPatient && (
+      <Dialog
+        open={deceasedModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeceasedModalOpen(false);
+            setDeceasedTargetPatient(null);
+          }
+        }}
+        title={`Resolusi Kebutuhan Almarhum: ${deceasedTargetPatient.fullName}`}
+        maxWidth="lg"
+      >
+        <div className="space-y-4 text-xs">
+          {/* Header Alert */}
+          <div className="p-3 rounded-xl bg-slate-900 text-white flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-black/60 border border-white/20 flex items-center justify-center shrink-0">
+              <Icon name="alert" variant="bold" size={20} className="text-white" />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="font-bold text-sm text-white">
+                Klasifikasi Triase Hitam (Meninggal Dunia)
+              </h4>
+              <p className="text-[11px] text-slate-300">
+                Pasien <strong>{deceasedTargetPatient.fullName}</strong> ({deceasedTargetPatient.age} thn, {deceasedTargetPatient.shelterLocation}) memiliki tiket kebutuhan aktif yang belum terselesaikan.
+              </p>
+            </div>
+          </div>
+
+          {/* List Active Tickets */}
+          <div className="space-y-2">
+            <span className="font-bold text-[11px] uppercase tracking-wider text-text-muted block">
+              Tiket Kebutuhan Aktif Terdeteksi:
+            </span>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+              {needsTickets
+                .filter(
+                  (t) =>
+                    (t.refugeeId === deceasedTargetPatient.id ||
+                      t.refugeeName.toLowerCase() === deceasedTargetPatient.fullName.toLowerCase()) &&
+                    (t.status === "PENDING" || t.status === "ALLOCATED")
+                )
+                .map((t) => {
+                  const isMed = [
+                    "obat", "medis", "paracetamol", "amoxicillin", "oralit", "infus",
+                    "p3k", "vitamin", "salep", "antibiotik", "antasida", "captopril",
+                    "ibuprofen", "dexamethasone", "kasa", "perban", "betadine", "injeksi"
+                  ].some((kw) => t.itemName.toLowerCase().includes(kw));
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="p-2.5 rounded-lg bg-surface-subtle border border-border flex items-center justify-between gap-2"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-text-main">
+                            {t.quantity} {t.unit} {t.itemName}
+                          </span>
+                          <Badge variant={isMed ? "danger" : "warning"} size="sm">
+                            {isMed ? "Resep Medis" : "Logistik Umum"}
+                          </Badge>
+                        </div>
+                        <p className="text-[10px] text-text-muted">
+                          ID: {t.id} • Status Saat Ini: <strong className="font-semibold text-text-main">{t.status}</strong>
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-semibold text-text-muted">
+                        {isMed ? "Otomatis Batal & Rollback" : "Menunggu Pilihan"}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Action 1: Resep Medis */}
+          <div className="p-3 rounded-xl bg-status-danger-bg border border-status-danger-border space-y-1">
+            <span className="font-bold text-status-danger flex items-center gap-1.5 text-xs">
+              <Icon name="check" variant="bold" size={14} />
+              <span>Resep & Tindakan Medis: Otomatis Dibatalkan</span>
+            </span>
+            <p className="text-[11px] text-text-muted">
+              Sesuai SOP darurat, seluruh resep obat almarhum dibatalkan otomatis dan alokasi obat farmasi yang tertahan dikembalikan ke stok gudang posko.
+            </p>
+          </div>
+
+          {/* Action 2: Ransum & Logistik Umum */}
+          <div className="space-y-2 p-3 rounded-xl bg-surface-subtle border border-border">
+            <span className="font-bold text-xs text-text-main block">
+              Penanganan Bantuan Non-Medis (Sembako, Selimut, dll.):
+            </span>
+
+            <div className="space-y-2">
+              <label className="flex items-start gap-2.5 p-2 rounded-lg bg-surface border border-border cursor-pointer hover:border-primary/40 transition-colors">
+                <input
+                  type="radio"
+                  name="genAction"
+                  value="CANCEL_ALL"
+                  checked={generalLogisticsAction === "CANCEL_ALL"}
+                  onChange={() => setGeneralLogisticsAction("CANCEL_ALL")}
+                  className="mt-0.5 text-primary focus:ring-primary"
+                />
+                <div className="space-y-0.5">
+                  <span className="font-bold text-xs text-text-main block">
+                    Batalkan Semua Tiket & Kembalikan Stok ke Gudang (Rekomendasi)
+                  </span>
+                  <p className="text-[11px] text-text-muted">
+                    Tiket diberi status CANCELLED dan saldo stok gudang fisik bertambah kembali.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-2 rounded-lg bg-surface border border-border cursor-pointer hover:border-primary/40 transition-colors">
+                <input
+                  type="radio"
+                  name="genAction"
+                  value="TRANSFER_TO_KIN"
+                  checked={generalLogisticsAction === "TRANSFER_TO_KIN"}
+                  onChange={() => setGeneralLogisticsAction("TRANSFER_TO_KIN")}
+                  className="mt-0.5 text-primary focus:ring-primary"
+                />
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <span className="font-bold text-xs text-text-main block">
+                      Alihkan Bantuan Pangan/Sandang ke Kerabat / Wali Tenda
+                    </span>
+                    <p className="text-[11px] text-text-muted">
+                      Tetap salurkan jatah sembako/selimut keluarga kepada kerabat yang masih tinggal di tenda yang sama.
+                    </p>
+                  </div>
+
+                  {generalLogisticsAction === "TRANSFER_TO_KIN" && (
+                    <div className="pt-1">
+                      <Input
+                        placeholder="Nama Kerabat / Ahli Waris Penerima"
+                        value={targetKinName}
+                        onChange={(e) => setTargetKinName(e.target.value)}
+                        className="h-8 text-xs font-semibold"
+                        icon="user"
+                      />
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Action 3: Kebutuhan Pemulasaran Jenazah */}
+          <div className="p-3 rounded-xl bg-surface-subtle border border-border">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={issueMortuaryKit}
+                onChange={(e) => setIssueMortuaryKit(e.target.checked)}
+                className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+              />
+              <div className="space-y-0.5">
+                <span className="font-bold text-xs text-text-main block">
+                  Terbitkan Tiket Kebutuhan Pemulasaran Jenazah (Kain Kafan / Kantong Jenazah)
+                </span>
+                <p className="text-[11px] text-text-muted">
+                  Otomatis mengirimkan tiket prioritas tinggi ke posko logistik untuk persiapan pemulasaran jenazah.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={() => {
+                setDeceasedModalOpen(false);
+                setDeceasedTargetPatient(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              disabled={isSubmitting}
+              onClick={handleConfirmDeceasedResolution}
+              icon="check"
+              iconVariant="bold"
+            >
+              {isSubmitting ? "Menyimpan Resolusi..." : "Konfirmasi Triase Hitam & Terapkan Resolusi"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    )}
   </div>
   );
 }

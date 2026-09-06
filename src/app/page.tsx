@@ -25,14 +25,14 @@ export default function LandingGatewayPage() {
       <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
         <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <SandyaLogo size={32} />
-            <div>
+            <SandyaLogo size={30} />
+            <div className="flex items-center gap-2">
               <span className="text-base font-bold tracking-tight text-text-main">
                 Sandya
               </span>
-              <span className="hidden sm:inline text-xs text-text-muted ml-2 font-medium">
-                Tanggap Darurat Offline-First
-              </span>
+              <Badge variant="neutral" size="sm" className="text-[10px] font-semibold">
+                v2.4
+              </Badge>
             </div>
           </div>
 
@@ -109,16 +109,6 @@ export default function LandingGatewayPage() {
             </div>
           </div>
         )}
-
-        {/* Judul Hero */}
-        <div className="space-y-2 text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-text-main">
-            Pusat Operasi Tanggap Darurat
-          </h1>
-          <p className="text-xs sm:text-sm text-text-muted leading-relaxed max-w-2xl">
-            Sistem pencatatan terdesentralisasi tanpa internet untuk pendataan warga, triase medis lapangan, logistik gudang posko, dan komunikasi radio taktis BLE Mesh.
-          </p>
-        </div>
 
         {/* 3 Pintu Akses Terstruktur */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -244,7 +234,7 @@ export default function LandingGatewayPage() {
 
       {/* 5. Footer Bersih */}
       <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
-        Sandya • Platform Manajemen Tanggap Darurat Bencana Mandiri (Local-First & Offline-Mesh Ecosystem)
+        Sandya • Sistem Tanggap Darurat Bencana Mandiri
       </footer>
     </div>
   );

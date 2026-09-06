@@ -268,9 +268,10 @@ export default function OrgSetupPage() {
   )}
   </main>
 
-  <footer className="max-w-md mx-auto w-full text-center py-2 text-xs text-text-subtle">
-  Sandya • Offline-First Humanitarian System
-  </footer>
-  </div>
+      {/* Footer Bersih */}
+      <footer className="border-t border-border bg-surface px-4 py-3 text-center text-xs text-text-muted">
+        Sandya • Sistem Tanggap Darurat Bencana Mandiri
+      </footer>
+    </div>
   );
 }
