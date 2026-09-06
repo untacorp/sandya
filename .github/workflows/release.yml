@@ -18,6 +18,9 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
 jobs:
   # 1. CREATE DRAFT RELEASE
   create-release:
@@ -93,8 +96,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Setup Node.js 22 (LTS)
         uses: actions/setup-node@v4
@@ -161,8 +162,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Setup Node.js 22 (LTS)
         uses: actions/setup-node@v4
@@ -217,8 +216,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Setup Node.js 22 (LTS)
         uses: actions/setup-node@v4
