@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { TIME_CONSTANTS } from "@/core/shared/constants";
+import { persist } from "zustand/middleware";
 import {
   type DisasterPerson,
   type InventoryItem,
@@ -55,6 +55,8 @@ export interface PoskoState {
   setSessionPosko: (poskoId: string, poskoName: string) => void;
   setSessionMission: (missionId: string, missionName: string) => void;
   setSessionOrg: (orgId: string, orgName: string) => void;
+  setSessionUser: (userId: string, userName: string) => void;
+  setFullSession: (session: Partial<ActiveSession>) => void;
 
   // Level 1: Organizations & Missions
   organizations: Organization[];
@@ -122,8 +124,10 @@ export interface PoskoState {
   simulateSync: () => void;
 }
 
-export const usePoskoStore = create<PoskoState>((set, get) => ({
-  // Default Session (uninitialized or configured by active user)
+export const usePoskoStore = create<PoskoState>()(
+  persist(
+    (set, get) => ({
+      // Default Session (uninitialized or configured by active user)
   session: {
   userId: "USR-001",
   userName: "Petugas Posko",
@@ -142,7 +146,11 @@ export const usePoskoStore = create<PoskoState>((set, get) => ({
   setSessionMission: (missionId, missionName) =>
   set((state) => ({ session: { ...state.session, missionId, missionName } })),
   setSessionOrg: (orgId, orgName) =>
-  set((state) => ({ session: { ...state.session, orgId, orgName } })),
+    set((state) => ({ session: { ...state.session, orgId, orgName } })),
+  setSessionUser: (userId, userName) =>
+    set((state) => ({ session: { ...state.session, userId, userName } })),
+  setFullSession: (sessionData) =>
+    set((state) => ({ session: { ...state.session, ...sessionData } })),
 
   // Level 1: Organizations (Pristine - Zero Mock Data)
   organizations: [],
@@ -423,7 +431,7 @@ export const usePoskoStore = create<PoskoState>((set, get) => ({
   addRestock: (itemName, category, qty, unit) => {
   const state = get();
   const existingIndex = state.inventory.findIndex((i) => i.itemName === itemName);
-  let updatedInventory = [...state.inventory];
+  const updatedInventory = [...state.inventory];
   let itemId = `INV-${Math.floor(POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_MIN + Math.random() * POSKO_STORE_CONSTANTS.RANDOM_ID_3_DIGIT_RANGE)}`;
 
   if (existingIndex >= 0) {
@@ -655,19 +663,40 @@ export const usePoskoStore = create<PoskoState>((set, get) => ({
   : `BYOC: ${get().cloudEndpoint}`
   }) berhasil diproses. 100% data posko tersinkronisasi.`,
   };
-  } catch (err: any) {
+  } catch (err: unknown) {
   set({ isCloudSyncing: false });
   return {
   success: false,
-  message: err?.message || "Gagal menghubungi server cloud.",
+  message: (err as Error)?.message || "Gagal menghubungi server cloud.",
   };
   }
   },
 
-  simulateSync: () => {
-  set({
-  pendingOutboxCount: 0,
-  lastSyncedAt: Date.now(),
-  });
-  },
-}));
+      simulateSync: () => {
+        set({
+          pendingOutboxCount: 0,
+          lastSyncedAt: Date.now(),
+        });
+      },
+    }),
+    {
+      name: "sandya_offline_posko_v1",
+      partialize: (state) => ({
+        session: state.session,
+        organizations: state.organizations,
+        missions: state.missions,
+        poskos: state.poskos,
+        refugees: state.refugees,
+        inventory: state.inventory,
+        transactions: state.transactions,
+        needsTickets: state.needsTickets,
+        messages: state.messages,
+        peers: state.peers,
+        pendingOutboxCount: state.pendingOutboxCount,
+        lastSyncedAt: state.lastSyncedAt,
+        cloudProvider: state.cloudProvider,
+        cloudEndpoint: state.cloudEndpoint,
+      }),
+    }
+  )
+);

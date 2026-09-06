@@ -70,19 +70,20 @@ export class CloudSyncService {
   : "Basis data lokal telah sinkron dengan Cloud.",
   timestamp: Date.now(),
   };
-  } catch (err: any) {
-  console.error("[CloudSyncService] Error during synchronization:", err);
-  return {
-  success: false,
-  pushedCount: 0,
-  pulledCount: 0,
-  message: `Gagal tersambung ke cloud server: ${err?.message || "Koneksi terputus"}`,
-  error: err?.message,
-  timestamp: Date.now(),
-  };
-  } finally {
-  this.isSyncing = false;
-  }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Koneksi terputus";
+      console.error("[CloudSyncService] Error during synchronization:", err);
+      return {
+        success: false,
+        pushedCount: 0,
+        pulledCount: 0,
+        message: `Gagal tersambung ke cloud server: ${errorMsg}`,
+        error: errorMsg,
+        timestamp: Date.now(),
+      };
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   /**
@@ -113,79 +114,78 @@ export class CloudSyncService {
   /**
   * Pulls latest remote updates from Cloud to update local SQLite.
   */
-  public async pullFromCloud(poskoId?: string): Promise<{ pulledCount: number }> {
-  // In production edge environment, this queries the delta endpoint or Supabase tables
-  // and feeds through IngestDeltaBatchUseCase
-  return { pulledCount: 0 };
+  public async pullFromCloud(_poskoId?: string): Promise<{ pulledCount: number }> {
+    // In production edge environment, this queries the delta endpoint or Supabase tables
+    // and feeds through IngestDeltaBatchUseCase
+    return { pulledCount: 0 };
   }
 
   private async pushToSupabase(messages: OutboxItem[]): Promise<void> {
-  const endpoint = `${this.config.supabase.url}/rest/v1/events_outbox`;
-  const payload = messages.map((m) => ({
-  id: m.id,
-  pos_id: m.poskoId,
-  topic: m.topic,
-  payload_json: m.payload,
-  status: 'ACKNOWLEDGED',
-  created_at: m.createdAt,
-  }));
+    const endpoint = `${this.config.supabase.url}/rest/v1/events_outbox`;
+    const payload = messages.map((m) => ({
+      id: m.id,
+      pos_id: m.poskoId,
+      topic: m.topic,
+      payload: m.payload,
+      status: m.status,
+      created_at: m.createdAt,
+    }));
 
-  // If fetch is available in environment
-  if (typeof fetch !== "undefined") {
-  try {
-  const res = await fetch(endpoint, {
-  method: "POST",
-  headers: {
-  "Content-Type": "application/json",
-  apikey: this.config.supabase.anonKey,
-  Authorization: `Bearer ${this.config.supabase.anonKey}`,
-  Prefer: "resolution=merge-duplicates",
-  },
-  body: JSON.stringify(payload),
-  });
+    if (typeof fetch !== "undefined" && this.config.supabase.url) {
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: this.config.supabase.anonKey,
+            Authorization: `Bearer ${this.config.supabase.anonKey}`,
+            Prefer: "resolution=merge-duplicates",
+          },
+          body: JSON.stringify(payload),
+        });
 
-  if (!res.ok && res.status !== 404 && res.status !== 401) {
-  console.warn("[CloudSyncService] Supabase endpoint returned status:", res.status);
-  }
-  } catch (err) {
-  // Log edge connection attempt
-  console.warn("[CloudSyncService] Supabase network offline or unreachable, will retry on next connection.");
-  }
-  }
+        if (!res.ok && res.status !== 404 && res.status !== 401) {
+          console.warn("[CloudSyncService] Supabase endpoint returned status:", res.status);
+        }
+      } catch {
+        // Log edge connection attempt
+        console.warn("[CloudSyncService] Supabase network offline or unreachable, will retry on next connection.");
+      }
+    }
   }
 
   private async pushToPostgresVps(messages: OutboxItem[]): Promise<void> {
-  const endpoint = this.config.postgresVps.endpoint;
-  if (typeof fetch !== "undefined" && endpoint) {
-  try {
-  const headers: Record<string, string> = {
-  "Content-Type": "application/json",
-  };
-  if (this.config.postgresVps.apiKey) {
-  headers["X-API-Key"] = this.config.postgresVps.apiKey;
-  }
+    const endpoint = this.config.postgresVps.endpoint;
+    if (typeof fetch !== "undefined" && endpoint) {
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (this.config.postgresVps.apiKey) {
+          headers["X-API-Key"] = this.config.postgresVps.apiKey;
+        }
 
-  const res = await fetch(endpoint, {
-  method: "POST",
-  headers,
-  body: JSON.stringify({
-  events: messages.map((m) => ({
-  id: m.id,
-  posId: m.poskoId,
-  topic: m.topic,
-  payload: m.payload,
-  status: 'ACKNOWLEDGED',
-  createdAt: m.createdAt,
-  })),
-  }),
-  });
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            events: messages.map((m) => ({
+              id: m.id,
+              posId: m.poskoId,
+              topic: m.topic,
+              payload: m.payload,
+              status: 'ACKNOWLEDGED',
+              createdAt: m.createdAt,
+            })),
+          }),
+        });
 
-  if (!res.ok) {
-  console.warn("[CloudSyncService] VPS Sync endpoint returned status:", res.status);
-  }
-  } catch (err) {
-  console.warn("[CloudSyncService] VPS Sync network offline or unreachable.");
-  }
-  }
+        if (!res.ok) {
+          console.warn("[CloudSyncService] VPS Sync endpoint returned status:", res.status);
+        }
+      } catch {
+        console.warn("[CloudSyncService] VPS Sync network offline or unreachable.");
+      }
+    }
   }
 }

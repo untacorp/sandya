@@ -45,16 +45,16 @@ export class InMemorySqliteConnection implements ISqlConnection {
   return this.tables.get(name)!;
   }
 
-  public async execute(query: string, params: unknown[] = []): Promise<SqlQueryResult> {
-  // Simple stub for in-memory execution
-  return {
-  rows: [],
-  rowsAffected: 1,
-  };
+  public async execute(_query: string, _params: unknown[] = []): Promise<SqlQueryResult> {
+    // Simple stub for in-memory execution
+    return {
+      rows: [],
+      rowsAffected: 1,
+    };
   }
 
-  public async query<T = unknown>(query: string, params: unknown[] = []): Promise<T[]> {
-  return [];
+  public async query<T = unknown>(_query: string, _params: unknown[] = []): Promise<T[]> {
+    return [];
   }
 
   public async transaction<T>(fn: (tx: ISqlConnection) => Promise<T>): Promise<T> {
