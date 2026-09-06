@@ -3,7 +3,8 @@
 import * as React from "react";
 import { usePoskoStore } from "@/features/posko/store/use-posko-store";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
-import { asPoskoId } from "@/core/shared/branded-types";
+import { asPoskoId, asRefugeeId } from "@/core/shared/branded-types";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 import { FamilyReunionMatch } from "@/core/services/family-reunion.service";
 import { FamilyReunionPassModal } from "@/features/refugees/components/family-reunion-pass-modal";
 import { Card } from "@/shared/ui/card";
@@ -14,7 +15,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { Icon } from "@/shared/ui/icon";
 
 export default function MissionReunionRadarPage() {
-  const { session } = usePoskoStore();
+  const { session, refugees } = usePoskoStore();
   const [search, setSearch] = React.useState("");
   const [matches, setMatches] = React.useState<FamilyReunionMatch[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -22,52 +23,93 @@ export default function MissionReunionRadarPage() {
   const [passModalOpen, setPassModalOpen] = React.useState(false);
 
   const fetchMatches = React.useCallback(async () => {
-  setIsLoading(true);
-  try {
-  const container = ServiceContainer.getInstance();
-  const poskoId = asPoskoId(session.poskoId || "POS-01");
-  const result = await container.familyReunionService.getPoskoReunionMatches(poskoId);
-  if (result.ok) {
-  setMatches(result.value);
-  }
-  } catch (err) {
-  console.error("Failed to load cross posko matches:", err);
-  } finally {
-  setIsLoading(false);
-  }
-  }, [session.poskoId]);
+    setIsLoading(true);
+    try {
+      const container = ServiceContainer.getInstance();
+
+      // Sinkronkan seluruh warga dari reactive store ke SQLite repository
+      for (const r of refugees) {
+        const agg = RefugeeAggregate.reconstitute({
+          id: asRefugeeId(r.id),
+          poskoId: asPoskoId(r.postId || session.poskoId),
+          fullName: r.fullName,
+          nationalId: r.nik || null,
+          gender: r.gender,
+          age: r.age,
+          domicileOrigin: r.domicileOrigin || null,
+          shelterLocation: r.shelterLocation || null,
+          missingKinName: r.missingKinName || null,
+          currentTriage: (r.triageStatus as any) || "GREEN",
+          registeredByUserId: r.registeredByUserId || session.userId,
+          createdAt: r.createdAt || Date.now(),
+          version: 1,
+        }, []);
+        await container.refugeeRepo.save(agg);
+      }
+
+      const poskoId = asPoskoId(session.poskoId || "ALL");
+      const result = await container.familyReunionService.getPoskoReunionMatches(poskoId);
+      if (result.ok) {
+        setMatches(result.value);
+      }
+    } catch (err) {
+      console.error("Failed to load cross posko matches:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session.poskoId, session.userId, refugees]);
 
   React.useEffect(() => {
-  fetchMatches();
+    fetchMatches();
   }, [fetchMatches]);
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!search.trim()) {
-  fetchMatches();
-  return;
-  }
+    e.preventDefault();
+    if (!search.trim()) {
+      fetchMatches();
+      return;
+    }
 
-  setIsLoading(true);
-  try {
-  const container = ServiceContainer.getInstance();
-  const result = await container.familyReunionService.searchRelatives({
-  targetName: search.trim(),
-  currentPoskoId: session.poskoId,
-  });
-  if (result.ok) {
-  setMatches(result.value);
-  }
-  } catch (err) {
-  console.error("Failed to search cross posko relatives:", err);
-  } finally {
-  setIsLoading(false);
-  }
+    setIsLoading(true);
+    try {
+      const container = ServiceContainer.getInstance();
+
+      for (const r of refugees) {
+        const agg = RefugeeAggregate.reconstitute({
+          id: asRefugeeId(r.id),
+          poskoId: asPoskoId(r.postId || session.poskoId),
+          fullName: r.fullName,
+          nationalId: r.nik || null,
+          gender: r.gender,
+          age: r.age,
+          domicileOrigin: r.domicileOrigin || null,
+          shelterLocation: r.shelterLocation || null,
+          missingKinName: r.missingKinName || null,
+          currentTriage: (r.triageStatus as any) || "GREEN",
+          registeredByUserId: r.registeredByUserId || session.userId,
+          createdAt: r.createdAt || Date.now(),
+          version: 1,
+        }, []);
+        await container.refugeeRepo.save(agg);
+      }
+
+      const result = await container.familyReunionService.searchRelatives({
+        targetName: search.trim(),
+        currentPoskoId: session.poskoId,
+      });
+      if (result.ok) {
+        setMatches(result.value);
+      }
+    } catch (err) {
+      console.error("Failed to search cross posko relatives:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOpenPass = (match: FamilyReunionMatch) => {
-  setSelectedMatch(match);
-  setPassModalOpen(true);
+    setSelectedMatch(match);
+    setPassModalOpen(true);
   };
 
   const filteredMatches = matches.filter(

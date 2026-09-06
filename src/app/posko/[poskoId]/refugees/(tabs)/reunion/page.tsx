@@ -14,7 +14,8 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Icon } from "@/shared/ui/icon";
 import { ServiceContainer } from "@/infrastructure/services/service-container";
-import { asPoskoId } from "@/core/shared/branded-types";
+import { asRefugeeId, asPoskoId } from "@/core/shared/branded-types";
+import { RefugeeAggregate } from "@/core/domain/refugees/refugee.aggregate";
 import { FamilyReunionMatch } from "@/core/services/family-reunion.service";
 import { FamilyReunionPassModal } from "@/features/refugees/components/family-reunion-pass-modal";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -36,6 +37,27 @@ export default function FamilyReunionPage() {
     setIsSearching(true);
     try {
       const container = ServiceContainer.getInstance();
+
+      // Pastikan seluruh warga di store tersinkronkan ke SQLite domain repository
+      for (const r of refugees) {
+        const agg = RefugeeAggregate.reconstitute({
+          id: asRefugeeId(r.id),
+          poskoId: asPoskoId(r.postId || session.poskoId),
+          fullName: r.fullName,
+          nationalId: r.nik || null,
+          gender: r.gender,
+          age: r.age,
+          domicileOrigin: r.domicileOrigin || null,
+          shelterLocation: r.shelterLocation || null,
+          missingKinName: r.missingKinName || null,
+          currentTriage: (r.triageStatus as any) || "GREEN",
+          registeredByUserId: r.registeredByUserId || session.userId,
+          createdAt: r.createdAt || Date.now(),
+          version: 1,
+        }, []);
+        await container.refugeeRepo.save(agg);
+      }
+
       const result = await container.familyReunionService.getPoskoReunionMatches(asPoskoId(effectivePoskoId));
       if (result.ok) {
         setMatches(result.value);
@@ -45,7 +67,7 @@ export default function FamilyReunionPage() {
     } finally {
       setIsSearching(false);
     }
-  }, [effectivePoskoId]);
+  }, [effectivePoskoId, refugees, session.poskoId, session.userId]);
 
   React.useEffect(() => {
     fetchPoskoMatches();
@@ -61,25 +83,45 @@ export default function FamilyReunionPage() {
     setIsSearching(true);
     try {
       const container = ServiceContainer.getInstance();
+
+      for (const r of refugees) {
+        const agg = RefugeeAggregate.reconstitute({
+          id: asRefugeeId(r.id),
+          poskoId: asPoskoId(r.postId || session.poskoId),
+          fullName: r.fullName,
+          nationalId: r.nik || null,
+          gender: r.gender,
+          age: r.age,
+          domicileOrigin: r.domicileOrigin || null,
+          shelterLocation: r.shelterLocation || null,
+          missingKinName: r.missingKinName || null,
+          currentTriage: (r.triageStatus as any) || "GREEN",
+          registeredByUserId: r.registeredByUserId || session.userId,
+          createdAt: r.createdAt || Date.now(),
+          version: 1,
+        }, []);
+        await container.refugeeRepo.save(agg);
+      }
+
       const result = await container.familyReunionService.searchRelatives({
         targetName: searchName.trim(),
         domicileOrigin: searchVillage.trim() || undefined,
         currentPoskoId: effectivePoskoId,
       });
 
-  if (result.ok) {
-  setMatches(result.value);
-  }
-  } catch (err) {
-  console.error("Failed manual search:", err);
-  } finally {
-  setIsSearching(false);
-  }
+      if (result.ok) {
+        setMatches(result.value);
+      }
+    } catch (err) {
+      console.error("Failed manual search:", err);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleOpenPass = (match: FamilyReunionMatch) => {
-  setSelectedMatch(match);
-  setPassModalOpen(true);
+    setSelectedMatch(match);
+    setPassModalOpen(true);
   };
 
   return (

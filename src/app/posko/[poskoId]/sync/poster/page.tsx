@@ -58,6 +58,7 @@ export default function ParityPosterSyncPage() {
   // 1. Build disaster manifest
   const manifestPersons = refugees.map((r) => ({
   id: r.id,
+  poskoId: r.postId || session.poskoId,
   fullName: r.fullName,
   nationalId: r.nik || undefined,
   gender: r.gender,
@@ -135,6 +136,7 @@ export default function ParityPosterSyncPage() {
   }));
 
   const manifest: DisasterManifestV4 = {
+  poskoId: session.poskoId,
   poskoName: session.poskoName || "Posko Sandya Utama",
   defaultRegionCode: "320101",
   timestamp: Date.now(),
@@ -228,53 +230,54 @@ export default function ParityPosterSyncPage() {
 
   // Import to store if available
   if (importRefugeeBatch && manifest.persons.length > 0) {
-  importRefugeeBatch(
-  manifest.persons.map((p) => ({
-  id: p.id,
-  postId: session.poskoId,
-  fullName: p.fullName,
-  nik: p.nationalId || null,
-  gender: p.gender,
-  age: p.age,
-  vulnerabilities: ([
-    (p.vulnerabilities & 0x01) ? "BALITA" : null,
-    (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
-    (p.vulnerabilities & 0x04) ? "LANSIA" : null,
-    (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
-    (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
-    (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
-  ].filter((v): v is VulnerabilityCategory => Boolean(v))),
-  urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
-  domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
-  shelterLocation: p.shelterLocation || "Tenda Pengungsian",
-  missingKinName: p.missingKinName,
-  registeredByUserId: session.userId,
-  registeredByUserName: session.userName,
-  triageStatus: (p.triage as TriageCategory) || "GREEN",
-  }))
-  );
+    importRefugeeBatch(
+      manifest.persons.map((p) => ({
+        id: p.id,
+        postId: p.poskoId || manifest.poskoId || session.poskoId,
+        fullName: p.fullName,
+        nik: p.nationalId || null,
+        gender: p.gender,
+        age: p.age,
+        vulnerabilities: ([
+          (p.vulnerabilities & 0x01) ? "BALITA" : null,
+          (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
+          (p.vulnerabilities & 0x04) ? "LANSIA" : null,
+          (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
+          (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
+          (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
+        ].filter((v): v is VulnerabilityCategory => Boolean(v))),
+        urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
+        domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
+        shelterLocation: p.shelterLocation || "Tenda Pengungsian",
+        missingKinName: p.missingKinName,
+        registeredByUserId: session.userId,
+        registeredByUserName: session.userName,
+        triageStatus: (p.triage as TriageCategory) || "GREEN",
+      }))
+    );
 
-  // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
-  const container = ServiceContainer.getInstance();
-  for (const p of manifest.persons) {
-    const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
-    const agg = RefugeeAggregate.reconstitute({
-      id: refId,
-      poskoId: asPoskoId(session.poskoId),
-      fullName: p.fullName,
-      nationalId: p.nationalId || null,
-      gender: p.gender,
-      age: p.age,
-      domicileOrigin: p.domicileOrigin || null,
-      shelterLocation: p.shelterLocation || null,
-      missingKinName: p.missingKinName || null,
-      currentTriage: (p.triage as TriageCategory) || "GREEN",
-      registeredByUserId: session.userId,
-      createdAt: Date.now(),
-      version: 1,
-    }, []);
-    await container.refugeeRepo.save(agg);
-  }
+    // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
+    const container = ServiceContainer.getInstance();
+    for (const p of manifest.persons) {
+      const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
+      const refugeePoskoId = asPoskoId(p.poskoId || manifest.poskoId || session.poskoId);
+      const agg = RefugeeAggregate.reconstitute({
+        id: refId,
+        poskoId: refugeePoskoId,
+        fullName: p.fullName,
+        nationalId: p.nationalId || null,
+        gender: p.gender,
+        age: p.age,
+        domicileOrigin: p.domicileOrigin || null,
+        shelterLocation: p.shelterLocation || null,
+        missingKinName: p.missingKinName || null,
+        currentTriage: (p.triage as TriageCategory) || "GREEN",
+        registeredByUserId: session.userId,
+        createdAt: Date.now(),
+        version: 1,
+      }, []);
+      await container.refugeeRepo.save(agg);
+    }
   }
   
   if (importInventoryBatch && manifest.inventory && manifest.inventory.length > 0) {

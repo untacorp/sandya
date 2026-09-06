@@ -65,95 +65,97 @@ export default function AnimatedQRPage() {
 
   const buildManifestAndFrames = async () => {
   try {
-  const manifestPersons = refugees.map((r) => ({
-  id: r.id,
-  fullName: r.fullName,
-  nationalId: r.nik || undefined,
-  gender: r.gender,
-  age: r.age,
-  vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
-    switch (v) {
-      case "BALITA": return mask | 0x01;
-      case "IBU_HAMIL": return mask | 0x02;
-      case "LANSIA": return mask | 0x04;
-      case "DISABILITAS": return mask | 0x08;
-      case "LUKA_BERAT": return mask | 0x10;
-      case "PENYAKIT_KRONIS": return mask | 0x20;
-      default: return mask;
-    }
-  }, 0),
-  urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
-  domicileOrigin: r.domicileOrigin || undefined,
-  shelterLocation: r.shelterLocation || undefined,
-  missingKinName: r.missingKinName || undefined,
-  triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
-  }));
+      const manifestPersons = refugees.map((r) => ({
+        id: r.id,
+        poskoId: r.postId || session.poskoId,
+        fullName: r.fullName,
+        nationalId: r.nik || undefined,
+        gender: r.gender,
+        age: r.age,
+        vulnerabilities: r.vulnerabilities.reduce((mask, v) => {
+          switch (v) {
+            case "BALITA": return mask | 0x01;
+            case "IBU_HAMIL": return mask | 0x02;
+            case "LANSIA": return mask | 0x04;
+            case "DISABILITAS": return mask | 0x08;
+            case "LUKA_BERAT": return mask | 0x10;
+            case "PENYAKIT_KRONIS": return mask | 0x20;
+            default: return mask;
+          }
+        }, 0),
+        urgentNeeds: r.urgentNeeds.map((_, idx) => 0x21 + (idx % 8)),
+        domicileOrigin: r.domicileOrigin || undefined,
+        shelterLocation: r.shelterLocation || undefined,
+        missingKinName: r.missingKinName || undefined,
+        triage: (r.triageStatus as "GREEN" | "YELLOW" | "RED" | "BLACK") || "GREEN",
+      }));
 
-  const manifestInventory = inventory.map((i) => ({
-    itemName: i.itemName,
-    category: i.category as "FOOD" | "CLOTHING" | "MEDICAL" | "HYGIENE" | "SHELTER" | "BABY_SUPPLIES",
-    currentQuantity: i.currentQuantity,
-    unit: i.unit,
-  }));
+      const manifestInventory = inventory.map((i) => ({
+        itemName: i.itemName,
+        category: i.category as "FOOD" | "CLOTHING" | "MEDICAL" | "HYGIENE" | "SHELTER" | "BABY_SUPPLIES",
+        currentQuantity: i.currentQuantity,
+        unit: i.unit,
+      }));
 
-  const manifestTransactions = transactions
-    .filter((tx) => !tx.postId || tx.postId === session.poskoId)
-    .map((tx) => ({
-      id: tx.id,
-      itemId: tx.itemId,
-      txType: tx.txType,
-      quantityChange: tx.quantityChange,
-      note: tx.note || undefined,
-      officerName: tx.officerName || undefined,
-      deviceTimestamp: tx.deviceTimestamp,
-    }));
+      const manifestTransactions = transactions
+        .filter((tx) => !tx.postId || tx.postId === session.poskoId)
+        .map((tx) => ({
+          id: tx.id,
+          itemId: tx.itemId,
+          txType: tx.txType,
+          quantityChange: tx.quantityChange,
+          note: tx.note || undefined,
+          officerName: tx.officerName || undefined,
+          deviceTimestamp: tx.deviceTimestamp,
+        }));
 
-  // Ambil rekam peristiwa / timeline warga dari SQLite
-  const container = ServiceContainer.getInstance();
-  const eventsRes = await container.refugeeRepo.getAllEvents();
-  const allEvents = eventsRes.ok ? eventsRes.value : [];
-  const refugeeIdSet = new Set(refugees.map((r) => r.id));
-  const poskoEvents = allEvents.filter((ev) => refugeeIdSet.has(ev.refugeeId));
-  const manifestEvents = poskoEvents.map((ev) => ({
-    id: ev.id,
-    refugeeId: ev.refugeeId,
-    authorName: ev.authorName,
-    authorRole: ev.authorRole,
-    eventType: ev.eventType,
-    eventPayloadJson: typeof ev.eventPayload === "string" ? ev.eventPayload : JSON.stringify(ev.eventPayload),
-    deviceTimestamp: ev.deviceTimestamp,
-    logicalSeq: ev.logicalSeq,
-  }));
+      // Ambil rekam peristiwa / timeline warga dari SQLite
+      const container = ServiceContainer.getInstance();
+      const eventsRes = await container.refugeeRepo.getAllEvents();
+      const allEvents = eventsRes.ok ? eventsRes.value : [];
+      const refugeeIdSet = new Set(refugees.map((r) => r.id));
+      const poskoEvents = allEvents.filter((ev) => refugeeIdSet.has(ev.refugeeId));
+      const manifestEvents = poskoEvents.map((ev) => ({
+        id: ev.id,
+        refugeeId: ev.refugeeId,
+        authorName: ev.authorName,
+        authorRole: ev.authorRole,
+        eventType: ev.eventType,
+        eventPayloadJson: typeof ev.eventPayload === "string" ? ev.eventPayload : JSON.stringify(ev.eventPayload),
+        deviceTimestamp: ev.deviceTimestamp,
+        logicalSeq: ev.logicalSeq,
+      }));
 
-  // Ambil tiket kebutuhan / distribusi bantuan
-  const poskoTickets = needsTickets.filter((t) => !t.postId || t.postId === session.poskoId);
-  const manifestTickets = poskoTickets.map((t) => ({
-    id: t.id,
-    refugeeId: t.refugeeId,
-    refugeeName: t.refugeeName,
-    shelterLocation: t.shelterLocation,
-    postId: t.postId,
-    itemName: t.itemName,
-    quantity: t.quantity,
-    unit: t.unit,
-    status: t.status,
-    urgency: t.urgency,
-    createdByUserName: t.createdByUserName,
-    createdAt: t.createdAt,
-    completedAt: t.completedAt,
-  }));
+      // Ambil tiket kebutuhan / distribusi bantuan
+      const poskoTickets = needsTickets.filter((t) => !t.postId || t.postId === session.poskoId);
+      const manifestTickets = poskoTickets.map((t) => ({
+        id: t.id,
+        refugeeId: t.refugeeId,
+        refugeeName: t.refugeeName,
+        shelterLocation: t.shelterLocation,
+        postId: t.postId,
+        itemName: t.itemName,
+        quantity: t.quantity,
+        unit: t.unit,
+        status: t.status,
+        urgency: t.urgency,
+        createdByUserName: t.createdByUserName,
+        createdAt: t.createdAt,
+        completedAt: t.completedAt,
+      }));
 
-  const manifest: DisasterManifestV4 = {
-  poskoName: session.poskoName || "Posko Sandya Utama",
-  defaultRegionCode: "320101",
-  timestamp: Date.now(),
-  persons: manifestPersons,
-  inventory: manifestInventory,
-  transactions: manifestTransactions,
-  personIds: refugees.map((r) => r.id),
-  events: manifestEvents,
-  tickets: manifestTickets,
-  };
+      const manifest: DisasterManifestV4 = {
+        poskoId: session.poskoId,
+        poskoName: session.poskoName || "Posko Sandya Utama",
+        defaultRegionCode: "320101",
+        timestamp: Date.now(),
+        persons: manifestPersons,
+        inventory: manifestInventory,
+        transactions: manifestTransactions,
+        personIds: refugees.map((r) => r.id),
+        events: manifestEvents,
+        tickets: manifestTickets,
+      };
 
   const packed = packManifestV4(manifest);
   const compressed = compressManifestV4(packed);
@@ -215,53 +217,54 @@ export default function AnimatedQRPage() {
   );
 
   if (importRefugeeBatch && manifest.persons.length > 0) {
-  importRefugeeBatch(
-  manifest.persons.map((p) => ({
-  id: p.id,
-  postId: session.poskoId,
-  fullName: p.fullName,
-  nik: p.nationalId || null,
-  gender: p.gender,
-  age: p.age,
-  vulnerabilities: ([
-    (p.vulnerabilities & 0x01) ? "BALITA" : null,
-    (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
-    (p.vulnerabilities & 0x04) ? "LANSIA" : null,
-    (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
-    (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
-    (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
-  ].filter((v): v is VulnerabilityCategory => Boolean(v))),
-  urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
-  domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
-  shelterLocation: p.shelterLocation || "Tenda Pengungsian",
-  missingKinName: p.missingKinName,
-  registeredByUserId: session.userId,
-  registeredByUserName: session.userName,
-  triageStatus: (p.triage as TriageCategory) || "GREEN",
-  }))
-  );
+    importRefugeeBatch(
+      manifest.persons.map((p) => ({
+        id: p.id,
+        postId: p.poskoId || manifest.poskoId || session.poskoId,
+        fullName: p.fullName,
+        nik: p.nationalId || null,
+        gender: p.gender,
+        age: p.age,
+        vulnerabilities: ([
+          (p.vulnerabilities & 0x01) ? "BALITA" : null,
+          (p.vulnerabilities & 0x02) ? "IBU_HAMIL" : null,
+          (p.vulnerabilities & 0x04) ? "LANSIA" : null,
+          (p.vulnerabilities & 0x08) ? "DISABILITAS" : null,
+          (p.vulnerabilities & 0x10) ? "LUKA_BERAT" : null,
+          (p.vulnerabilities & 0x20) ? "PENYAKIT_KRONIS" : null,
+        ].filter((v): v is VulnerabilityCategory => Boolean(v))),
+        urgentNeeds: p.urgentNeeds ? p.urgentNeeds.map((code) => `Kebutuhan #${code}`) : [],
+        domicileOrigin: p.domicileOrigin || session.poskoName || "Posko Pengungsian",
+        shelterLocation: p.shelterLocation || "Tenda Pengungsian",
+        missingKinName: p.missingKinName,
+        registeredByUserId: session.userId,
+        registeredByUserName: session.userName,
+        triageStatus: (p.triage as TriageCategory) || "GREEN",
+      }))
+    );
 
-  // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
-  const container = ServiceContainer.getInstance();
-  for (const p of manifest.persons) {
-    const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
-    const agg = RefugeeAggregate.reconstitute({
-      id: refId,
-      poskoId: asPoskoId(session.poskoId),
-      fullName: p.fullName,
-      nationalId: p.nationalId || null,
-      gender: p.gender,
-      age: p.age,
-      domicileOrigin: p.domicileOrigin || null,
-      shelterLocation: p.shelterLocation || null,
-      missingKinName: p.missingKinName || null,
-      currentTriage: (p.triage as TriageCategory) || "GREEN",
-      registeredByUserId: session.userId,
-      createdAt: Date.now(),
-      version: 1,
-    }, []);
-    await container.refugeeRepo.save(agg);
-  }
+    // Simpan warga ke database lokal SQLite posko agar terdaftar di domain repository
+    const container = ServiceContainer.getInstance();
+    for (const p of manifest.persons) {
+      const refId = asRefugeeId(p.id || `REF-${Math.floor(1000 + Math.random() * 9000)}`);
+      const refugeePoskoId = asPoskoId(p.poskoId || manifest.poskoId || session.poskoId);
+      const agg = RefugeeAggregate.reconstitute({
+        id: refId,
+        poskoId: refugeePoskoId,
+        fullName: p.fullName,
+        nationalId: p.nationalId || null,
+        gender: p.gender,
+        age: p.age,
+        domicileOrigin: p.domicileOrigin || null,
+        shelterLocation: p.shelterLocation || null,
+        missingKinName: p.missingKinName || null,
+        currentTriage: (p.triage as TriageCategory) || "GREEN",
+        registeredByUserId: session.userId,
+        createdAt: Date.now(),
+        version: 1,
+      }, []);
+      await container.refugeeRepo.save(agg);
+    }
   }
 
   if (importInventoryBatch && manifest.inventory && manifest.inventory.length > 0) {
