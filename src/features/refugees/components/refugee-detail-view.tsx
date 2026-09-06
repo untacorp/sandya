@@ -20,6 +20,7 @@ import { RefugeeEventProps } from "@/core/domain/refugees/refugee.aggregate";
 import { AddRefugeeEventModal } from "./add-refugee-event-modal";
 import { EditRefugeeModal } from "./edit-refugee-modal";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { AdHocDistributionModal } from "@/features/logistics/components/adhoc-distribution-modal";
 
 export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   const router = useRouter();
@@ -29,6 +30,7 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   const [addEventOpen, setAddEventOpen] = React.useState(false);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [checkoutModalOpen, setCheckoutModalOpen] = React.useState(false);
+  const [adHocLogisticsOpen, setAdHocLogisticsOpen] = React.useState(false);
   const [dbEvents, setDbEvents] = React.useState<RefugeeEventProps[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
 
@@ -169,32 +171,42 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   </Button>
   </Link>
   <div className="flex items-center gap-2">
-  <Button
-  variant="outline"
-  size="sm"
-  icon="edit"
-  onClick={() => setEditModalOpen(true)}
-  >
-  Edit Data Pokok
-  </Button>
-  <Button
-  variant="primary"
-  size="sm"
-  icon="add-circle"
-  iconVariant="bold"
-  onClick={() => setAddEventOpen(true)}
-  >
-  + Rekam Peristiwa
-  </Button>
-  <Button
-  variant="ghost"
-  size="sm"
-  icon="trash"
-  onClick={() => setCheckoutModalOpen(true)}
-  className="text-status-danger hover:bg-status-danger-bg"
-  >
-  Checkout Warga
-  </Button>
+    <Button
+      variant="outline"
+      size="sm"
+      icon="edit"
+      onClick={() => setEditModalOpen(true)}
+    >
+      Edit Data Pokok
+    </Button>
+    <Button
+      variant="secondary"
+      size="sm"
+      icon="delivery"
+      iconVariant="bold"
+      onClick={() => setAdHocLogisticsOpen(true)}
+      className="font-bold text-primary border-primary/30 hover:bg-primary/10"
+    >
+      + Ajukan Logistik
+    </Button>
+    <Button
+      variant="primary"
+      size="sm"
+      icon="add-circle"
+      iconVariant="bold"
+      onClick={() => setAddEventOpen(true)}
+    >
+      + Rekam Peristiwa
+    </Button>
+    <Button
+      variant="ghost"
+      size="sm"
+      icon="trash"
+      onClick={() => setCheckoutModalOpen(true)}
+      className="text-status-danger hover:bg-status-danger-bg"
+    >
+      Checkout Warga
+    </Button>
   </div>
   </div>
 
@@ -388,8 +400,18 @@ export function RefugeeDetailView({ refugeeId }: { refugeeId: string }) {
   Ya, Proses Checkout
   </Button>
   </div>
-  </div>
-  </Dialog>
+      </div>
+    </Dialog>
+
+    {/* Ad-Hoc Logistics Request Modal */}
+    <AdHocDistributionModal
+      open={adHocLogisticsOpen}
+      onOpenChange={setAdHocLogisticsOpen}
+      preselectedRefugeeId={person.id}
+      onSuccess={() => {
+        fetchEvents();
+      }}
+    />
   </div>
   );
 }
