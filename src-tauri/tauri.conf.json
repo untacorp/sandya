@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Sandya",
   "version": "0.1.0-alpha.1",
-  "identifier": "id.sandya.app",
+  "identifier": "id.sandya",
   "build": {
   "frontendDist": "../out",
   "devUrl": "http://localhost:3000",
@@ -27,7 +27,7 @@
   },
   "bundle": {
   "active": true,
-  "category": "PublicSafety",
+  "category": "Utilities",
   "shortDescription": "Sistem Operasi Tanggap Darurat Bencana Mandiri & Offline Mesh",
   "longDescription": "Sandya adalah platform manajemen operasi tanggap darurat bencana offline-first untuk pendataan pengungsi, triase medis lapangan, logistik gudang posko, temu keluarga terpisah, dan komunikasi taktis PTT.",
   "copyright": "Copyright 2026 Sandya Humanitarian Project. All rights reserved.",

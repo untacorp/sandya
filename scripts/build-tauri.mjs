@@ -21,11 +21,13 @@ try {
   }
 
   console.log('⚡ Building Next.js static export for Tauri...');
-  const nextBin = path.join(rootDir, 'node_modules', '.bin', process.platform === 'win32' ? 'next.cmd' : 'next');
+  const isWin = process.platform === 'win32';
+  const cmd = isWin ? 'pnpm.cmd' : 'pnpm';
   
-  const result = spawnSync(nextBin, ['build'], {
+  const result = spawnSync(cmd, ['exec', 'next', 'build'], {
     cwd: rootDir,
     stdio: 'inherit',
+    shell: isWin,
     env: {
       ...process.env,
       NODE_ENV: 'production',
@@ -33,6 +35,10 @@ try {
       TAURI_BUILD: 'true',
     },
   });
+
+  if (result.error) {
+    throw result.error;
+  }
 
   if (result.status !== 0) {
     throw new Error(`Next.js build failed with exit code ${result.status}`);
