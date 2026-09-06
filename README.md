@@ -50,6 +50,7 @@
 - [Testing](#-testing)
   - [Running Tests](#running-tests)
   - [Hasil Pengujian Unit](#hasil-pengujian-unit)
+- [Keamanan](#-keamanan)
 - [Lisensi](#-lisensi)
 
 ---
@@ -689,6 +690,14 @@ Eksekusi perintah `pnpm test:unit` mencakup verifikasi menyeluruh terhadap 17 su
 | 15 | **Codec QR Teranimasi & Role Pass QR** | `tests/unit/qr-codecs.test.ts` | **PASS (100%)** |
 | 16 | **Transport Dinamis & Paritas XOR** | `tests/unit/dynamic-sync-transports.test.ts` | **PASS (100%)** |
 | 17 | **Framing Protokol BLE Mesh** | `tests/unit/ble-mesh-protocol.test.ts` | **PASS (100%)** |
+
+---
+
+## 🛡️ Keamanan
+
+Keamanan data kependudukan pengungsi, rekam medis darurat, serta integritas buku kas stok bantuan kemanusiaan adalah prioritas mutlak ekosistem Sandya. Kami menyambut baik laporan kerentanan secara bertanggung jawab (*responsible disclosure*) dengan perlindungan *Safe Harbor* penuh bagi peneliti keamanan.
+
+Detail lengkap mengenai versi yang didukung, saluran pelaporan privat, SLA respons, model ancaman (*threat model*), serta penanganan darurat lapangan dapat dilihat pada dokumen [**Kebijakan Keamanan Sandya (SECURITY.md)**](.github/SECURITY.md).
 
 ---
 
